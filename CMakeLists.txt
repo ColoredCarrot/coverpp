@@ -1,13 +1,26 @@
 cmake_minimum_required(VERSION 3.22)
 project(coverpp)
 
+cmake_policy(SET CMP0091 NEW)
+
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
 include(FetchContent)
+include(InstallRequiredSystemLibraries)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")
 
 set(CMAKE_CXX_STANDARD 23)
 
 add_executable(coverpp main.cpp)
+
+# TODO copy clang_rt.asan_dynamic-x86_64.dll just like the other dll
+# D:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.38.33130\bin\Hostx86\x64
+# D:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.38.33130\bin\Hostx64\x64
+target_compile_options(coverpp PUBLIC "$<$<C_COMPILER_ID:MSVC>:/utf-8>" "$<$<C_COMPILER_ID:MSVC>:/fsanitize=address>")
+target_compile_options(coverpp PUBLIC "$<$<CXX_COMPILER_ID:MSVC>:/utf-8>" "$<$<CXX_COMPILER_ID:MSVC>:/fsanitize=address>")
+set_property(TARGET coverpp PROPERTY
+        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 # DIA SDK
 find_package(DiaSDK REQUIRED)
@@ -25,6 +38,24 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(wil)
 
+#$<$<CONFIG:DEBUG>:-wholearchive:clang_rt.asan_dbg-x86_64.lib$<SEMICOLON>-NODEFAULTLIB:LIBCMTD>
 target_link_libraries(coverpp WIL)
+
+# Copy DIA SDK DLL to same directory as .exe
+# See https://stackoverflow.com/questions/10671916/how-to-copy-dll-files-into-the-same-folder-as-the-executable-using-cmake
+add_custom_command(TARGET coverpp POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${DIASDK_DLL}" $<TARGET_FILE_DIR:coverpp>
+)
+
+set(MSVC_DLL_DIR [=[D:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.38.33130\bin\Hostx64\x64\]=])
+set(MSVC_DLL_LIST
+    "${MSVC_DLL_DIR}clang_rt.asan_dynamic-x86_64.dll"
+    "${MSVC_DLL_DIR}clang_rt.asan_dbg_dynamic-x86_64.dll"
+)
+foreach (dll ${MSVC_DLL_LIST})
+    add_custom_command(TARGET coverpp POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${dll}" $<TARGET_FILE_DIR:coverpp>
+    )
+endforeach ()
 
 add_subdirectory(example-sut)
