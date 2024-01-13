@@ -3,12 +3,15 @@
 #include <print>
 #include <iostream>
 #include <filesystem>
+#include <cassert>
 
 #define NOMINMAX
 
 #include <wil/com.h>
 #include <dia2.h>
 #include <psapi.h>
+#include <intrin.h>
+#include <signal.h>
 
 int exec(std::convertible_to<std::string_view> auto&& ... parts) {
     std::string s;
@@ -138,29 +141,95 @@ struct std::formatter<wil::com_ptr<T>> {
     }
 };
 
-std::intptr_t GetBaseAddress(const HANDLE hProcess) {
-    if (hProcess == NULL)
-        return NULL; // No access to the process
+std::intptr_t get_base_address(HANDLE process) {
+    assert(process);
 
     HMODULE lphModule[1024]; // Array that receives the list of module handles
-    DWORD lpcbNeeded(NULL); // Output of EnumProcessModules, giving the number of bytes requires to store all modules handles in the lphModule array
+    DWORD lpcbNeeded(
+        NULL); // Output of EnumProcessModules, giving the number of bytes requires to store all modules handles in the lphModule array
 
-    if (!EnumProcessModules(hProcess, lphModule, sizeof(lphModule), &lpcbNeeded))
+    if (!EnumProcessModules(process, lphModule, sizeof(lphModule), &lpcbNeeded))
         return NULL; // Impossible to read modules
 
     TCHAR szModName[MAX_PATH];
-    if (!GetModuleFileNameEx(hProcess, lphModule[0], szModName, sizeof(szModName) / sizeof(TCHAR)))
+    if (!GetModuleFileNameEx(process, lphModule[0], szModName, sizeof(szModName) / sizeof(TCHAR)))
         return NULL; // Impossible to get module info
 
     const auto hmodule = lphModule[0]; // Module 0 is apparently always the EXE itself, returning its address
 
-    MODULEINFO  info;
-    THROW_LAST_ERROR_IF(!GetModuleInformation(hProcess, hmodule, &info, sizeof(info)));
+    MODULEINFO info;
+    THROW_LAST_ERROR_IF(!GetModuleInformation(process, hmodule, &info, sizeof(info)));
 
-    return  (std::intptr_t) info.lpBaseOfDll;
+    return (std::intptr_t) info.lpBaseOfDll;
+}
+
+std::intptr_t instruction_pointer_to_va(std::intptr_t ip, HANDLE process = GetCurrentProcess()) {
+    assert(process);
+    return ip - get_base_address(process);
+}
+
+#define enable_single_step_execution() __writeeflags(__readeflags() | (1 << 8))
+
+/**
+ * Writes the TF (Trap Flag, bit 8) in the EFLAGS register.
+ * When this flag is set, the processor traps after every instruction.
+ *
+ * If running under a debugger, the debugger will take over at this point.
+ */
+void set_single_step_execution(bool enabled) {
+    const std::uint64_t old_eflags = __readeflags();
+    const std::uint64_t new_eflags = enabled ? old_eflags | (1 << 8) : old_eflags & ~(1 << 8);
+    if (new_eflags != old_eflags) {
+        __writeeflags(new_eflags);
+    }
+}
+
+int seh_handler(EXCEPTION_POINTERS* info) {
+    /*
+     * Idea:
+     *  1. Load process
+     *  2. Iterate lines from PDB, for each first instruction in that line:
+     *       - Replace first byte with INT3
+     *       - Track map<LineNum, Byte>
+     */
+
+    std::println("Rip: {:x}", info->ContextRecord->Rip);
+    std::println("exA: {:x}", (intptr_t)info->ExceptionRecord->ExceptionAddress);
+    std::println("f:   {:x}", (intptr_t)(&set_single_step_execution));
+
+    unsigned char instr = *(unsigned char*) info->ContextRecord->Rip;
+    std::println("The instr is: {:x}", instr);
+    // We could suss out the instruction length of instr, then add that to Rip, also calculating jumps... yeah nah
+
+    std::println("TF {}", bool(info->ContextRecord->EFlags & (1 << 8)));
+
+    // Re-enable TF, set Resume Flag
+    info->ContextRecord->EFlags |= (1 << 8) | (1 << 16);
+
+//    return EXCEPTION_CONTINUE_EXECUTION;
+    return EXCEPTION_EXECUTE_HANDLER;
+}
+
+void asd() {
+    __try {
+        set_single_step_execution(true);
+        int a = 2;
+        a += 3;
+    }
+    __except(/*__writeeflags(__readeflags() | (1 << 8) | (1 << 16)), EXCEPTION_CONTINUE_EXECUTION*/seh_handler(GetExceptionInformation())) {
+        std::println("handler");
+    };
 }
 
 void read_pdb(const std::filesystem::path& path) {
+//    signal(SIGINT, my_signal_handler);
+
+    asd();
+
+
+
+
+
     auto dll = load_library("msdia140.dll");
 
     auto dia_data_source = get_dia_data_source(dll);
@@ -190,8 +259,8 @@ void read_pdb(const std::filesystem::path& path) {
     });
 
 
-    std::println("relative function address: {:x}", reinterpret_cast<std::intptr_t >(&read_pdb) - GetBaseAddress(GetCurrentProcess()));
-
+    std::println("relative function address: {:x}", reinterpret_cast<std::intptr_t >(&read_pdb) -
+                                                    get_base_address(GetCurrentProcess()));
 
 
     wil::com_ptr<IDiaEnumLineNumbers> line_numbers;
