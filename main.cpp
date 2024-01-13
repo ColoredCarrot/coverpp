@@ -9,13 +9,13 @@
 #include <wil/com.h>
 #include <dia2.h>
 
-int exec(std::convertible_to<std::string_view> auto &&... parts) {
+int exec(std::convertible_to<std::string_view> auto&& ... parts) {
     std::string s;
     (s.append(parts).append(" "), ...);
     return std::system(s.c_str());
 }
 
-using DllGetClassObject_t = HRESULT(_In_ REFCLSID rclsid, _In_ REFIID riid, _Outptr_ LPVOID FAR *ppv);
+using DllGetClassObject_t = HRESULT(_In_ REFCLSID rclsid, _In_ REFIID riid, _Outptr_ LPVOID FAR* ppv);
 
 std::string bstr_to_utf8_string(BSTR bs) {
     const std::size_t num_wchars{SysStringLen(bs)};
@@ -39,25 +39,31 @@ std::string bstr_to_utf8_string(BSTR bs) {
     return utf8;
 }
 
-void read_pdb(const std::filesystem::path &path) {
-    const std::filesystem::path dll = "msdia140.dll";
-    if (!std::filesystem::exists(dll)) {
-        throw std::runtime_error("DLL not found");
-    }
+wil::unique_hmodule load_library(const std::filesystem::path& path) {
+    return wil::unique_hmodule(THROW_LAST_ERROR_IF_NULL(LoadLibraryW(path.c_str())));
+}
 
-    wil::unique_hmodule h(LoadLibraryW(dll.c_str()));
-    if (!h) {
-        throw std::runtime_error("DLL not loaded");
-    }
+DllGetClassObject_t* get_DllGetClassObject_proc(const wil::unique_hmodule& library) {
+    return reinterpret_cast<DllGetClassObject_t*>(THROW_LAST_ERROR_IF_NULL(
+        GetProcAddress(library.get(), "DllGetClassObject")));
+}
 
-    const auto DllGetClassObject_proc = (DllGetClassObject_t *) THROW_LAST_ERROR_IF_NULL(
-        GetProcAddress(h.get(), "DllGetClassObject"));
+wil::com_ptr<IDiaDataSource> get_dia_data_source(const wil::unique_hmodule& dll) {
+    const auto DllGetClassObject_proc = get_DllGetClassObject_proc(dll);
 
     wil::com_ptr<IClassFactory> cf;
     THROW_IF_FAILED(DllGetClassObject_proc(CLSID_DiaSource, IID_IClassFactory, cf.put_void()));
 
     wil::com_ptr<IDiaDataSource> dia_data_source;
     cf->CreateInstance(nullptr, IID_IDiaDataSource, dia_data_source.put_void());
+
+    return dia_data_source;
+}
+
+void read_pdb(const std::filesystem::path& path) {
+    auto dll = load_library("msdia140.dll");
+
+    auto dia_data_source = get_dia_data_source(dll);
 
     THROW_IF_FAILED(dia_data_source->loadDataFromPdb(path.c_str()));
 
@@ -96,7 +102,7 @@ int main() {
         read_pdb(
             R"(G:\Voidev\Official\Projects\C++\Cover++\cmake-build-debug-visual-studio\Debug\covercpp-work\Debug\example-sut.pdb)");
 
-    } catch (const wil::ResultException &ex) {
+    } catch (const wil::ResultException& ex) {
         std::println(std::cerr, "Windows Exception: {}", ex.what());
     }
 
