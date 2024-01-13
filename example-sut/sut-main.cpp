@@ -1,6 +1,9 @@
+#define NOMINMAX
+#include <windows.h>
+
 int min(int a, int b) {
     if (a <= b) {
-        __debugbreak();
+//        __debugbreak();
         if (a == b) {
             return 99;
         }
@@ -10,5 +13,6 @@ int min(int a, int b) {
 }
 
 int main() {
+    OutputDebugString("Hello, world!");
     return min(1, 2);
 }

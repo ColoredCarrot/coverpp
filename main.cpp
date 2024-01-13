@@ -13,6 +13,8 @@
 #include <intrin.h>
 #include <signal.h>
 
+#define THROW_LAST_ERROR_IF_NOT(x) THROW_LAST_ERROR_IF(!(x))
+
 int exec(std::convertible_to<std::string_view> auto&& ... parts) {
     std::string s;
     (s.append(parts).append(" "), ...);
@@ -194,8 +196,8 @@ int seh_handler(EXCEPTION_POINTERS* info) {
      */
 
     std::println("Rip: {:x}", info->ContextRecord->Rip);
-    std::println("exA: {:x}", (intptr_t)info->ExceptionRecord->ExceptionAddress);
-    std::println("f:   {:x}", (intptr_t)(&set_single_step_execution));
+    std::println("exA: {:x}", (intptr_t) info->ExceptionRecord->ExceptionAddress);
+    std::println("f:   {:x}", (intptr_t) (&set_single_step_execution));
 
     unsigned char instr = *(unsigned char*) info->ContextRecord->Rip;
     std::println("The instr is: {:x}", instr);
@@ -211,14 +213,62 @@ int seh_handler(EXCEPTION_POINTERS* info) {
 }
 
 void asd() {
-    __try {
-        set_single_step_execution(true);
-        int a = 2;
-        a += 3;
+    std::filesystem::path exe = R"(G:\Voidev\Official\Projects\C++\Cover++\cmake-build-debug-visual-studio\example-sut\Debug\example-sut.exe)";
+
+    STARTUPINFOW si{};
+    si.cb = sizeof(si);
+    PROCESS_INFORMATION pi{};
+    // TODO specify desired ENV and pwdir for debuggee
+    THROW_LAST_ERROR_IF(!CreateProcessW(
+        exe.c_str(), nullptr, nullptr, nullptr, false, DEBUG_ONLY_THIS_PROCESS, nullptr, nullptr, &si, &pi
+    ));
+
+    const HANDLE hProcess = pi.hProcess;
+
+    while (true) {
+        DEBUG_EVENT evt;
+        THROW_LAST_ERROR_IF_NOT(WaitForDebugEventEx(&evt, INFINITE));
+
+        bool is_exit = false;
+        DWORD continue_status = DBG_CONTINUE;
+        switch (evt.dwDebugEventCode) {
+        case CREATE_PROCESS_DEBUG_EVENT: {
+
+            break;
+        }
+        case OUTPUT_DEBUG_STRING_EVENT: {
+            //TODO unicode handling, also nDebugStringLength might be too small, so can't use that (at least not only)
+            auto buf = std::make_unique<char[]>(evt.u.DebugString.nDebugStringLength);
+            THROW_LAST_ERROR_IF_NOT(ReadProcessMemory(hProcess, evt.u.DebugString.lpDebugStringData, buf.get(),
+                                                      evt.u.DebugString.nDebugStringLength,
+                                                      nullptr));
+
+            OutputDebugString(buf.get());
+            std::println("Received debug string: {}", buf.get());
+            break;
+        }
+        case EXIT_PROCESS_DEBUG_EVENT: {
+            std::println("Process exited with code {}", evt.u.ExitProcess.dwExitCode);
+            is_exit = true;
+            break;
+        }
+        case EXCEPTION_DEBUG_EVENT: {
+            continue_status = DBG_EXCEPTION_NOT_HANDLED;
+            break;
+        }
+        case RIP_EVENT: {
+            std::println("RIP! {} - {}", evt.u.RipInfo.dwError, evt.u.RipInfo.dwType);
+            is_exit = true;
+            break;
+        }
+        }
+
+        THROW_LAST_ERROR_IF_NOT(ContinueDebugEvent(evt.dwProcessId, evt.dwThreadId, continue_status));
+
+        if (is_exit) {
+            break;
+        }
     }
-    __except(/*__writeeflags(__readeflags() | (1 << 8) | (1 << 16)), EXCEPTION_CONTINUE_EXECUTION*/seh_handler(GetExceptionInformation())) {
-        std::println("handler");
-    };
 }
 
 void read_pdb(const std::filesystem::path& path) {
@@ -226,8 +276,7 @@ void read_pdb(const std::filesystem::path& path) {
 
     asd();
 
-
-
+    return;
 
 
     auto dll = load_library("msdia140.dll");
