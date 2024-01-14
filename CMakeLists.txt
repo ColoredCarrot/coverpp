@@ -22,6 +22,13 @@ add_executable(coverpp
         src/com_utils.cpp
         src/com_utils.hpp
         src/CoverageEngine.hpp
+        src/WindowsCoverageSession.cpp
+        src/WindowsCoverageSession.hpp
+        src/CoverageParams.hpp
+        src/DiaAccessor.cpp
+        src/DiaAccessor.hpp
+        src/file_util.cpp
+        src/file_util.hpp
 )
 # TODO Once CMake 3.28 is supported:
 #[[add_executable(coverpp)

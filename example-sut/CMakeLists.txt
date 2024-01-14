@@ -5,6 +5,6 @@ set(CMAKE_CXX_STANDARD 23)
 
 add_compile_options(/FAs)
 
-add_executable(example-sut sut-main.cpp)
+add_executable(example-sut sut-main.cpp sut-foo.hpp)
 
 target_compile_options(example-sut PUBLIC /FAs)

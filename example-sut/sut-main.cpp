@@ -1,5 +1,6 @@
 //#define NOMINMAX
 //#include <windows.h>
+#include "sut-foo.hpp"
 
 int min(int a, int b) {
     if (a <= b) {
@@ -14,7 +15,7 @@ int min(int a, int b) {
 
 int main() {
 //    OutputDebugString("Hello, world!");
-    return min(1, 2);
+    return min(1, add(1, 1));
 }
 
 namespace foo {

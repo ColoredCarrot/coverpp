@@ -1,6 +1,7 @@
 #include "src/BreakpointDriver.hpp"
 #include "src/com_utils.hpp"
 #include "src/CoverageSink.hpp"
+#include "src/WindowsCoverageSession.hpp"
 
 #include <print>
 #include <iostream>
@@ -25,51 +26,6 @@ int exec(std::convertible_to<std::string_view> auto&& ... parts)
     return std::system(s.c_str());
 }
 
-using DllGetClassObject_t = HRESULT(_In_ REFCLSID rclsid, _In_ REFIID riid, _Outptr_ LPVOID FAR* ppv);
-
-wil::unique_hmodule load_library(const std::filesystem::path& path)
-{
-    return wil::unique_hmodule(THROW_LAST_ERROR_IF_NULL(LoadLibraryW(path.c_str())));
-}
-
-DllGetClassObject_t* get_DllGetClassObject_proc(const wil::unique_hmodule& library)
-{
-    return reinterpret_cast<DllGetClassObject_t*>(THROW_LAST_ERROR_IF_NULL(
-        GetProcAddress(library.get(), "DllGetClassObject")));
-}
-
-wil::com_ptr<IDiaDataSource> get_dia_data_source(const wil::unique_hmodule& dll)
-{
-    /*
-     * High-level procedure:
-     *  1. Call DllGetClassObject with IID_IClassFactory
-     *  2. Call cf->CreateInstance
-     * See https://stackoverflow.com/a/2187454
-     */
-
-    const auto DllGetClassObject_proc = get_DllGetClassObject_proc(dll);
-
-    wil::com_ptr<IClassFactory> cf;
-    THROW_IF_FAILED(DllGetClassObject_proc(CLSID_DiaSource, IID_IClassFactory, cf.put_void()));
-
-    wil::com_ptr<IDiaDataSource> dia_data_source;
-    cf->CreateInstance(nullptr, IID_IDiaDataSource, dia_data_source.put_void());
-
-    return dia_data_source;
-}
-
-
-template<typename TItem, typename TEnum>
-void iterate_enum(TEnum& enumeration, auto&& f)
-{
-    wil::com_ptr<TItem> item;
-    ULONG celt;
-    while (THROW_IF_FAILED(enumeration.Next(1, item.put(), &celt)), celt == 1)
-    {
-        f(*item);
-    }
-}
-
 
 template<typename T>
 std::string get_string(const wil::com_ptr<T>& com, HRESULT (T::* f)(BSTR*))
@@ -77,14 +33,6 @@ std::string get_string(const wil::com_ptr<T>& com, HRESULT (T::* f)(BSTR*))
     BSTR bs;
     THROW_IF_FAILED(((*com).*f)(&bs));
     return coverpp::detail::windows::bstr_to_utf8_string(bs);
-}
-
-template<std::integral V, typename T>
-V get_dword(const wil::com_ptr<T>& com, HRESULT (T::* f)(V*))
-{
-    V v;
-    THROW_IF_FAILED(((*com).*f)(&v));
-    return v;
 }
 
 
@@ -124,84 +72,6 @@ struct std::formatter<IDiaEnumLineNumbers>
 };
 
 
-#define CONCAT(a, b) a##b
-#define CONCAT2(a, b) CONCAT(a, b)
-
-#define COVERPP_FOR_EACH_COM_ITEM_(TItem, item, in_enum, celt) \
-    wil::com_ptr<TItem> item; DWORD celt; \
-    while (THROW_IF_FAILED((in_enum).Next(1, item.put(), &celt)), celt == 1)
-
-#define COVERPP_FOR_EACH_COM_ITEM(TItem, item, in_enum) COVERPP_FOR_EACH_COM_ITEM_(TItem, item, in_enum, CONCAT2(celt, __LINE__))
-
-wil::com_ptr<IDiaEnumSourceFiles> get_enum_source_files(IDiaSession& dia_session)
-{
-    // See https://learn.microsoft.com/en-us/visualstudio/debugger/debug-interface-access/idiaenumsourcefiles?view=vs-2022
-
-    wil::com_ptr<IDiaEnumTables> dia_tables;
-    THROW_IF_FAILED(dia_session.getEnumTables(dia_tables.put()));
-
-    wil::com_ptr<IDiaEnumSourceFiles> dia_source_files;
-    COVERPP_FOR_EACH_COM_ITEM(IDiaTable, dia_table, *dia_tables)
-    {
-        const HRESULT hr = dia_table->QueryInterface(IID_IDiaEnumSourceFiles, dia_source_files.put_void());
-        if (hr == S_OK)
-        {
-            break;
-        }
-        (void) dia_source_files.detach();
-    }
-
-    return dia_source_files;
-}
-
-bool path_is_subpath_of(const std::filesystem::path& sub_path, const std::filesystem::path& base_path)
-{
-    const auto r = std::ranges::mismatch(base_path, sub_path);
-    return r.in1 == base_path.end();
-}
-
-coverpp::CoverageSink
-get_project_source_lines(const std::filesystem::path& project_dir, IDiaSession& dia_session)
-{
-    auto dia_source_files = get_enum_source_files(dia_session);
-
-    coverpp::CoverageSink sink;
-    COVERPP_FOR_EACH_COM_ITEM(IDiaSourceFile, dia_source_file, *dia_source_files)
-    {
-        std::filesystem::path file = get_string(dia_source_file, &IDiaSourceFile::get_fileName);
-        if (!path_is_subpath_of(file, project_dir))
-        {
-            continue;
-        }
-
-        wil::com_ptr<IDiaEnumSymbols> dia_enum_compilands;
-        THROW_IF_FAILED(dia_source_file->get_compilands(dia_enum_compilands.put()));
-
-        COVERPP_FOR_EACH_COM_ITEM(IDiaSymbol, dia_compiland, *dia_enum_compilands)
-        {
-            wil::com_ptr<IDiaEnumLineNumbers> dia_enum_line_numbers;
-            THROW_IF_FAILED(
-                dia_session.findLines(dia_compiland.get(), dia_source_file.get(), dia_enum_line_numbers.put()));
-
-            COVERPP_FOR_EACH_COM_ITEM(IDiaLineNumber, dia_line_number, *dia_enum_line_numbers)
-            {
-                sink.track_coverage(
-                    file,
-                    {
-                        .lineBegin = get_dword(dia_line_number, &IDiaLineNumber::get_lineNumber),
-                        .lineEnd = get_dword(dia_line_number, &IDiaLineNumber::get_lineNumberEnd),
-                        .columnBegin = get_dword(dia_line_number, &IDiaLineNumber::get_columnNumber),
-                        .columnEnd = get_dword(dia_line_number, &IDiaLineNumber::get_columnNumberEnd),
-                    }
-                );
-            }
-        }
-    }
-
-    return sink;
-}
-
-
 std::intptr_t get_base_address(HANDLE process)
 {
     assert(process);
@@ -226,31 +96,6 @@ std::intptr_t get_base_address(HANDLE process)
 }
 
 
-std::optional<std::filesystem::path> get_file_by_line_numbers(IDiaEnumLineNumbers& line_numbers)
-{
-    THROW_IF_FAILED(line_numbers.Reset());
-
-    DWORD celt;
-    wil::com_ptr<IDiaLineNumber> line_number;
-    THROW_IF_FAILED(line_numbers.Next(1, line_number.put(), &celt));
-    if (celt != 1)
-    {
-        return std::nullopt;
-    }
-
-    wil::com_ptr<IDiaSourceFile> src_file;
-    THROW_IF_FAILED(line_number->get_sourceFile(src_file.put()));
-
-    return get_string(src_file, &IDiaSourceFile::get_fileName);
-}
-
-std::optional<std::filesystem::path> get_file_by_va(unsigned long long va, IDiaSession& dia_session)
-{
-    wil::com_ptr<IDiaEnumLineNumbers> line_numbers;
-    THROW_IF_FAILED(dia_session.findLinesByVA(va, 1, line_numbers.put()));
-    return get_file_by_line_numbers(*line_numbers);
-}
-
 template<typename TItem, typename TEnum>
 wil::com_ptr<TItem> get_single_item(TEnum& enumeration)
 {
@@ -272,35 +117,14 @@ using coverpp::InstructionPointer;
 int run_with_coverage(const std::filesystem::path& src_dir, const std::filesystem::path& exe,
                       const std::filesystem::path& pdb)
 {
-    // Step #1: Load PDB
-    auto dia_dll = load_library("msdia140.dll");
-    auto dia_data_source = get_dia_data_source(dia_dll);
+    coverpp::windows::WindowsCoverageSession coverage_session{{src_dir, exe, pdb}};
 
-    THROW_IF_FAILED(dia_data_source->loadDataFromPdb(pdb.c_str()));
-
-    wil::com_ptr<IDiaSession> dia_session;
-    THROW_IF_FAILED(dia_data_source->openSession(dia_session.put()));
-
-
-    auto reachable = get_project_source_lines(src_dir, *dia_session);
+    auto reachable = coverage_session.collect_source_lines();
     std::println("reachable: {}", reachable);
 
 
     // Step #2: Find address of main function
-    wil::com_ptr<IDiaSymbol> dia_global_scope;
-    THROW_IF_FAILED(dia_session->get_globalScope(dia_global_scope.put()));
-
-    wil::com_ptr<IDiaEnumSymbols> dia_enum_main;
-    THROW_IF_FAILED(dia_global_scope->findChildren(
-        SymTagEnum::SymTagFunction, L"main", nsfCaseSensitive, dia_enum_main.put()
-    ));
-    auto dia_main = get_single_item<IDiaSymbol>(*dia_enum_main);
-    if (!dia_main)
-    {
-        throw std::runtime_error("Could not find main function in PDB");
-    }
-
-    const VirtualAddress main_entry_va{get_dword(dia_main, &IDiaSymbol::get_virtualAddress)};
+    const auto main_entry_va = coverage_session.find_entrypoint();
 
 
     coverpp::CoverageSink sink;
@@ -401,39 +225,17 @@ int run_with_coverage(const std::filesystem::path& src_dir, const std::filesyste
             }
             else if (evt.u.Exception.ExceptionRecord.ExceptionCode == STATUS_SINGLE_STEP)
             {
-                wil::com_ptr<IDiaEnumLineNumbers> line_numbers;
-                THROW_IF_FAILED(dia_session->findLinesByVA(va.value, 1, line_numbers.put()));
-
-                std::println("single st {:x}", ip.value);
-                std::println("single step VA: {} @ {}", va, *line_numbers);
-
-                const auto file = get_file_by_line_numbers(*line_numbers);
+                std::println("single step {:x}", ip.value);
 
                 // Note: Gets into infinite loop in some external Windows file without this check
-                if (!file || path_is_subpath_of(*file, src_dir))
+                if (coverage_session.trace(sink, va))
                 {
-                    // FUCK YES, THIS IS WORKING!
-                    if (file)
-                    {
-                        auto line_number = get_single_item<IDiaLineNumber>(*line_numbers);
-                        sink.track_coverage(
-                            *file,
-                            {
-                                .lineBegin = get_dword(line_number, &IDiaLineNumber::get_lineNumber),
-                                .lineEnd = get_dword(line_number, &IDiaLineNumber::get_lineNumberEnd),
-                                .columnBegin = get_dword(line_number, &IDiaLineNumber::get_columnNumber),
-                                .columnEnd = get_dword(line_number, &IDiaLineNumber::get_columnNumberEnd),
-                            }
-                        );
-                    }
-
                     CONTEXT context{};
                     context.ContextFlags = CONTEXT_CONTROL;
                     THROW_LAST_ERROR_IF_NOT(GetThreadContext(hThread, &context));
                     context.EFlags |= (1 << 8) /*| (1 << 16)*/;
                     THROW_LAST_ERROR_IF_NOT(SetThreadContext(hThread, &context));
                 }
-
 
                 continue_status = DBG_EXCEPTION_HANDLED;
             }
