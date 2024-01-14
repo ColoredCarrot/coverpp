@@ -3,6 +3,8 @@ project(coverpp)
 
 cmake_policy(SET CMP0091 NEW)
 
+add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/MP>")
+
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 include(FetchContent)
@@ -34,8 +36,8 @@ add_executable(coverpp
         src/report/ReportGenerator.hpp
         src/report/CoverageProcessor.cpp
         src/report/CoverageProcessor.hpp
-        src/report/Report.cpp
-        src/report/Report.hpp
+        src/report/BasicReport.cpp
+        src/report/BasicReport.hpp
 )
 # TODO Once CMake 3.28 is supported:
 #[[add_executable(coverpp)

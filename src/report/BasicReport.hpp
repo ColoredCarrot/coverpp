@@ -6,7 +6,7 @@
 
 namespace coverpp
 {
-class FileReport
+class BasicFileReport
 {
 public:
     std::unordered_set<unsigned>& covered_lines();
@@ -16,13 +16,13 @@ private:
     std::unordered_set<unsigned> m_covered_lines;
 };
 
-class Report
+class BasicReport
 {
 public:
-    std::unordered_map<std::filesystem::path, FileReport>& file_reports();
-    const std::unordered_map<std::filesystem::path, FileReport>& file_reports() const;
+    std::unordered_map<std::filesystem::path, BasicFileReport>& file_reports();
+    const std::unordered_map<std::filesystem::path, BasicFileReport>& file_reports() const;
 
 private:
-    std::unordered_map<std::filesystem::path, FileReport> m_file_reports;
+    std::unordered_map<std::filesystem::path, BasicFileReport> m_file_reports;
 };
 }

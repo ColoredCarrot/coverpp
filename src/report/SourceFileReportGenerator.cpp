@@ -37,7 +37,7 @@ std::istream& operator>>(std::istream& is, Line& line)
 }
 }
 
-void SourceFileReportGenerator::generate_report(const Report& report, const Report& reachability_report)
+void SourceFileReportGenerator::generate_report(const BasicReport& report, const BasicReport& reachability_report)
 {
     std::filesystem::create_directories(m_dir);
 

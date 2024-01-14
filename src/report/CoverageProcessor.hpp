@@ -1,9 +1,9 @@
 #pragma once
 
 #include "../CoverageSink.hpp"
-#include "Report.hpp"
+#include "BasicReport.hpp"
 
 namespace coverpp
 {
-Report process_coverage_sink(CoverageSink& sink);
+BasicReport process_coverage_sink(CoverageSink& sink);
 }

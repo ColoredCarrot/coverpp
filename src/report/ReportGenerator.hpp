@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Report.hpp"
+#include "BasicReport.hpp"
 
 namespace coverpp
 {
@@ -9,6 +9,6 @@ class ReportGenerator
 public:
     virtual ~ReportGenerator() = default;
 
-    virtual void generate_report(const Report& report, const Report& reachability_report) = 0;
+    virtual void generate_report(const BasicReport& report, const BasicReport& reachability_report) = 0;
 };
 }
