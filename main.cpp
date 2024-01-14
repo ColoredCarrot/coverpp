@@ -4,6 +4,7 @@
 #include <iostream>
 #include <filesystem>
 #include <cassert>
+#include <unordered_map>
 
 #define NOMINMAX
 
@@ -186,6 +187,26 @@ void set_single_step_execution(bool enabled) {
     }
 }
 
+std::optional<std::filesystem::path> get_file_by_line_numbers(IDiaEnumLineNumbers& line_numbers) {
+    DWORD celt;
+    wil::com_ptr<IDiaLineNumber> line_number;
+    THROW_IF_FAILED(line_numbers.Next(1, line_number.put(), &celt));
+    if (celt != 1) {
+        return std::nullopt;
+    }
+
+    wil::com_ptr<IDiaSourceFile> src_file;
+    THROW_IF_FAILED(line_number->get_sourceFile(src_file.put()));
+
+    return get_string(src_file, &IDiaSourceFile::get_fileName);
+}
+
+std::optional<std::filesystem::path> get_file_by_va(unsigned long long va, IDiaSession& dia_session) {
+    wil::com_ptr<IDiaEnumLineNumbers> line_numbers;
+    THROW_IF_FAILED(dia_session.findLinesByVA(va, 1, line_numbers.put()));
+    return get_file_by_line_numbers(*line_numbers);
+}
+
 int seh_handler(EXCEPTION_POINTERS* info) {
     /*
      * Idea:
@@ -212,8 +233,29 @@ int seh_handler(EXCEPTION_POINTERS* info) {
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
+bool path_is_subpath_of(const std::filesystem::path& sub_path, const std::filesystem::path& base_path) {
+    const auto r = std::ranges::mismatch(base_path, sub_path);
+    return r.in1 == base_path.end();
+}
+
 void asd() {
+    std::filesystem::path src_dir = R"(G:\Voidev\Official\Projects\C++\Cover++)";
+
+    std::filesystem::path pdb = R"(G:\Voidev\Official\Projects\C++\Cover++\cmake-build-debug-visual-studio\example-sut\Debug\example-sut.pdb)";
+
+    auto dll = load_library("msdia140.dll");
+
+    auto dia_data_source = get_dia_data_source(dll);
+
+    THROW_IF_FAILED(dia_data_source->loadDataFromPdb(pdb.c_str()));
+
+    wil::com_ptr<IDiaSession> dia_session;
+    THROW_IF_FAILED(dia_data_source->openSession(dia_session.put()));
+
+
     std::filesystem::path exe = R"(G:\Voidev\Official\Projects\C++\Cover++\cmake-build-debug-visual-studio\example-sut\Debug\example-sut.exe)";
+
+    // See this amazingly helpful resource: https://www.codeproject.com/Articles/43682/Writing-a-basic-Windows-debugger
 
     STARTUPINFOW si{};
     si.cb = sizeof(si);
@@ -225,6 +267,9 @@ void asd() {
 
     const HANDLE hProcess = pi.hProcess;
 
+    std::unordered_map<DWORD, HANDLE> thread_handles;
+
+    bool first_breakpoint = true;
     while (true) {
         DEBUG_EVENT evt;
         THROW_LAST_ERROR_IF_NOT(WaitForDebugEventEx(&evt, INFINITE));
@@ -233,7 +278,19 @@ void asd() {
         DWORD continue_status = DBG_CONTINUE;
         switch (evt.dwDebugEventCode) {
         case CREATE_PROCESS_DEBUG_EVENT: {
+            thread_handles.emplace(evt.dwThreadId, evt.u.CreateProcessInfo.hThread);
 
+            // We want to set the Trap Flag
+            /*const auto hThread = evt.u.CreateProcessInfo.hThread;
+            CONTEXT context;
+            context.ContextFlags = CONTEXT_CONTROL;
+            THROW_LAST_ERROR_IF_NOT(GetThreadContext(hThread, &context));
+            context.EFlags |= (1 << 8) | (1 << 16);
+            THROW_LAST_ERROR_IF_NOT(SetThreadContext(hThread, &context));*/
+            break;
+        }
+        case CREATE_THREAD_DEBUG_EVENT: {
+            thread_handles.emplace(evt.dwThreadId, evt.u.CreateThread.hThread);
             break;
         }
         case OUTPUT_DEBUG_STRING_EVENT: {
@@ -253,7 +310,50 @@ void asd() {
             break;
         }
         case EXCEPTION_DEBUG_EVENT: {
-            continue_status = DBG_EXCEPTION_NOT_HANDLED;
+            const auto hThread = thread_handles.at(evt.dwThreadId);
+
+            if (evt.u.Exception.ExceptionRecord.ExceptionCode == STATUS_BREAKPOINT) {
+                if (first_breakpoint) {
+                    first_breakpoint = false;
+                    break;
+                }
+
+                std::println("breakpoint hit");
+
+                CONTEXT context{};
+                context.ContextFlags = CONTEXT_CONTROL;
+                THROW_LAST_ERROR_IF_NOT(GetThreadContext(hThread, &context));
+                context.EFlags |= (1 << 8) | (1 << 16);
+//                context.Dr6 |= 1 << 14;
+                THROW_LAST_ERROR_IF_NOT(SetThreadContext(hThread, &context));
+
+                continue_status = DBG_EXCEPTION_HANDLED;
+            } else if (evt.u.Exception.ExceptionRecord.ExceptionCode == STATUS_SINGLE_STEP) {
+                const auto ip = (std::intptr_t) evt.u.Exception.ExceptionRecord.ExceptionAddress;
+                const auto va = instruction_pointer_to_va(ip, hProcess);
+
+                std::println("single step VA: {:x}", va);
+
+                const auto file = get_file_by_va(va, *dia_session);
+                // Note: Gets into infinite loop in some external Windows file without this check
+                if (file && path_is_subpath_of(*file, src_dir)) {
+                    // FUCK YES, THIS IS WORKING!
+                    // TODO: Track the source line, add to list of reached lines
+
+                    CONTEXT context{};
+                    context.ContextFlags = CONTEXT_CONTROL;
+                    THROW_LAST_ERROR_IF_NOT(GetThreadContext(hThread, &context));
+                    context.EFlags |= (1 << 8) /*| (1 << 16)*/;
+                    THROW_LAST_ERROR_IF_NOT(SetThreadContext(hThread, &context));
+                }
+
+
+                continue_status = DBG_EXCEPTION_HANDLED;
+            } else {
+                std::println("exc");
+                continue_status = DBG_EXCEPTION_NOT_HANDLED;
+            }
+
             break;
         }
         case RIP_EVENT: {
