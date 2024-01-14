@@ -11,8 +11,10 @@ namespace coverpp
 struct Tracepoint
 {
     /** 1-based; zero means unknown. */
-    unsigned lineBegin, lineEnd;
-    unsigned columnBegin, columnEnd;
+    unsigned lineBegin;
+    unsigned columnBegin;
+    unsigned lineEnd;
+    unsigned columnEnd;
 
     bool operator==(const Tracepoint&) const = default;
     std::strong_ordering operator<=>(const Tracepoint&) const = default;

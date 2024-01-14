@@ -9,6 +9,14 @@ set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 include(FetchContent)
 include(InstallRequiredSystemLibraries)
+include(cmake/CMakeRC.cmake)
+
+cmrc_add_resource_library(coverpp-resources ALIAS coverpp::rc NAMESPACE coverpp_rc
+    "src/resources/html-exporter/index.html"
+    "src/resources/html-exporter/index.css"
+    "src/resources/html-exporter/third_party/prism.js"
+    "src/resources/html-exporter/third_party/prism.css"
+)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")
 
@@ -38,6 +46,8 @@ add_executable(coverpp
         src/report/CoverageProcessor.hpp
         src/report/BasicReport.cpp
         src/report/BasicReport.hpp
+        src/exporter/html/HtmlExporter.cpp
+        src/exporter/html/HtmlExporter.hpp
 )
 # TODO Once CMake 3.28 is supported:
 #[[add_executable(coverpp)
@@ -57,15 +67,15 @@ target_sources(coverpp
 # TODO copy clang_rt.asan_dynamic-x86_64.dll just like the other dll
 # D:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.38.33130\bin\Hostx86\x64
 # D:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.38.33130\bin\Hostx64\x64
-target_compile_options(coverpp PUBLIC "$<$<C_COMPILER_ID:MSVC>:/utf-8>" "$<$<C_COMPILER_ID:MSVC>:/fsanitize=address>")
-target_compile_options(coverpp PUBLIC "$<$<CXX_COMPILER_ID:MSVC>:/utf-8>" "$<$<CXX_COMPILER_ID:MSVC>:/fsanitize=address>")
+add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>" "$<$<C_COMPILER_ID:MSVC>:/fsanitize=address>")
+add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>" "$<$<CXX_COMPILER_ID:MSVC>:/fsanitize=address>")
 set_property(TARGET coverpp PROPERTY
         MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 # DIA SDK
 find_package(DiaSDK REQUIRED)
 target_include_directories(coverpp PUBLIC ${DIASDK_INCLUDE_DIRS})
-target_link_libraries(coverpp ${DIASDK_LIBRARIES})
+target_link_libraries(coverpp ${DIASDK_LIBRARIES} coverpp::rc)
 
 # WIL
 set(WIL_BUILD_PACKAGING OFF)

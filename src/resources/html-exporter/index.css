@@ -1,0 +1,16 @@
+mark {
+    color: inherit;
+    background-color: mark;
+}
+
+mark.cov-y {
+    background-color: rgba(16, 255, 0, 0.2);
+}
+
+mark.cov-n {
+    background-color: rgba(255, 28, 28, 0.4);
+}
+
+mark.cov-p {
+    background-color: rgba(255, 250, 16, 0.3);
+}

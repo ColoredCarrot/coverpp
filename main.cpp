@@ -4,6 +4,7 @@
 #include "src/WindowsCoverageSession.hpp"
 #include "src/report/SourceFileReportGenerator.hpp"
 #include "src/report/CoverageProcessor.hpp"
+#include "src/exporter/html/HtmlExporter.hpp"
 
 #include <print>
 #include <iostream>
@@ -284,6 +285,11 @@ int run_with_coverage(const std::filesystem::path& src_dir, const std::filesyste
         R"(G:\Voidev\Official\Projects\C++\Cover++\cmake-build-debug-visual-studio\Debug\covercpp-work\report)"};
 
     report_generator.generate_report(coverpp::process_coverage_sink(sink), coverpp::process_coverage_sink(reachable));
+
+    coverpp::HtmlExporter exporter{
+        R"(G:\Voidev\Official\Projects\C++\Cover++\cmake-build-debug-visual-studio\Debug\covercpp-work\report)"};
+
+    exporter.export_report(sink, reachable);
 
     return exit_code;
 }
