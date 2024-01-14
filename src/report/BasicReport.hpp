@@ -1,7 +1,7 @@
 #pragma once
 
 #include <unordered_map>
-#include <unordered_set>
+#include <set>
 #include <filesystem>
 
 namespace coverpp
@@ -9,11 +9,11 @@ namespace coverpp
 class BasicFileReport
 {
 public:
-    std::unordered_set<unsigned>& covered_lines();
-    const std::unordered_set<unsigned>& covered_lines() const;
+    std::set<unsigned>& covered_lines();
+    const std::set<unsigned>& covered_lines() const;
 
 private:
-    std::unordered_set<unsigned> m_covered_lines;
+    std::set<unsigned> m_covered_lines;
 };
 
 class BasicReport

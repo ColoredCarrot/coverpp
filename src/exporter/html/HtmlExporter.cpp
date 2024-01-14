@@ -3,8 +3,27 @@
 #include <cmrc/cmrc.hpp>
 #include <fstream>
 #include <print>
+#include <ranges>
 
 CMRC_DECLARE(coverpp_rc);
+
+static const std::string_view html_head = R"###(<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+
+    <title>Cover++ Report</title>
+
+    <link rel="stylesheet" href="G:\Voidev\Official\Projects\C++\Cover++\src\resources\html-exporter\third_party/prism.css"/>
+    <link rel="stylesheet" href="G:\Voidev\Official\Projects\C++\Cover++\src\resources\html-exporter\index.css"/>
+</head>
+<body>
+)###";
+
+static const std::string_view html_foot = R"###(<script src="G:\Voidev\Official\Projects\C++\Cover++\src\resources\html-exporter\third_party/prism.js"></script>
+</body>
+</html>
+)###";
 
 namespace
 {
@@ -25,7 +44,7 @@ std::ostream& operator<<(std::ostream& os, const Line& line)
         | std::views::join_with(std::string_view{"&gt;"}),
         std::ostream_iterator<char>(os)
     );
-    return os << '\n';
+    return os;
 }
 
 std::istream& operator>>(std::istream& is, Line& line)
@@ -41,20 +60,20 @@ namespace coverpp
 HtmlExporter::HtmlExporter(std::filesystem::path output_directory) : m_dir{std::move(output_directory)}
 {}
 
-void HtmlExporter::export_report(const CoverageSink& covered, const CoverageSink& reachable)
+void HtmlExporter::export_report(const BasicReport& covered, const BasicReport& reachable)
 {
     std::filesystem::create_directories(m_dir);
 
-    for (const auto& [source_file_path, reachable_tracepoints] : reachable.tracepoints())
+    for (const auto& [source_file_path, reachable_tracepoints] : reachable.file_reports())
     {
-        const auto it = covered.tracepoints().find(source_file_path);
-        if (it == covered.tracepoints().end())
+        const auto it = covered.file_reports().find(source_file_path);
+        if (it == covered.file_reports().end())
         {
             // No coverage in entire file
             continue;
         }
 
-        const auto& covered_tracepoints = it->second;
+        const auto& covered_lines = it->second.covered_lines();
 
         //TODO relativize source_file against project dir -> include remaining dir path
         const std::filesystem::path output_file_path = m_dir / (source_file_path.filename().concat(".html"));
@@ -66,69 +85,37 @@ void HtmlExporter::export_report(const CoverageSink& covered, const CoverageSink
             throw std::runtime_error{"Failed to open file"};
         }
 
-
-        /*// Write header
-        const auto resource_filesystem = cmrc::coverpp_rc::get_filesystem();
-        const auto index_html_f = resource_filesystem.open("src/resources/html-exporter/index.html");
-        const std::string_view index_html{index_html_f.begin(), index_html_f.end()};
-        std::ranges::copy(index_html, std::ostream_iterator<char>(output_file));*/
+        std::print(output_file, "{}", html_head);
 
         std::print(output_file, "<pre><code class=\"language-cpp\">");
 
-        unsigned next_line = 1, next_column = 1;
-        for (const Tracepoint& reachable_tracepoint : reachable_tracepoints)
+        Line line;
+        unsigned next_line = 1;
+        for (const unsigned reachable_line : reachable_tracepoints.covered_lines())
         {
             // TODO: Unfortunately, MSVC doesn't emit column information in the PDB :( See https://developercommunity.visualstudio.com/t/Produce-PDB-with-column-informaiton/1409758?space=21&q=column+width
 
-            // We interpret "no data for columnBegin (i.e. == 0)" as "first column"
-            const unsigned column_begin = reachable_tracepoint.columnBegin != 0 ? reachable_tracepoint.columnBegin : 1;
-
             // Need to write up to (excluding) reachable_tracepoint.begin
             // First, write remaining lines
-            if (reachable_tracepoint.lineBegin > next_line)
+            while (reachable_line > next_line)
             {
-                std::ranges::copy(
-                    std::views::istream<Line>(source_file)
-                    | std::views::take(reachable_tracepoint.lineBegin - next_line),
-                    std::ostream_iterator<Line>(output_file)
-                );
-                next_line = reachable_tracepoint.lineBegin;
-                next_column = 1;
+                source_file >> line;
+                output_file << line << '\n';
+                ++next_line;
             }
 
-            // Then, write remaining chars up until, but excluding, the column_begin
-            std::ranges::copy(
-                std::views::istream<char>(source_file)
-                | std::views::take(column_begin - next_column),
-                std::ostream_iterator<char>(output_file)
-            );
+            // Now, emit a <mark> tag for the line
+            const std::string_view mark_class = covered_lines.contains(reachable_line) ? "cov-y" : "cov-n";
+            std::print(output_file, "<mark class=\"{}\">", mark_class);
+            source_file >> line;
+            output_file << line;
+            std::print(output_file, "</mark>\n");
 
-            // Now, emit a <mark> tag
-            std::print(output_file, "<mark>");
-
-
-
-            break;
+            ++next_line;
         }
 
         std::println(output_file, "</code></pre>>");
+        std::print(output_file, "{}", html_foot);
     }
-
-    /*
-
-    Generate like:
-
-    <pre>
-        <code class="language-cpp">
-            #pragma once
-
-            auto add(auto a, <mark class="cov-n">auto b</mark>)
-            {
-                <mark class="cov-p">partial</mark>
-                <mark class="cov-y">return a + b;</mark>
-            }
-        </code>
-    </pre>
-     */
 }
 }

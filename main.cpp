@@ -284,12 +284,14 @@ int run_with_coverage(const std::filesystem::path& src_dir, const std::filesyste
     coverpp::SourceFileReportGenerator report_generator{
         R"(G:\Voidev\Official\Projects\C++\Cover++\cmake-build-debug-visual-studio\Debug\covercpp-work\report)"};
 
-    report_generator.generate_report(coverpp::process_coverage_sink(sink), coverpp::process_coverage_sink(reachable));
+    coverpp::BasicReport report = coverpp::process_coverage_sink(sink);
+    coverpp::BasicReport reachable_report = coverpp::process_coverage_sink(reachable);
+    report_generator.generate_report(report, reachable_report);
 
     coverpp::HtmlExporter exporter{
         R"(G:\Voidev\Official\Projects\C++\Cover++\cmake-build-debug-visual-studio\Debug\covercpp-work\report)"};
 
-    exporter.export_report(sink, reachable);
+    exporter.export_report(report, reachable_report);
 
     return exit_code;
 }

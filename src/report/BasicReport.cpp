@@ -2,11 +2,11 @@
 
 namespace coverpp
 {
-std::unordered_set<unsigned>& BasicFileReport::covered_lines()
+std::set<unsigned>& BasicFileReport::covered_lines()
 {
     return m_covered_lines;
 }
-const std::unordered_set<unsigned>& BasicFileReport::covered_lines() const
+const std::set<unsigned>& BasicFileReport::covered_lines() const
 {
     return m_covered_lines;
 }
