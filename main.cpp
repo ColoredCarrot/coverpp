@@ -13,6 +13,9 @@
 #include <psapi.h>
 #include <intrin.h>
 
+import coverpp.DebugEngine;
+
+
 #define THROW_LAST_ERROR_IF_NOT(x) THROW_LAST_ERROR_IF(!(x))
 
 int exec(std::convertible_to<std::string_view> auto&& ... parts) {
