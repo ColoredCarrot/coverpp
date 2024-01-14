@@ -87,7 +87,7 @@ void HtmlExporter::export_report(const BasicReport& covered, const BasicReport& 
 
         std::print(output_file, "{}", html_head);
 
-        std::print(output_file, "<pre><code class=\"language-cpp\">");
+        std::print(output_file, "<pre><code class=\"language-cpp match-braces\">");
 
         Line line;
         unsigned next_line = 1;
@@ -114,7 +114,13 @@ void HtmlExporter::export_report(const BasicReport& covered, const BasicReport& 
             ++next_line;
         }
 
-        std::println(output_file, "</code></pre>>");
+        // Output any remaining lines
+        while (source_file >> line)
+        {
+            output_file << line << '\n';
+        }
+
+        std::println(output_file, "</code></pre>");
         std::print(output_file, "{}", html_foot);
     }
 }
