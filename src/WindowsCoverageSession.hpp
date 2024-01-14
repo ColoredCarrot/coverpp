@@ -15,7 +15,7 @@ public:
 
     VirtualAddress find_entrypoint();
 
-    bool trace(CoverageSink& sink, VirtualAddress va);
+    std::optional<std::filesystem::path> trace(CoverageSink& sink, VirtualAddress va);
 
 private:
     CoverageParams m_params;

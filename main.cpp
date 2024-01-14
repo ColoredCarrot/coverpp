@@ -116,6 +116,19 @@ wil::com_ptr<TItem> get_single_item(TEnum& enumeration)
 using coverpp::VirtualAddress;
 using coverpp::InstructionPointer;
 
+static bool is_exit_path(const std::filesystem::path& file)
+{
+    // Tests for paths like minkernel\crts\ucrt\src\appcrt\startup\exit.cpp
+
+    if (file.has_root_directory() || file.has_root_name() || file.has_root_path())
+    {
+        return false;
+    }
+
+    auto it = file.begin();
+    return it != file.end() && *it == "minkernel";
+}
+
 int run_with_coverage(const std::filesystem::path& src_dir, const std::filesystem::path& exe,
                       const std::filesystem::path& pdb)
 {
@@ -227,10 +240,9 @@ int run_with_coverage(const std::filesystem::path& src_dir, const std::filesyste
             }
             else if (evt.u.Exception.ExceptionRecord.ExceptionCode == STATUS_SINGLE_STEP)
             {
-                std::println("single step {:x}", ip.value);
-
                 // Note: Gets into infinite loop in some external Windows file without this check
-                if (coverage_session.trace(sink, va))
+                const auto file = coverage_session.trace(sink, va);
+                if (!file || !is_exit_path(*file))
                 {
                     CONTEXT context{};
                     context.ContextFlags = CONTEXT_CONTROL;

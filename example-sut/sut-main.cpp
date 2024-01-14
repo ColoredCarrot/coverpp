@@ -2,6 +2,8 @@
 //#include <windows.h>
 #include "sut-foo.hpp"
 
+#include <ranges>
+
 int min(int a, int b) {
     if (a <= b) {
 //        __debugbreak();
@@ -15,7 +17,13 @@ int min(int a, int b) {
 
 int main() {
 //    OutputDebugString("Hello, world!");
-    return min(1, add(1, 1));
+
+    for (int i : std::views::iota(0, 10))
+    {
+        add(1, i);
+    }
+
+    return min(1, 2);
 }
 
 namespace foo {

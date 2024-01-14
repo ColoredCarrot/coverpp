@@ -119,19 +119,14 @@ static std::optional<std::filesystem::path> get_file_by_line_numbers(IDiaEnumLin
     return get_string(src_file, &IDiaSourceFile::get_fileName);
 }
 
-bool WindowsCoverageSession::trace(CoverageSink& sink, VirtualAddress va)
+std::optional<std::filesystem::path> WindowsCoverageSession::trace(CoverageSink& sink, VirtualAddress va)
 {
     wil::com_ptr<IDiaEnumLineNumbers> line_numbers;
     THROW_IF_FAILED(m_dia.session().findLinesByVA(va.value, 1, line_numbers.put()));
 
     const auto file = get_file_by_line_numbers(*line_numbers);
 
-    if (file && !coverpp::detail::path_is_subpath_of(*file, m_params.source_dir))
-    {
-        return false;
-    }
-
-    if (file)
+    if (file && coverpp::detail::path_is_subpath_of(*file, m_params.source_dir))
     {
         auto line_number = get_single_item<IDiaLineNumber>(*line_numbers);
         sink.track_coverage(
@@ -145,6 +140,6 @@ bool WindowsCoverageSession::trace(CoverageSink& sink, VirtualAddress va)
         );
     }
 
-    return true;
+    return file;
 }
 }
