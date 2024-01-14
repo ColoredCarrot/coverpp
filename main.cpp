@@ -12,7 +12,6 @@
 #include <dia2.h>
 #include <psapi.h>
 #include <intrin.h>
-#include <signal.h>
 
 #define THROW_LAST_ERROR_IF_NOT(x) THROW_LAST_ERROR_IF(!(x))
 
@@ -171,22 +170,6 @@ std::intptr_t instruction_pointer_to_va(std::intptr_t ip, HANDLE process = GetCu
     return ip - get_base_address(process);
 }
 
-#define enable_single_step_execution() __writeeflags(__readeflags() | (1 << 8))
-
-/**
- * Writes the TF (Trap Flag, bit 8) in the EFLAGS register.
- * When this flag is set, the processor traps after every instruction.
- *
- * If running under a debugger, the debugger will take over at this point.
- */
-void set_single_step_execution(bool enabled) {
-    const std::uint64_t old_eflags = __readeflags();
-    const std::uint64_t new_eflags = enabled ? old_eflags | (1 << 8) : old_eflags & ~(1 << 8);
-    if (new_eflags != old_eflags) {
-        __writeeflags(new_eflags);
-    }
-}
-
 std::optional<std::filesystem::path> get_file_by_line_numbers(IDiaEnumLineNumbers& line_numbers) {
     DWORD celt;
     wil::com_ptr<IDiaLineNumber> line_number;
@@ -207,45 +190,16 @@ std::optional<std::filesystem::path> get_file_by_va(unsigned long long va, IDiaS
     return get_file_by_line_numbers(*line_numbers);
 }
 
-int seh_handler(EXCEPTION_POINTERS* info) {
-    /*
-     * Idea:
-     *  1. Load process
-     *  2. Iterate lines from PDB, for each first instruction in that line:
-     *       - Replace first byte with INT3
-     *       - Track map<LineNum, Byte>
-     */
-
-    std::println("Rip: {:x}", info->ContextRecord->Rip);
-    std::println("exA: {:x}", (intptr_t) info->ExceptionRecord->ExceptionAddress);
-    std::println("f:   {:x}", (intptr_t) (&set_single_step_execution));
-
-    unsigned char instr = *(unsigned char*) info->ContextRecord->Rip;
-    std::println("The instr is: {:x}", instr);
-    // We could suss out the instruction length of instr, then add that to Rip, also calculating jumps... yeah nah
-
-    std::println("TF {}", bool(info->ContextRecord->EFlags & (1 << 8)));
-
-    // Re-enable TF, set Resume Flag
-    info->ContextRecord->EFlags |= (1 << 8) | (1 << 16);
-
-//    return EXCEPTION_CONTINUE_EXECUTION;
-    return EXCEPTION_EXECUTE_HANDLER;
-}
-
 bool path_is_subpath_of(const std::filesystem::path& sub_path, const std::filesystem::path& base_path) {
     const auto r = std::ranges::mismatch(base_path, sub_path);
     return r.in1 == base_path.end();
 }
 
-void asd() {
-    std::filesystem::path src_dir = R"(G:\Voidev\Official\Projects\C++\Cover++)";
-
-    std::filesystem::path pdb = R"(G:\Voidev\Official\Projects\C++\Cover++\cmake-build-debug-visual-studio\example-sut\Debug\example-sut.pdb)";
-
-    auto dll = load_library("msdia140.dll");
-
-    auto dia_data_source = get_dia_data_source(dll);
+int run_with_coverage(const std::filesystem::path& src_dir, const std::filesystem::path& exe,
+                      const std::filesystem::path& pdb) {
+    // Step #1: Load PDB
+    auto dia_dll = load_library("msdia140.dll");
+    auto dia_data_source = get_dia_data_source(dia_dll);
 
     THROW_IF_FAILED(dia_data_source->loadDataFromPdb(pdb.c_str()));
 
@@ -253,14 +207,14 @@ void asd() {
     THROW_IF_FAILED(dia_data_source->openSession(dia_session.put()));
 
 
-    std::filesystem::path exe = R"(G:\Voidev\Official\Projects\C++\Cover++\cmake-build-debug-visual-studio\example-sut\Debug\example-sut.exe)";
+    // Step #2: Run the exe in a new process with coverage tracking
 
     // See this amazingly helpful resource: https://www.codeproject.com/Articles/43682/Writing-a-basic-Windows-debugger
 
     STARTUPINFOW si{};
     si.cb = sizeof(si);
     PROCESS_INFORMATION pi{};
-    // TODO specify desired ENV and pwdir for debuggee
+    // Inherit env and workdir from the coverage process
     THROW_LAST_ERROR_IF(!CreateProcessW(
         exe.c_str(), nullptr, nullptr, nullptr, false, DEBUG_ONLY_THIS_PROCESS, nullptr, nullptr, &si, &pi
     ));
@@ -269,6 +223,7 @@ void asd() {
 
     std::unordered_map<DWORD, HANDLE> thread_handles;
 
+    int exit_code = 0;
     bool first_breakpoint = true;
     while (true) {
         DEBUG_EVENT evt;
@@ -279,14 +234,6 @@ void asd() {
         switch (evt.dwDebugEventCode) {
         case CREATE_PROCESS_DEBUG_EVENT: {
             thread_handles.emplace(evt.dwThreadId, evt.u.CreateProcessInfo.hThread);
-
-            // We want to set the Trap Flag
-            /*const auto hThread = evt.u.CreateProcessInfo.hThread;
-            CONTEXT context;
-            context.ContextFlags = CONTEXT_CONTROL;
-            THROW_LAST_ERROR_IF_NOT(GetThreadContext(hThread, &context));
-            context.EFlags |= (1 << 8) | (1 << 16);
-            THROW_LAST_ERROR_IF_NOT(SetThreadContext(hThread, &context));*/
             break;
         }
         case CREATE_THREAD_DEBUG_EVENT: {
@@ -305,8 +252,9 @@ void asd() {
             break;
         }
         case EXIT_PROCESS_DEBUG_EVENT: {
-            std::println("Process exited with code {}", evt.u.ExitProcess.dwExitCode);
             is_exit = true;
+            exit_code = static_cast<int>(evt.u.ExitProcess.dwExitCode);
+            std::println("Process finished with exit code {}", exit_code);
             break;
         }
         case EXCEPTION_DEBUG_EVENT: {
@@ -320,6 +268,8 @@ void asd() {
 
                 std::println("breakpoint hit");
 
+                // Set the TF (Trap Flag, bit 8) in the EFLAGS register.
+                // When this flag is set, the processor traps after every instruction with STATUS_SINGLE_STEP.
                 CONTEXT context{};
                 context.ContextFlags = CONTEXT_CONTROL;
                 THROW_LAST_ERROR_IF_NOT(GetThreadContext(hThread, &context));
@@ -359,6 +309,7 @@ void asd() {
         case RIP_EVENT: {
             std::println("RIP! {} - {}", evt.u.RipInfo.dwError, evt.u.RipInfo.dwType);
             is_exit = true;
+            exit_code = 99;
             break;
         }
         }
@@ -369,16 +320,11 @@ void asd() {
             break;
         }
     }
+
+    return exit_code;
 }
 
 void read_pdb(const std::filesystem::path& path) {
-//    signal(SIGINT, my_signal_handler);
-
-    asd();
-
-    return;
-
-
     auto dll = load_library("msdia140.dll");
 
     auto dia_data_source = get_dia_data_source(dll);
@@ -400,22 +346,6 @@ void read_pdb(const std::filesystem::path& path) {
      *
      * So we can get source file + line numbers from an instruction pointer (+ process handle)
      */
-
-    iterate_enum<IDiaSymbol>(functions, [&](const wil::com_ptr<IDiaSymbol>& function) {
-        std::println("func {}", get_string(function, &IDiaSymbol::get_name));
-        std::println("VA:\t{:x}", get_dword(function, &IDiaSymbol::get_virtualAddress));
-        std::println("RVA:\t{:x}", get_dword(function, &IDiaSymbol::get_relativeVirtualAddress));
-    });
-
-
-    std::println("relative function address: {:x}", reinterpret_cast<std::intptr_t >(&read_pdb) -
-                                                    get_base_address(GetCurrentProcess()));
-
-
-    wil::com_ptr<IDiaEnumLineNumbers> line_numbers;
-//    THROW_IF_FAILED(dia_session->findLinesByRVA(get_instruction_pointer() - reinterpret_cast<std::intptr_t>(&read_pdb), 10, line_numbers.put()));
-    THROW_IF_FAILED(dia_session->findLinesByVA(0xed840, 10, line_numbers.put()));
-    std::println("{}", line_numbers);
 }
 
 struct CoInitializeGuard {
@@ -432,9 +362,11 @@ int main() {
     try {
         CoInitializeGuard guard;
 
-        read_pdb(
-            R"(G:\Voidev\Official\Projects\C++\Cover++\cmake-build-debug-visual-studio\Debug\coverpp.pdb)");
-
+        return run_with_coverage(
+            R"(G:\Voidev\Official\Projects\C++\Cover++)",
+            R"(G:\Voidev\Official\Projects\C++\Cover++\cmake-build-debug-visual-studio\example-sut\Debug\example-sut.exe)",
+            R"(G:\Voidev\Official\Projects\C++\Cover++\cmake-build-debug-visual-studio\example-sut\Debug\example-sut.pdb)"
+        );
     } catch (const wil::ResultException& ex) {
         std::println(std::cerr, "Windows Exception: {}", ex.what());
     }
