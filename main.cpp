@@ -1,4 +1,6 @@
-#include "src/DebugEngine.hpp"
+#include "src/BreakpointDriver.hpp"
+#include "src/com_utils.hpp"
+#include "src/CoverageSink.hpp"
 
 #include <print>
 #include <iostream>
@@ -24,31 +26,6 @@ int exec(std::convertible_to<std::string_view> auto&& ... parts)
 }
 
 using DllGetClassObject_t = HRESULT(_In_ REFCLSID rclsid, _In_ REFIID riid, _Outptr_ LPVOID FAR* ppv);
-
-std::string bstr_to_utf8_string(BSTR bs)
-{
-    // See https://stackoverflow.com/questions/6284524/bstr-to-stdstring-stdwstring-and-vice-versa
-
-    const std::size_t num_wchars{SysStringLen(bs)};
-
-    // This is not an optimization, but required, since WideCharToMultiByte returns 0 to indicate an error
-    if (num_wchars == 0) {
-        return {};
-    }
-
-    //TODO check if num_wchars > max int
-    const int num_bytes{WideCharToMultiByte(
-        CP_UTF8, 0, bs, static_cast<int>(num_wchars), nullptr, 0, nullptr, nullptr
-    )};
-    THROW_LAST_ERROR_IF(num_bytes == 0);
-
-    std::string utf8(num_bytes, '\0');
-    THROW_LAST_ERROR_IF(!WideCharToMultiByte(
-        CP_UTF8, 0, bs, static_cast<int>(num_wchars), utf8.data(), num_bytes, nullptr, nullptr
-    ));
-
-    return utf8;
-}
 
 wil::unique_hmodule load_library(const std::filesystem::path& path)
 {
@@ -87,7 +64,8 @@ void iterate_enum(const wil::com_ptr<TEnum>& enum_ptr, auto&& f)
 {
     wil::com_ptr<TItem> item;
     ULONG celt;
-    while (THROW_IF_FAILED(enum_ptr->Next(1, item.put(), &celt)), celt == 1) {
+    while (THROW_IF_FAILED(enum_ptr->Next(1, item.put(), &celt)), celt == 1)
+    {
         f(item);
     }
 }
@@ -98,7 +76,7 @@ std::string get_string(const wil::com_ptr<T>& com, HRESULT (T::* f)(BSTR*))
 {
     BSTR bs;
     THROW_IF_FAILED(((*com).*f)(&bs));
-    return bstr_to_utf8_string(bs);
+    return coverpp::detail::windows::bstr_to_utf8_string(bs);
 }
 
 template<std::integral V, typename T>
@@ -122,7 +100,8 @@ struct std::formatter<IDiaEnumLineNumbers>
         bool any = false;
         wil::com_ptr<IDiaLineNumber> line_number;
         ULONG celt;
-        while (THROW_IF_FAILED(line_numbers.Next(1, line_number.put(), &celt)), celt == 1) {
+        while (THROW_IF_FAILED(line_numbers.Next(1, line_number.put(), &celt)), celt == 1)
+        {
             DWORD n;
             THROW_IF_FAILED(line_number->get_lineNumber(&n));
 
@@ -134,23 +113,12 @@ struct std::formatter<IDiaEnumLineNumbers>
             any = true;
         }
 
-        if (!any) {
+        if (!any)
+        {
             out = std::format_to(out, "(None)");
         }
 
         return out;
-    }
-};
-
-template<typename T>
-struct std::formatter<wil::com_ptr<T>>
-{
-    constexpr auto parse(std::format_parse_context& ctx)
-    { return ctx.begin(); }
-
-    auto format(const wil::com_ptr<T>& p, std::format_context& ctx) const
-    {
-        return std::format_to(ctx.out(), "{}", *p);
     }
 };
 
@@ -185,7 +153,8 @@ std::optional<std::filesystem::path> get_file_by_line_numbers(IDiaEnumLineNumber
     DWORD celt;
     wil::com_ptr<IDiaLineNumber> line_number;
     THROW_IF_FAILED(line_numbers.Next(1, line_number.put(), &celt));
-    if (celt != 1) {
+    if (celt != 1)
+    {
         return std::nullopt;
     }
 
@@ -213,7 +182,8 @@ wil::com_ptr<TItem> get_single_item(TEnum& enumeration)
 {
     LONG count;
     THROW_IF_FAILED(enumeration.get_Count(&count));
-    if (count != 1) {
+    if (count != 1)
+    {
         return {};
     }
 
@@ -247,11 +217,15 @@ int run_with_coverage(const std::filesystem::path& src_dir, const std::filesyste
         SymTagEnum::SymTagFunction, L"main", nsfCaseSensitive, dia_enum_main.put()
     ));
     auto dia_main = get_single_item<IDiaSymbol>(*dia_enum_main);
-    if (!dia_main) {
+    if (!dia_main)
+    {
         throw std::runtime_error("Could not find main function in PDB");
     }
 
     const VirtualAddress main_entry_va{get_dword(dia_main, &IDiaSymbol::get_virtualAddress)};
+
+
+    coverpp::CoverageSink sink;
 
 
     // Step #3: Run the exe in a new process with coverage tracking
@@ -269,30 +243,36 @@ int run_with_coverage(const std::filesystem::path& src_dir, const std::filesyste
     const HANDLE hProcess = pi.hProcess;
 
     // Step #4: Set breakpoint in main function
-    coverpp::DebugEngine breakpoint_driver{hProcess};
+    coverpp::BreakpointDriver breakpoint_driver{hProcess};
 
     std::unordered_map<DWORD, HANDLE> thread_handles;
 
     int exit_code = 0;
     bool first_breakpoint = true;
-    while (true) {
+    while (true)
+    {
         DEBUG_EVENT evt;
         THROW_LAST_ERROR_IF_NOT(WaitForDebugEventEx(&evt, INFINITE));
 
         bool is_exit = false;
         DWORD continue_status = DBG_CONTINUE;
-        switch (evt.dwDebugEventCode) {
-        case CREATE_PROCESS_DEBUG_EVENT: {
+        switch (evt.dwDebugEventCode)
+        {
+        case CREATE_PROCESS_DEBUG_EVENT:
+        {
             thread_handles.emplace(evt.dwThreadId, evt.u.CreateProcessInfo.hThread);
-            breakpoint_driver.set_base_address(InstructionPointer{(std::uintptr_t)evt.u.CreateProcessInfo.lpBaseOfImage});
+            breakpoint_driver.set_base_address(
+                InstructionPointer{(std::uintptr_t) evt.u.CreateProcessInfo.lpBaseOfImage});
             breakpoint_driver.set_breakpoint(breakpoint_driver.va_to_ip(main_entry_va));
             break;
         }
-        case CREATE_THREAD_DEBUG_EVENT: {
+        case CREATE_THREAD_DEBUG_EVENT:
+        {
             thread_handles.emplace(evt.dwThreadId, evt.u.CreateThread.hThread);
             break;
         }
-        case OUTPUT_DEBUG_STRING_EVENT: {
+        case OUTPUT_DEBUG_STRING_EVENT:
+        {
             //TODO unicode handling, also nDebugStringLength might be too small, so can't use that (at least not only)
             auto buf = std::make_unique<char[]>(evt.u.DebugString.nDebugStringLength);
             THROW_LAST_ERROR_IF_NOT(ReadProcessMemory(hProcess, evt.u.DebugString.lpDebugStringData, buf.get(),
@@ -303,20 +283,24 @@ int run_with_coverage(const std::filesystem::path& src_dir, const std::filesyste
             std::println("Received debug string: {}", buf.get());
             break;
         }
-        case EXIT_PROCESS_DEBUG_EVENT: {
+        case EXIT_PROCESS_DEBUG_EVENT:
+        {
             is_exit = true;
             exit_code = static_cast<int>(evt.u.ExitProcess.dwExitCode);
             std::println("Process finished with exit code {}", exit_code);
             break;
         }
-        case EXCEPTION_DEBUG_EVENT: {
+        case EXCEPTION_DEBUG_EVENT:
+        {
             const auto hThread = thread_handles.at(evt.dwThreadId);
 
             const InstructionPointer ip{(std::uintptr_t) evt.u.Exception.ExceptionRecord.ExceptionAddress};
             const auto va = breakpoint_driver.ip_to_va(ip);
 
-            if (evt.u.Exception.ExceptionRecord.ExceptionCode == STATUS_BREAKPOINT) {
-                if (first_breakpoint) {
+            if (evt.u.Exception.ExceptionRecord.ExceptionCode == STATUS_BREAKPOINT)
+            {
+                if (first_breakpoint)
+                {
                     first_breakpoint = false;
                     break;
                 }
@@ -336,19 +320,35 @@ int run_with_coverage(const std::filesystem::path& src_dir, const std::filesyste
                 breakpoint_driver.remove_breakpoint(ip);
 
                 continue_status = DBG_EXCEPTION_HANDLED;
-            } else if (evt.u.Exception.ExceptionRecord.ExceptionCode == STATUS_SINGLE_STEP) {
+            }
+            else if (evt.u.Exception.ExceptionRecord.ExceptionCode == STATUS_SINGLE_STEP)
+            {
                 wil::com_ptr<IDiaEnumLineNumbers> line_numbers;
                 THROW_IF_FAILED(dia_session->findLinesByVA(va.value, 1, line_numbers.put()));
 
                 std::println("single st {:x}", ip.value);
-                std::println("single step VA: {} @ {}", va, line_numbers);
+                std::println("single step VA: {} @ {}", va, *line_numbers);
 
                 const auto file = get_file_by_line_numbers(*line_numbers);
 
                 // Note: Gets into infinite loop in some external Windows file without this check
-                if (!file || path_is_subpath_of(*file, src_dir)) {
+                if (!file || path_is_subpath_of(*file, src_dir))
+                {
                     // FUCK YES, THIS IS WORKING!
                     // TODO: Track the source line, add to list of reached lines
+                    if (file)
+                    {
+                        auto line_number = get_single_item<IDiaLineNumber>(*line_numbers);
+                        sink.track_coverage(
+                            *file,
+                            {
+                                .lineBegin = get_dword(line_number, &IDiaLineNumber::get_lineNumber),
+                                .lineEnd = get_dword(line_number, &IDiaLineNumber::get_lineNumberEnd),
+                                .columnBegin = get_dword(line_number, &IDiaLineNumber::get_columnNumber),
+                                .columnEnd = get_dword(line_number, &IDiaLineNumber::get_columnNumberEnd),
+                            }
+                        );
+                    }
 
                     CONTEXT context{};
                     context.ContextFlags = CONTEXT_CONTROL;
@@ -359,14 +359,17 @@ int run_with_coverage(const std::filesystem::path& src_dir, const std::filesyste
 
 
                 continue_status = DBG_EXCEPTION_HANDLED;
-            } else {
+            }
+            else
+            {
                 std::println("exc");
                 continue_status = DBG_EXCEPTION_NOT_HANDLED;
             }
 
             break;
         }
-        case RIP_EVENT: {
+        case RIP_EVENT:
+        {
             std::println("RIP! {} - {}", evt.u.RipInfo.dwError, evt.u.RipInfo.dwType);
             is_exit = true;
             exit_code = 99;
@@ -376,37 +379,13 @@ int run_with_coverage(const std::filesystem::path& src_dir, const std::filesyste
 
         THROW_LAST_ERROR_IF_NOT(ContinueDebugEvent(evt.dwProcessId, evt.dwThreadId, continue_status));
 
-        if (is_exit) {
+        if (is_exit)
+        {
             break;
         }
     }
 
     return exit_code;
-}
-
-void read_pdb(const std::filesystem::path& path)
-{
-    auto dll = load_library("msdia140.dll");
-
-    auto dia_data_source = get_dia_data_source(dll);
-
-    THROW_IF_FAILED(dia_data_source->loadDataFromPdb(path.c_str()));
-
-    wil::com_ptr<IDiaSession> dia_session;
-    THROW_IF_FAILED(dia_data_source->openSession(dia_session.put()));
-
-
-    wil::com_ptr<IDiaSymbol> global_scope;
-    THROW_IF_FAILED(dia_session->get_globalScope(global_scope.put()));
-
-    wil::com_ptr<IDiaEnumSymbols> functions;
-    THROW_IF_FAILED(global_scope->findChildren(SymTagFunction, L"read_pdb", nsCaseSensitive, functions.put()));
-
-    /*
-     * VA == RVA == (&the_func - GetBaseAddress())
-     *
-     * So we can get source file + line numbers from an instruction pointer (+ process handle)
-     */
 }
 
 struct CoInitializeGuard
@@ -424,7 +403,8 @@ struct CoInitializeGuard
 
 int main()
 {
-    try {
+    try
+    {
         CoInitializeGuard guard;
 
         return run_with_coverage(
@@ -432,7 +412,8 @@ int main()
             R"(G:\Voidev\Official\Projects\C++\Cover++\cmake-build-debug-visual-studio\example-sut\Debug\example-sut.exe)",
             R"(G:\Voidev\Official\Projects\C++\Cover++\cmake-build-debug-visual-studio\example-sut\Debug\example-sut.pdb)"
         );
-    } catch (const wil::ResultException& ex) {
+    } catch (const wil::ResultException& ex)
+    {
         std::println(std::cerr, "Windows Exception: {}", ex.what());
     }
 
@@ -442,7 +423,8 @@ int main()
 
     std::filesystem::path project_dir = R"(G:\Voidev\Official\Projects\C++\Cover++\example-sut)";
 
-    if (exec(cmake, "--version") != 0) {
+    if (exec(cmake, "--version") != 0)
+    {
         std::println(std::cerr, "CMake not found");
         return 1;
     }

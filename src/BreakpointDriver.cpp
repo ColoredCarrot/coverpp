@@ -1,4 +1,4 @@
-#include "DebugEngine.hpp"
+#include "BreakpointDriver.hpp"
 
 #include <cassert>
 #include <print>
@@ -14,26 +14,26 @@
 
 namespace coverpp
 {
-DebugEngine::DebugEngine(void* process) : m_process{process}
+BreakpointDriver::BreakpointDriver(void* process) : m_process{process}
 {}
 
-void DebugEngine::set_base_address(InstructionPointer base_address)
+void BreakpointDriver::set_base_address(InstructionPointer base_address)
 {
     m_base_address = base_address;
 }
 
-VirtualAddress DebugEngine::ip_to_va(InstructionPointer ip) const
+VirtualAddress BreakpointDriver::ip_to_va(InstructionPointer ip) const
 {
     // VA = IP - base
     return VirtualAddress{ip.value - m_base_address.value};
 }
-InstructionPointer DebugEngine::va_to_ip(VirtualAddress va) const
+InstructionPointer BreakpointDriver::va_to_ip(VirtualAddress va) const
 {
     // IP = VA + base
     return InstructionPointer{va.value + m_base_address.value};
 }
 
-void DebugEngine::set_breakpoint(InstructionPointer ip)
+void BreakpointDriver::set_breakpoint(InstructionPointer ip)
 {
     std::println("set {:x} base {:x}", ip.value, m_base_address.value);
 
@@ -47,7 +47,7 @@ void DebugEngine::set_breakpoint(InstructionPointer ip)
     m_breakpoints.emplace(ip, Breakpoint{original_instruction});
 }
 
-void DebugEngine::remove_breakpoint(InstructionPointer ip)
+void BreakpointDriver::remove_breakpoint(InstructionPointer ip)
 {
     const auto it = m_breakpoints.find(ip);
     if (it == m_breakpoints.end()) {
@@ -59,7 +59,7 @@ void DebugEngine::remove_breakpoint(InstructionPointer ip)
     m_breakpoints.erase(it);
 }
 
-void DebugEngine::write_byte(InstructionPointer ip, std::byte byte)
+void BreakpointDriver::write_byte(InstructionPointer ip, std::byte byte)
 {
     THROW_LAST_ERROR_IF_NOT(WriteProcessMemory(m_process, ip.vp(), &byte, 1, nullptr));
     THROW_LAST_ERROR_IF_NOT(FlushInstructionCache(m_process, ip.vp(), 1));

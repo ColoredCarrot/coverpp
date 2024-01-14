@@ -14,8 +14,14 @@ set(CMAKE_CXX_STANDARD 23)
 
 add_executable(coverpp
     "main.cpp"
-    "src/DebugEngine.hpp"
-    "src/DebugEngine.cpp"
+    "src/BreakpointDriver.hpp"
+    "src/BreakpointDriver.cpp"
+        src/CoverageSink.cpp
+        src/CoverageSink.hpp
+        src/types.hpp
+        src/com_utils.cpp
+        src/com_utils.hpp
+        src/CoverageEngine.hpp
 )
 # TODO Once CMake 3.28 is supported:
 #[[add_executable(coverpp)
