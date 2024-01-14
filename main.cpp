@@ -98,7 +98,7 @@ std::string get_string(const wil::com_ptr<T>& com, HRESULT (T::* f)(BSTR*)) {
 }
 
 template<std::integral V, typename T>
-DWORD get_dword(const wil::com_ptr<T>& com, HRESULT (T::* f)(V*)) {
+V get_dword(const wil::com_ptr<T>& com, HRESULT (T::* f)(V*)) {
     V v;
     THROW_IF_FAILED(((*com).*f)(&v));
     return v;
@@ -195,6 +195,19 @@ bool path_is_subpath_of(const std::filesystem::path& sub_path, const std::filesy
     return r.in1 == base_path.end();
 }
 
+template<typename TItem, typename TEnum>
+wil::com_ptr<TItem> get_single_item(TEnum& enumeration) {
+    LONG count;
+    THROW_IF_FAILED(enumeration.get_Count(&count));
+    if (count != 1) {
+        return {};
+    }
+
+    wil::com_ptr<TItem> item;
+    THROW_IF_FAILED(enumeration.Item(0, item.put()));
+    return item;
+}
+
 int run_with_coverage(const std::filesystem::path& src_dir, const std::filesystem::path& exe,
                       const std::filesystem::path& pdb) {
     // Step #1: Load PDB
@@ -205,6 +218,24 @@ int run_with_coverage(const std::filesystem::path& src_dir, const std::filesyste
 
     wil::com_ptr<IDiaSession> dia_session;
     THROW_IF_FAILED(dia_data_source->openSession(dia_session.put()));
+
+
+    // Step #2: Find address of main function
+    wil::com_ptr<IDiaSymbol> dia_global_scope;
+    THROW_IF_FAILED(dia_session->get_globalScope(dia_global_scope.put()));
+
+    wil::com_ptr<IDiaEnumSymbols> dia_enum_main;
+    THROW_IF_FAILED(dia_global_scope->findChildren(
+        SymTagEnum::SymTagFunction, L"main", nsfCaseSensitive, dia_enum_main.put()
+    ));
+    auto dia_main = get_single_item<IDiaSymbol>(*dia_enum_main);
+    if (!dia_main) {
+        throw std::runtime_error("Could not find main function in PDB");
+    }
+
+    const auto main_entry_va = get_dword(dia_main, &IDiaSymbol::get_virtualAddress);
+
+    std::println("entrypoint VA: {:x}", main_entry_va);
 
 
     // Step #2: Run the exe in a new process with coverage tracking

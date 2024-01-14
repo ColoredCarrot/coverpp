@@ -16,3 +16,9 @@ int main() {
 //    OutputDebugString("Hello, world!");
     return min(1, 2);
 }
+
+namespace foo {
+    int main() {
+        return 42;
+    }
+}
