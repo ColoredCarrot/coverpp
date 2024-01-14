@@ -2,6 +2,8 @@
 #include "src/com_utils.hpp"
 #include "src/CoverageSink.hpp"
 #include "src/WindowsCoverageSession.hpp"
+#include "src/report/SourceFileReportGenerator.hpp"
+#include "src/report/CoverageProcessor.hpp"
 
 #include <print>
 #include <iostream>
@@ -265,6 +267,11 @@ int run_with_coverage(const std::filesystem::path& src_dir, const std::filesyste
     }
 
     std::println("reached: {}", sink);
+
+    coverpp::SourceFileReportGenerator report_generator{
+        R"(G:\Voidev\Official\Projects\C++\Cover++\cmake-build-debug-visual-studio\Debug\covercpp-work\report)"};
+
+    report_generator.generate_report(coverpp::process_coverage_sink(sink), coverpp::process_coverage_sink(reachable));
 
     return exit_code;
 }

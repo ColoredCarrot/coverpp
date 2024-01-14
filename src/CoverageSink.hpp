@@ -23,6 +23,8 @@ class CoverageSink
 public:
     void track_coverage(const std::filesystem::path& source_file, const Tracepoint& tracepoint);
 
+    const std::unordered_map<std::filesystem::path, std::set<Tracepoint>>& tracepoints() const;
+
 private:
     // Note: No duplicate tracepoints are recorded
     std::unordered_map<std::filesystem::path, std::set<Tracepoint>> m_tracepoints;

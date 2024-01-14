@@ -6,6 +6,10 @@ void CoverageSink::track_coverage(const std::filesystem::path& source_file, cons
 {
     m_tracepoints[source_file].emplace(tracepoint);
 }
+const std::unordered_map<std::filesystem::path, std::set<Tracepoint>>& CoverageSink::tracepoints() const
+{
+    return m_tracepoints;
+}
 }
 
 std::format_context::iterator

@@ -29,6 +29,13 @@ add_executable(coverpp
         src/DiaAccessor.hpp
         src/file_util.cpp
         src/file_util.hpp
+        src/report/SourceFileReportGenerator.cpp
+        src/report/SourceFileReportGenerator.hpp
+        src/report/ReportGenerator.hpp
+        src/report/CoverageProcessor.cpp
+        src/report/CoverageProcessor.hpp
+        src/report/Report.cpp
+        src/report/Report.hpp
 )
 # TODO Once CMake 3.28 is supported:
 #[[add_executable(coverpp)
