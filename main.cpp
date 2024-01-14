@@ -18,7 +18,8 @@ import coverpp.DebugEngine;
 
 #define THROW_LAST_ERROR_IF_NOT(x) THROW_LAST_ERROR_IF(!(x))
 
-int exec(std::convertible_to<std::string_view> auto&& ... parts) {
+int exec(std::convertible_to<std::string_view> auto&& ... parts)
+{
     std::string s;
     (s.append(parts).append(" "), ...);
     return std::system(s.c_str());
@@ -26,7 +27,8 @@ int exec(std::convertible_to<std::string_view> auto&& ... parts) {
 
 using DllGetClassObject_t = HRESULT(_In_ REFCLSID rclsid, _In_ REFIID riid, _Outptr_ LPVOID FAR* ppv);
 
-std::string bstr_to_utf8_string(BSTR bs) {
+std::string bstr_to_utf8_string(BSTR bs)
+{
     // See https://stackoverflow.com/questions/6284524/bstr-to-stdstring-stdwstring-and-vice-versa
 
     const std::size_t num_wchars{SysStringLen(bs)};
@@ -50,16 +52,19 @@ std::string bstr_to_utf8_string(BSTR bs) {
     return utf8;
 }
 
-wil::unique_hmodule load_library(const std::filesystem::path& path) {
+wil::unique_hmodule load_library(const std::filesystem::path& path)
+{
     return wil::unique_hmodule(THROW_LAST_ERROR_IF_NULL(LoadLibraryW(path.c_str())));
 }
 
-DllGetClassObject_t* get_DllGetClassObject_proc(const wil::unique_hmodule& library) {
+DllGetClassObject_t* get_DllGetClassObject_proc(const wil::unique_hmodule& library)
+{
     return reinterpret_cast<DllGetClassObject_t*>(THROW_LAST_ERROR_IF_NULL(
         GetProcAddress(library.get(), "DllGetClassObject")));
 }
 
-wil::com_ptr<IDiaDataSource> get_dia_data_source(const wil::unique_hmodule& dll) {
+wil::com_ptr<IDiaDataSource> get_dia_data_source(const wil::unique_hmodule& dll)
+{
     /*
      * High-level procedure:
      *  1. Call DllGetClassObject with IID_IClassFactory
@@ -78,13 +83,10 @@ wil::com_ptr<IDiaDataSource> get_dia_data_source(const wil::unique_hmodule& dll)
     return dia_data_source;
 }
 
-__declspec(noinline) std::intptr_t get_instruction_pointer() {
-    return reinterpret_cast<std::intptr_t>(_ReturnAddress());
-}
-
 
 template<typename TItem, typename TEnum>
-void iterate_enum(const wil::com_ptr<TEnum>& enum_ptr, auto&& f) {
+void iterate_enum(const wil::com_ptr<TEnum>& enum_ptr, auto&& f)
+{
     wil::com_ptr<TItem> item;
     ULONG celt;
     while (THROW_IF_FAILED(enum_ptr->Next(1, item.put(), &celt)), celt == 1) {
@@ -94,24 +96,29 @@ void iterate_enum(const wil::com_ptr<TEnum>& enum_ptr, auto&& f) {
 
 
 template<typename T>
-std::string get_string(const wil::com_ptr<T>& com, HRESULT (T::* f)(BSTR*)) {
+std::string get_string(const wil::com_ptr<T>& com, HRESULT (T::* f)(BSTR*))
+{
     BSTR bs;
     THROW_IF_FAILED(((*com).*f)(&bs));
     return bstr_to_utf8_string(bs);
 }
 
 template<std::integral V, typename T>
-V get_dword(const wil::com_ptr<T>& com, HRESULT (T::* f)(V*)) {
+V get_dword(const wil::com_ptr<T>& com, HRESULT (T::* f)(V*))
+{
     V v;
     THROW_IF_FAILED(((*com).*f)(&v));
     return v;
 }
 
 template<>
-struct std::formatter<IDiaEnumLineNumbers> {
-    constexpr auto parse(std::format_parse_context& ctx) { return ctx.begin(); }
+struct std::formatter<IDiaEnumLineNumbers>
+{
+    constexpr auto parse(std::format_parse_context& ctx)
+    { return ctx.begin(); }
 
-    auto format(IDiaEnumLineNumbers& line_numbers, std::format_context& ctx) const {
+    auto format(IDiaEnumLineNumbers& line_numbers, std::format_context& ctx) const
+    {
         auto out = ctx.out();
 
         bool any = false;
@@ -138,15 +145,19 @@ struct std::formatter<IDiaEnumLineNumbers> {
 };
 
 template<typename T>
-struct std::formatter<wil::com_ptr<T>> {
-    constexpr auto parse(std::format_parse_context& ctx) { return ctx.begin(); }
+struct std::formatter<wil::com_ptr<T>>
+{
+    constexpr auto parse(std::format_parse_context& ctx)
+    { return ctx.begin(); }
 
-    auto format(const wil::com_ptr<T>& p, std::format_context& ctx) const {
+    auto format(const wil::com_ptr<T>& p, std::format_context& ctx) const
+    {
         return std::format_to(ctx.out(), "{}", *p);
     }
 };
 
-std::intptr_t get_base_address(HANDLE process) {
+std::intptr_t get_base_address(HANDLE process)
+{
     assert(process);
 
     HMODULE lphModule[1024]; // Array that receives the list of module handles
@@ -168,12 +179,11 @@ std::intptr_t get_base_address(HANDLE process) {
     return (std::intptr_t) info.lpBaseOfDll;
 }
 
-std::intptr_t instruction_pointer_to_va(std::intptr_t ip, HANDLE process = GetCurrentProcess()) {
-    assert(process);
-    return ip - get_base_address(process);
-}
 
-std::optional<std::filesystem::path> get_file_by_line_numbers(IDiaEnumLineNumbers& line_numbers) {
+std::optional<std::filesystem::path> get_file_by_line_numbers(IDiaEnumLineNumbers& line_numbers)
+{
+    THROW_IF_FAILED(line_numbers.Reset());
+
     DWORD celt;
     wil::com_ptr<IDiaLineNumber> line_number;
     THROW_IF_FAILED(line_numbers.Next(1, line_number.put(), &celt));
@@ -187,19 +197,22 @@ std::optional<std::filesystem::path> get_file_by_line_numbers(IDiaEnumLineNumber
     return get_string(src_file, &IDiaSourceFile::get_fileName);
 }
 
-std::optional<std::filesystem::path> get_file_by_va(unsigned long long va, IDiaSession& dia_session) {
+std::optional<std::filesystem::path> get_file_by_va(unsigned long long va, IDiaSession& dia_session)
+{
     wil::com_ptr<IDiaEnumLineNumbers> line_numbers;
     THROW_IF_FAILED(dia_session.findLinesByVA(va, 1, line_numbers.put()));
     return get_file_by_line_numbers(*line_numbers);
 }
 
-bool path_is_subpath_of(const std::filesystem::path& sub_path, const std::filesystem::path& base_path) {
+bool path_is_subpath_of(const std::filesystem::path& sub_path, const std::filesystem::path& base_path)
+{
     const auto r = std::ranges::mismatch(base_path, sub_path);
     return r.in1 == base_path.end();
 }
 
 template<typename TItem, typename TEnum>
-wil::com_ptr<TItem> get_single_item(TEnum& enumeration) {
+wil::com_ptr<TItem> get_single_item(TEnum& enumeration)
+{
     LONG count;
     THROW_IF_FAILED(enumeration.get_Count(&count));
     if (count != 1) {
@@ -211,8 +224,12 @@ wil::com_ptr<TItem> get_single_item(TEnum& enumeration) {
     return item;
 }
 
+using coverpp::VirtualAddress;
+using coverpp::InstructionPointer;
+
 int run_with_coverage(const std::filesystem::path& src_dir, const std::filesystem::path& exe,
-                      const std::filesystem::path& pdb) {
+                      const std::filesystem::path& pdb)
+{
     // Step #1: Load PDB
     auto dia_dll = load_library("msdia140.dll");
     auto dia_data_source = get_dia_data_source(dia_dll);
@@ -236,12 +253,10 @@ int run_with_coverage(const std::filesystem::path& src_dir, const std::filesyste
         throw std::runtime_error("Could not find main function in PDB");
     }
 
-    const auto main_entry_va = get_dword(dia_main, &IDiaSymbol::get_virtualAddress);
-
-    std::println("entrypoint VA: {:x}", main_entry_va);
+    const VirtualAddress main_entry_va{get_dword(dia_main, &IDiaSymbol::get_virtualAddress)};
 
 
-    // Step #2: Run the exe in a new process with coverage tracking
+    // Step #3: Run the exe in a new process with coverage tracking
 
     // See this amazingly helpful resource: https://www.codeproject.com/Articles/43682/Writing-a-basic-Windows-debugger
 
@@ -254,6 +269,9 @@ int run_with_coverage(const std::filesystem::path& src_dir, const std::filesyste
     ));
 
     const HANDLE hProcess = pi.hProcess;
+
+    // Step #4: Set breakpoint in main function
+    coverpp::DebugEngine breakpoint_driver{hProcess};
 
     std::unordered_map<DWORD, HANDLE> thread_handles;
 
@@ -268,6 +286,8 @@ int run_with_coverage(const std::filesystem::path& src_dir, const std::filesyste
         switch (evt.dwDebugEventCode) {
         case CREATE_PROCESS_DEBUG_EVENT: {
             thread_handles.emplace(evt.dwThreadId, evt.u.CreateProcessInfo.hThread);
+            breakpoint_driver.set_base_address(InstructionPointer{(std::uintptr_t)evt.u.CreateProcessInfo.lpBaseOfImage});
+            breakpoint_driver.set_breakpoint(breakpoint_driver.va_to_ip(main_entry_va));
             break;
         }
         case CREATE_THREAD_DEBUG_EVENT: {
@@ -294,6 +314,9 @@ int run_with_coverage(const std::filesystem::path& src_dir, const std::filesyste
         case EXCEPTION_DEBUG_EVENT: {
             const auto hThread = thread_handles.at(evt.dwThreadId);
 
+            const InstructionPointer ip{(std::uintptr_t) evt.u.Exception.ExceptionRecord.ExceptionAddress};
+            const auto va = breakpoint_driver.ip_to_va(ip);
+
             if (evt.u.Exception.ExceptionRecord.ExceptionCode == STATUS_BREAKPOINT) {
                 if (first_breakpoint) {
                     first_breakpoint = false;
@@ -308,19 +331,24 @@ int run_with_coverage(const std::filesystem::path& src_dir, const std::filesyste
                 context.ContextFlags = CONTEXT_CONTROL;
                 THROW_LAST_ERROR_IF_NOT(GetThreadContext(hThread, &context));
                 context.EFlags |= (1 << 8) | (1 << 16);
+                --context.Rip; // Decrement because we get here *after* the INT3 instruction executed
 //                context.Dr6 |= 1 << 14;
                 THROW_LAST_ERROR_IF_NOT(SetThreadContext(hThread, &context));
 
+                breakpoint_driver.remove_breakpoint(ip);
+
                 continue_status = DBG_EXCEPTION_HANDLED;
             } else if (evt.u.Exception.ExceptionRecord.ExceptionCode == STATUS_SINGLE_STEP) {
-                const auto ip = (std::intptr_t) evt.u.Exception.ExceptionRecord.ExceptionAddress;
-                const auto va = instruction_pointer_to_va(ip, hProcess);
+                wil::com_ptr<IDiaEnumLineNumbers> line_numbers;
+                THROW_IF_FAILED(dia_session->findLinesByVA(va.value, 1, line_numbers.put()));
 
-                std::println("single step VA: {:x}", va);
+                std::println("single st {:x}", ip.value);
+                std::println("single step VA: {} @ {}", va, line_numbers);
 
-                const auto file = get_file_by_va(va, *dia_session);
+                const auto file = get_file_by_line_numbers(*line_numbers);
+
                 // Note: Gets into infinite loop in some external Windows file without this check
-                if (file && path_is_subpath_of(*file, src_dir)) {
+                if (!file || path_is_subpath_of(*file, src_dir)) {
                     // FUCK YES, THIS IS WORKING!
                     // TODO: Track the source line, add to list of reached lines
 
@@ -358,7 +386,8 @@ int run_with_coverage(const std::filesystem::path& src_dir, const std::filesyste
     return exit_code;
 }
 
-void read_pdb(const std::filesystem::path& path) {
+void read_pdb(const std::filesystem::path& path)
+{
     auto dll = load_library("msdia140.dll");
 
     auto dia_data_source = get_dia_data_source(dll);
@@ -382,17 +411,21 @@ void read_pdb(const std::filesystem::path& path) {
      */
 }
 
-struct CoInitializeGuard {
-    CoInitializeGuard() {
+struct CoInitializeGuard
+{
+    CoInitializeGuard()
+    {
         THROW_IF_FAILED(CoInitialize(nullptr));
     }
 
-    ~CoInitializeGuard() {
+    ~CoInitializeGuard()
+    {
         CoUninitialize();
     }
 };
 
-int main() {
+int main()
+{
     try {
         CoInitializeGuard guard;
 

@@ -1,6 +1,7 @@
 module;
 
 #include <unordered_map>
+#include <format>
 
 export module coverpp.DebugEngine;
 
@@ -8,48 +9,80 @@ export namespace coverpp
 {
 struct VirtualAddress
 {
-    std::intptr_t value;
+    std::uintptr_t value;
+};
+
+struct InstructionPointer
+{
+    std::uintptr_t value;
+
+    void* vp() const
+    { return reinterpret_cast<void*>(value); }
+
+    bool operator==(const InstructionPointer&) const = default;
 };
 }
 
 export template<>
-struct std::hash<coverpp::VirtualAddress>
+struct std::formatter<coverpp::VirtualAddress>
 {
-    std::size_t operator()(coverpp::VirtualAddress va) const
+    constexpr auto parse(std::format_parse_context& ctx)
+    { return ctx.begin(); }
+
+    auto format(coverpp::VirtualAddress va, std::format_context& ctx) const
     {
-        return std::hash<decltype(va.value)>()(va.value);
+        return std::format_to(ctx.out(), "{:x}", va.value);
     }
 };
 
-export namespace coverpp
+export template<>
+struct std::formatter<coverpp::InstructionPointer>
 {
-class DebugEngine
+    constexpr auto parse(std::format_parse_context& ctx)
+    { return ctx.begin(); }
+
+    auto format(coverpp::InstructionPointer ip, std::format_context& ctx) const
+    {
+        return std::format_to(ctx.out(), "{:x}", ip.value);
+    }
+};
+
+export template<>
+struct std::hash<coverpp::InstructionPointer>
+{
+    std::size_t operator()(coverpp::InstructionPointer ip) const
+    {
+        return std::hash<decltype(ip.value)>()(ip.value);
+    }
+};
+
+namespace coverpp
+{
+export class DebugEngine
 {
 public:
-    void set_breakpoint(VirtualAddress address);
+    explicit DebugEngine(void* process);
 
-    void remove_breakpoint(VirtualAddress address);
+    void set_base_address(InstructionPointer base_address);
+
+    VirtualAddress ip_to_va(InstructionPointer ip) const;
+    InstructionPointer va_to_ip(VirtualAddress va) const;
+
+    void set_breakpoint(InstructionPointer ip);
+
+    void remove_breakpoint(InstructionPointer ip);
 
 private:
+    void* m_process;
+    InstructionPointer m_base_address;
+
     struct Breakpoint
     {
         std::byte original_instruction;
     };
 
-    std::unordered_map<VirtualAddress, Breakpoint> m_breakpoints;
+    std::unordered_map<InstructionPointer, Breakpoint> m_breakpoints;
+
+    void write_byte(InstructionPointer ip, std::byte byte);
 };
-
-
-void DebugEngine::set_breakpoint(VirtualAddress address)
-{
-    remove_breakpoint(address);
-
-
-
-//    m_breakpoints.emplace(address, Breakpoint{.original_instruction = });
-}
-void DebugEngine::remove_breakpoint(VirtualAddress address)
-{
-
-}
 }

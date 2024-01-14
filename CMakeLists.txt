@@ -23,6 +23,7 @@ target_sources(coverpp
 target_sources(coverpp
     PRIVATE
         "main.cpp"
+        "src/DebugEngine.cpp"
 )
 
 # TODO copy clang_rt.asan_dynamic-x86_64.dll just like the other dll

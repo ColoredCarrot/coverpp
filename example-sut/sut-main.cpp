@@ -3,7 +3,7 @@
 
 int min(int a, int b) {
     if (a <= b) {
-        __debugbreak();
+//        __debugbreak();
         if (a == b) {
             return 99;
         }
