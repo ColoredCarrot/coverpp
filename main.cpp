@@ -1,4 +1,4 @@
-//#import "D:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\DIA SDK\bin\amd64\msdia140.dll"
+#include "src/DebugEngine.hpp"
 
 #include <print>
 #include <iostream>
@@ -12,8 +12,6 @@
 #include <dia2.h>
 #include <psapi.h>
 #include <intrin.h>
-
-import coverpp.DebugEngine;
 
 
 #define THROW_LAST_ERROR_IF_NOT(x) THROW_LAST_ERROR_IF(!(x))

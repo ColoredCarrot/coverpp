@@ -1,4 +1,4 @@
-module;
+#include "DebugEngine.hpp"
 
 #include <cassert>
 #include <print>
@@ -9,8 +9,6 @@ module;
 #include <dia2.h>
 #include <psapi.h>
 #include <intrin.h>
-
-module coverpp.DebugEngine;
 
 #define THROW_LAST_ERROR_IF_NOT(x) THROW_LAST_ERROR_IF(!(x))
 

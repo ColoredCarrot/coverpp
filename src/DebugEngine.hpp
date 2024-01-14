@@ -1,11 +1,7 @@
-module;
-
 #include <unordered_map>
 #include <format>
 
-export module coverpp.DebugEngine;
-
-export namespace coverpp
+namespace coverpp
 {
 struct VirtualAddress
 {
@@ -23,7 +19,7 @@ struct InstructionPointer
 };
 }
 
-export template<>
+template<>
 struct std::formatter<coverpp::VirtualAddress>
 {
     constexpr auto parse(std::format_parse_context& ctx)
@@ -35,7 +31,7 @@ struct std::formatter<coverpp::VirtualAddress>
     }
 };
 
-export template<>
+template<>
 struct std::formatter<coverpp::InstructionPointer>
 {
     constexpr auto parse(std::format_parse_context& ctx)
@@ -47,7 +43,7 @@ struct std::formatter<coverpp::InstructionPointer>
     }
 };
 
-export template<>
+template<>
 struct std::hash<coverpp::InstructionPointer>
 {
     std::size_t operator()(coverpp::InstructionPointer ip) const
@@ -58,7 +54,7 @@ struct std::hash<coverpp::InstructionPointer>
 
 namespace coverpp
 {
-export class DebugEngine
+class DebugEngine
 {
 public:
     explicit DebugEngine(void* process);

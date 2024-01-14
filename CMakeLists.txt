@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.28)
+cmake_minimum_required(VERSION 3.27)
 project(coverpp)
 
 cmake_policy(SET CMP0091 NEW)
@@ -12,7 +12,13 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")
 
 set(CMAKE_CXX_STANDARD 23)
 
-add_executable(coverpp)
+add_executable(coverpp
+    "main.cpp"
+    "src/DebugEngine.hpp"
+    "src/DebugEngine.cpp"
+)
+# TODO Once CMake 3.28 is supported:
+#[[add_executable(coverpp)
 
 target_sources(coverpp
     PUBLIC
@@ -24,7 +30,7 @@ target_sources(coverpp
     PRIVATE
         "main.cpp"
         "src/DebugEngine.cpp"
-)
+)]]
 
 # TODO copy clang_rt.asan_dynamic-x86_64.dll just like the other dll
 # D:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.38.33130\bin\Hostx86\x64
