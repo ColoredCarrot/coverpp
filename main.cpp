@@ -212,7 +212,12 @@ int run_with_coverage(const coverpp::CoverageParams& params)
             thread_handles.emplace(evt.dwThreadId, evt.u.CreateProcessInfo.hThread);
             breakpoint_driver.set_base_address(
                 InstructionPointer{(std::uintptr_t) evt.u.CreateProcessInfo.lpBaseOfImage});
-            breakpoint_driver.set_breakpoint(breakpoint_driver.va_to_ip(main_entry_va));
+            const auto main_entry_ip = breakpoint_driver.va_to_ip(main_entry_va);
+            breakpoint_driver.set_breakpoint(main_entry_ip);
+            if (params.verbosity >= 2)
+            {
+                std::println("Set breakpoint for main() at {}", main_entry_ip);
+            }
             break;
         }
         case CREATE_THREAD_DEBUG_EVENT:
@@ -245,6 +250,8 @@ int run_with_coverage(const coverpp::CoverageParams& params)
             const InstructionPointer ip{(std::uintptr_t) evt.u.Exception.ExceptionRecord.ExceptionAddress};
             const auto va = breakpoint_driver.ip_to_va(ip);
 
+            const auto tracepoint = coverage_session.resolve_tracepoint(va);
+
             continue_status = DBG_EXCEPTION_NOT_HANDLED;
 
             if (evt.u.Exception.ExceptionRecord.ExceptionCode == STATUS_BREAKPOINT)
@@ -256,7 +263,15 @@ int run_with_coverage(const coverpp::CoverageParams& params)
                     break;
                 }
 
-                std::println("breakpoint hit");
+                if (params.verbosity >= 1)
+                {
+                    std::println(
+                        "Breakpoint hit at {}",
+                        tracepoint
+                        ? std::format("{}:{} (address {})", tracepoint->first.u8string(), tracepoint->second.lineBegin, ip)
+                        : std::format("address {}", ip)
+                    );
+                }
 
                 // Set the TF (Trap Flag, bit 8) in the EFLAGS register.
                 // When this flag is set, the processor traps after every instruction with STATUS_SINGLE_STEP.
@@ -291,14 +306,16 @@ int run_with_coverage(const coverpp::CoverageParams& params)
             {
                 const bool first_chance = evt.u.Exception.dwFirstChance;
                 const auto& record = evt.u.Exception.ExceptionRecord;
-                const auto tracepoint = coverage_session.resolve_tracepoint(va);
-                std::println(
-                    "{} {} encountered at {}",
-                    first_chance ? "First-chance" : "Unhandled",
-                    coverpp::describe_seh_exception(record.ExceptionCode, record.ExceptionInformation),
-                    tracepoint ? std::format("{}:{}", tracepoint->first.u8string(), tracepoint->second.lineBegin)
-                               : std::format("{}", record.ExceptionAddress)
-                );
+                if (!first_chance || params.print_first_chance_seh_exceptions)
+                {
+                    std::println(
+                        "{} {} encountered at {}",
+                        first_chance ? "First-chance" : "Unhandled",
+                        coverpp::describe_seh_exception(record.ExceptionCode, record.ExceptionInformation),
+                        tracepoint ? std::format("{}:{}", tracepoint->first.u8string(), tracepoint->second.lineBegin)
+                                   : std::format("{}", record.ExceptionAddress)
+                    );
+                }
                 continue_status = DBG_EXCEPTION_NOT_HANDLED;
             }
 
@@ -314,7 +331,10 @@ int run_with_coverage(const coverpp::CoverageParams& params)
         {
             // We need to manually release the DLL handle once we're done with it
             wil::unique_handle dll{evt.u.LoadDll.hFile};
-            std::println("Loaded DLL: {}", get_loaded_dll_name(hProcess, evt.u.LoadDll));
+            if (params.verbosity >= 2)
+            {
+                std::println("Loaded DLL: {}", get_loaded_dll_name(hProcess, evt.u.LoadDll));
+            }
             break;
         }
         case UNLOAD_DLL_DEBUG_EVENT:
@@ -378,6 +398,8 @@ int main(int argc, char** argv)
     app.add_option("-d,--debug-info", params.debug_info, "PDB file")->check(CLI::ExistingFile)->required();
     app.add_option("-o,--out-dir", params.out_dir, "Output directory")->default_val("./coverpp-report");
     app.add_flag("-v,--verbose", params.verbosity, "Print more messages to the console");
+    app.add_flag("--print-first-chance-seh", params.print_first_chance_seh_exceptions,
+                 "Print first-chance SEH exceptions to the console");
 
     CLI11_PARSE(app, argc, argv);
 

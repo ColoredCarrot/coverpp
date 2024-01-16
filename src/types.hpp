@@ -29,7 +29,7 @@ struct std::formatter<coverpp::VirtualAddress>
 
     auto format(coverpp::VirtualAddress va, std::format_context& ctx) const
     {
-        return std::format_to(ctx.out(), "{:x}", va.value);
+        return std::format_to(ctx.out(), "0x{:X}", va.value);
     }
 };
 
@@ -41,7 +41,7 @@ struct std::formatter<coverpp::InstructionPointer>
 
     auto format(coverpp::InstructionPointer ip, std::format_context& ctx) const
     {
-        return std::format_to(ctx.out(), "{:x}", ip.value);
+        return std::format_to(ctx.out(), "0x{:X}", ip.value);
     }
 };
 

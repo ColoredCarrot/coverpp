@@ -35,8 +35,6 @@ InstructionPointer BreakpointDriver::va_to_ip(VirtualAddress va) const
 
 void BreakpointDriver::set_breakpoint(InstructionPointer ip)
 {
-    std::println("set {:x} base {:x}", ip.value, m_base_address.value);
-
     remove_breakpoint(ip);
 
     std::byte original_instruction;
@@ -50,7 +48,8 @@ void BreakpointDriver::set_breakpoint(InstructionPointer ip)
 void BreakpointDriver::remove_breakpoint(InstructionPointer ip)
 {
     const auto it = m_breakpoints.find(ip);
-    if (it == m_breakpoints.end()) {
+    if (it == m_breakpoints.end())
+    {
         return;
     }
 

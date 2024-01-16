@@ -13,5 +13,6 @@ struct CoverageParams
     std::filesystem::path out_dir;
 
     int verbosity;
+    bool print_first_chance_seh_exceptions;
 };
 }
