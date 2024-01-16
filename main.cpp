@@ -7,6 +7,7 @@
 #include "src/exporter/html/HtmlExporter.hpp"
 #include "src/seh_descriptions.hpp"
 #include "src/util/encodings_util.hpp"
+#include "src/exporter/raw/RawExporter.hpp"
 
 #include <CLI11.hpp>
 #include <print>
@@ -361,8 +362,10 @@ int run_with_coverage(const coverpp::CoverageParams& params)
     report_generator.run(report, reachable_report);
 
     coverpp::HtmlExporter exporter{params.out_dir};
-
     exporter.run(report, reachable_report);
+
+    coverpp::RawExporter raw_exporter{params.out_dir};
+    raw_exporter.run(report, reachable_report);
 
     return *exit_code;
 }

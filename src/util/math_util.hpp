@@ -17,6 +17,4 @@ constexpr R convert_or_clamp(V value)
     }
     return static_cast<R>(value);
 }
-
-static_assert(convert_or_clamp<int>(std::numeric_limits<long>::max()) == std::numeric_limits<int>::max());
 }

@@ -54,6 +54,10 @@ add_executable(coverpp
         src/util/encodings_util.cpp
         src/util/encodings_util.hpp
         src/util/math_util.hpp
+        src/exporter/raw/RawExporter.cpp
+        src/exporter/raw/RawExporter.hpp
+        src/exporter/AbstractFileExporter.cpp
+        src/exporter/AbstractFileExporter.hpp
 )
 # TODO Once CMake 3.28 is supported:
 #[[add_executable(coverpp)
