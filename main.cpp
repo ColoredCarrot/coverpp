@@ -8,6 +8,8 @@
 #include "src/seh_descriptions.hpp"
 #include "src/util/encodings_util.hpp"
 #include "src/exporter/raw/RawExporter.hpp"
+#include "src/serve/ServeOptions.hpp"
+#include "src/serve/serve.hpp"
 
 #include <CLI11.hpp>
 #include <print>
@@ -269,7 +271,8 @@ int run_with_coverage(const coverpp::CoverageParams& params)
                     std::println(
                         "Breakpoint hit at {}",
                         tracepoint
-                        ? std::format("{}:{} (address {})", tracepoint->first.u8string(), tracepoint->second.lineBegin, ip)
+                        ? std::format("{}:{} (address {})", tracepoint->first.u8string(), tracepoint->second.lineBegin,
+                                      ip)
                         : std::format("address {}", ip)
                     );
                 }
@@ -394,17 +397,32 @@ int main(int argc, char** argv)
 #endif
 
     CLI::App app{"Cover++"};
+    app.failure_message(CLI::FailureMessage::help);
+
+    const auto run_app = app.add_subcommand("run");
 
     coverpp::CoverageParams params;
-    app.add_option("-s,--source", params.source_dir, "Source directory")->check(CLI::ExistingDirectory)->required();
-    app.add_option("-p,--program", params.program, "Executable")->check(CLI::ExistingFile)->required();
-    app.add_option("-d,--debug-info", params.debug_info, "PDB file")->check(CLI::ExistingFile)->required();
-    app.add_option("-o,--out-dir", params.out_dir, "Output directory")->default_val("./coverpp-report");
-    app.add_flag("-v,--verbose", params.verbosity, "Print more messages to the console");
-    app.add_flag("--print-first-chance-seh", params.print_first_chance_seh_exceptions,
-                 "Print first-chance SEH exceptions to the console");
+    run_app->add_option("-s,--source", params.source_dir, "Source directory")->check(
+        CLI::ExistingDirectory)->required();
+    run_app->add_option("-p,--program", params.program, "Executable")->check(CLI::ExistingFile)->required();
+    run_app->add_option("-d,--debug-info", params.debug_info, "PDB file")->check(CLI::ExistingFile)->required();
+    run_app->add_option("-o,--out-dir", params.out_dir, "Output directory")->default_val("./coverpp-report");
+    run_app->add_flag("-v,--verbose", params.verbosity, "Print more messages to the console");
+    run_app->add_flag("--print-first-chance-seh", params.print_first_chance_seh_exceptions,
+                      "Print first-chance SEH exceptions to the console");
+
+    coverpp::ServeOptions serve_options;
+    const auto serve_app = app.add_subcommand("view", "View coverage results in your browser");
+    serve_app->alias("serve");
+    serve_app->add_option("-p,--port", serve_options.port)->default_val(8080)->check(CLI::NonNegativeNumber);
+    serve_app->add_option("-d,--data")->check(CLI::ExistingFile)->default_val("./coverpp-report/report.coverpp");
 
     CLI11_PARSE(app, argc, argv);
+
+    if (*serve_app)
+    {
+        return coverpp::serve(serve_options);
+    }
 
     if (params.verbosity > 0)
     {

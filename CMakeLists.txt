@@ -60,6 +60,9 @@ add_executable(coverpp
         src/exporter/AbstractFileExporter.hpp
         src/exporter/teamcity/TeamCityStatisticsExporter.cpp
         src/exporter/teamcity/TeamCityStatisticsExporter.hpp
+        src/serve/ServeOptions.hpp
+        src/serve/serve.cpp
+        src/serve/serve.hpp
 )
 # TODO Once CMake 3.28 is supported:
 #[[add_executable(coverpp)
