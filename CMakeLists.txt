@@ -72,9 +72,11 @@ add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>" "$<$<CXX_COMPILER_ID:MSV
 set_property(TARGET coverpp PROPERTY
         MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
+target_compile_options(coverpp PUBLIC "$<$<C_COMPILER_ID:MSVC>:/Zc:char8_t->")
+
 # DIA SDK
 find_package(DiaSDK REQUIRED)
-target_include_directories(coverpp PUBLIC ${DIASDK_INCLUDE_DIRS})
+target_include_directories(coverpp PUBLIC ${DIASDK_INCLUDE_DIRS} "${CMAKE_SOURCE_DIR}/third_party/CLI11/include")
 target_link_libraries(coverpp ${DIASDK_LIBRARIES} coverpp::rc)
 
 # WIL

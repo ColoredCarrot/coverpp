@@ -6,6 +6,7 @@
 #include "src/report/CoverageProcessor.hpp"
 #include "src/exporter/html/HtmlExporter.hpp"
 
+#include <CLI11.hpp>
 #include <print>
 #include <iostream>
 #include <filesystem>
@@ -130,10 +131,9 @@ static bool is_exit_path(const std::filesystem::path& file)
     return it != file.end() && *it == "minkernel";
 }
 
-int run_with_coverage(const std::filesystem::path& src_dir, const std::filesystem::path& exe,
-                      const std::filesystem::path& pdb)
+int run_with_coverage(const coverpp::CoverageParams& params)
 {
-    coverpp::windows::WindowsCoverageSession coverage_session{{src_dir, exe, pdb}};
+    coverpp::windows::WindowsCoverageSession coverage_session{params};
 
     auto reachable = coverage_session.collect_source_lines();
     std::println("reachable: {}", reachable);
@@ -155,7 +155,7 @@ int run_with_coverage(const std::filesystem::path& src_dir, const std::filesyste
     PROCESS_INFORMATION pi{};
     // Inherit env and workdir from the coverage process
     THROW_LAST_ERROR_IF(!CreateProcessW(
-        exe.c_str(), nullptr, nullptr, nullptr, false, DEBUG_ONLY_THIS_PROCESS, nullptr, nullptr, &si, &pi
+        params.program.c_str(), nullptr, nullptr, nullptr, false, DEBUG_ONLY_THIS_PROCESS, nullptr, nullptr, &si, &pi
     ));
 
     const HANDLE hProcess = pi.hProcess;
@@ -281,15 +281,12 @@ int run_with_coverage(const std::filesystem::path& src_dir, const std::filesyste
 
     std::println("reached: {}", sink);
 
-    coverpp::SourceFileReportGenerator report_generator{
-        R"(G:\Voidev\Official\Projects\C++\Cover++\cmake-build-debug-visual-studio\Debug\covercpp-work\report)"};
-
+    coverpp::SourceFileReportGenerator report_generator{R"(covercpp-report)"};
     coverpp::BasicReport report = coverpp::process_coverage_sink(sink);
     coverpp::BasicReport reachable_report = coverpp::process_coverage_sink(reachable);
     report_generator.generate_report(report, reachable_report);
 
-    coverpp::HtmlExporter exporter{
-        R"(G:\Voidev\Official\Projects\C++\Cover++\cmake-build-debug-visual-studio\Debug\covercpp-work\report)"};
+    coverpp::HtmlExporter exporter{R"(covercpp-report)"};
 
     exporter.export_report(report, reachable_report);
 
@@ -309,17 +306,39 @@ struct CoInitializeGuard
     }
 };
 
-int main()
+int main(int argc, char** argv)
 {
+#ifdef _WIN32
+    // Tell the console to interpret outputted bytes as UTF-8
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
+    // Enable buffering to prevent VS from chopping up UTF-8 byte sequences
+    setvbuf(stdout, nullptr, _IOFBF, 1000);
+#endif
+
+    CLI::App app{"Cover++"};
+
+    coverpp::CoverageParams params;
+    app.add_option("-s,--source", params.source_dir, "Source directory")->check(CLI::ExistingDirectory)->required();
+    app.add_option("-p,--program", params.program, "Executable")->check(CLI::ExistingFile)->required();
+    app.add_option("-d,--debug-info", params.debug_info, "PDB file")->check(CLI::ExistingFile)->required();
+    app.add_flag("-v,--verbose", params.verbosity, "Print more messages to the console");
+
+    CLI11_PARSE(app, argc, argv);
+
+    if (params.verbosity > 0)
+    {
+        std::println("Cover++");
+        std::println("==========================");
+        std::println("Source directory: {}\nExecutable:       {}\nDebug info:       {}",
+                     params.source_dir.u8string(), params.program.u8string(), params.debug_info.u8string());
+    }
+
     try
     {
         CoInitializeGuard guard;
 
-        return run_with_coverage(
-            R"(G:\Voidev\Official\Projects\C++\Cover++)",
-            R"(G:\Voidev\Official\Projects\C++\Cover++\cmake-build-debug-visual-studio\example-sut\Debug\example-sut.exe)",
-            R"(G:\Voidev\Official\Projects\C++\Cover++\cmake-build-debug-visual-studio\example-sut\Debug\example-sut.pdb)"
-        );
+        return run_with_coverage(params);
     } catch (const wil::ResultException& ex)
     {
         std::println(std::cerr, "Windows Exception: {}", ex.what());
@@ -327,20 +346,16 @@ int main()
 
     return 0;
 
-    std::string cmake = "cmake";
-
-    std::filesystem::path project_dir = R"(G:\Voidev\Official\Projects\C++\Cover++\example-sut)";
-
-    if (exec(cmake, "--version") != 0)
-    {
-        std::println(std::cerr, "CMake not found");
-        return 1;
-    }
-
-    exec(cmake, "-S", project_dir.string(), "-B", "covercpp-work", "-G \"Visual Studio 17 2022\"");
-    exec(cmake, "--build", "covercpp-work");
-
-    // before and after every jump (conditional or not), insert a breakpoint instruction
-
-    return 0;
+//    std::string cmake = "cmake";
+//
+//    if (exec(cmake, "--version") != 0)
+//    {
+//        std::println(std::cerr, "CMake not found");
+//        return 1;
+//    }
+//
+//    exec(cmake, "-S", project_dir.u8string(), "-B", "covercpp-work", "-G \"Visual Studio 17 2022\"");
+//    exec(cmake, "--build", "covercpp-work");
+//
+//    return 0;
 }

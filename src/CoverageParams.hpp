@@ -9,5 +9,7 @@ struct CoverageParams
     std::filesystem::path source_dir;
     std::filesystem::path program;
     std::filesystem::path debug_info;
+
+    int verbosity;
 };
 }

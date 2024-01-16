@@ -21,7 +21,7 @@ std::formatter<coverpp::CoverageSink>::format(const coverpp::CoverageSink& sink,
         out = std::format_to(
             out,
             "{} @ {}\n",
-            source_file.string(),
+            source_file.u8string(),
             tracepoints
             | std::views::transform([](const auto& tp) { return std::format("{}", tp); })
             | std::views::join_with(std::string_view(", "))

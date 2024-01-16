@@ -71,8 +71,8 @@ CoverageSink WindowsCoverageSession::collect_source_lines()
                     file,
                     {
                         .lineBegin = get_dword(dia_line_number, &IDiaLineNumber::get_lineNumber),
-                        .lineEnd = get_dword(dia_line_number, &IDiaLineNumber::get_lineNumberEnd),
                         .columnBegin = get_dword(dia_line_number, &IDiaLineNumber::get_columnNumber),
+                        .lineEnd = get_dword(dia_line_number, &IDiaLineNumber::get_lineNumberEnd),
                         .columnEnd = get_dword(dia_line_number, &IDiaLineNumber::get_columnNumberEnd),
                     }
                 );
@@ -133,8 +133,8 @@ std::optional<std::filesystem::path> WindowsCoverageSession::trace(CoverageSink&
             *file,
             {
                 .lineBegin = get_dword(line_number, &IDiaLineNumber::get_lineNumber),
-                .lineEnd = get_dword(line_number, &IDiaLineNumber::get_lineNumberEnd),
                 .columnBegin = get_dword(line_number, &IDiaLineNumber::get_columnNumber),
+                .lineEnd = get_dword(line_number, &IDiaLineNumber::get_lineNumberEnd),
                 .columnEnd = get_dword(line_number, &IDiaLineNumber::get_columnNumberEnd),
             }
         );
