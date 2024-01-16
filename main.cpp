@@ -281,12 +281,12 @@ int run_with_coverage(const coverpp::CoverageParams& params)
 
     std::println("reached: {}", sink);
 
-    coverpp::SourceFileReportGenerator report_generator{R"(covercpp-report)"};
+    coverpp::SourceFileReportGenerator report_generator{params.out_dir};
     coverpp::BasicReport report = coverpp::process_coverage_sink(sink);
     coverpp::BasicReport reachable_report = coverpp::process_coverage_sink(reachable);
     report_generator.generate_report(report, reachable_report);
 
-    coverpp::HtmlExporter exporter{R"(covercpp-report)"};
+    coverpp::HtmlExporter exporter{params.out_dir};
 
     exporter.export_report(report, reachable_report);
 
@@ -322,6 +322,7 @@ int main(int argc, char** argv)
     app.add_option("-s,--source", params.source_dir, "Source directory")->check(CLI::ExistingDirectory)->required();
     app.add_option("-p,--program", params.program, "Executable")->check(CLI::ExistingFile)->required();
     app.add_option("-d,--debug-info", params.debug_info, "PDB file")->check(CLI::ExistingFile)->required();
+    app.add_option("-o,--out-dir", params.out_dir, "Output directory")->default_val("./coverpp-report");
     app.add_flag("-v,--verbose", params.verbosity, "Print more messages to the console");
 
     CLI11_PARSE(app, argc, argv);
@@ -330,8 +331,11 @@ int main(int argc, char** argv)
     {
         std::println("Cover++");
         std::println("==========================");
-        std::println("Source directory: {}\nExecutable:       {}\nDebug info:       {}",
-                     params.source_dir.u8string(), params.program.u8string(), params.debug_info.u8string());
+        std::println("Source directory: {}\nExecutable:       {}\nDebug info:       {}\nOutput directory: {}",
+                     params.source_dir.u8string(),
+                     params.program.u8string(),
+                     params.debug_info.u8string(),
+                     absolute(params.out_dir).u8string());
     }
 
     try
