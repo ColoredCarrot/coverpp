@@ -1,12 +1,15 @@
-import {NotFoundRoute, Router, RouterProvider} from "@tanstack/react-router";
+import {
+    createHashHistory,
+    NotFoundRoute,
+    Router,
+    RouterProvider,
+} from "@tanstack/react-router";
 import React from "react";
-import {createRoot as createReactRoot} from "react-dom/client";
-import {routes} from "#/routes";
+import { createRoot as createReactRoot } from "react-dom/client";
+import { routes } from "#/routes";
 import NotFoundPage from "#/pages/NotFoundPage";
 
-const routeTree = routes.root.addChildren([
-    routes.index,
-]);
+const routeTree = routes.root.addChildren([routes.index]);
 
 const notFoundRoute = new NotFoundRoute({
     getParentRoute: () => routes.root,
@@ -17,6 +20,7 @@ const router = new Router({
     routeTree,
     defaultPreload: "intent",
     notFoundRoute,
+    history: createHashHistory(),
 });
 
 declare module "@tanstack/react-router" {
@@ -28,6 +32,6 @@ declare module "@tanstack/react-router" {
 
 createReactRoot(document.getElementById("root")!).render(
     <React.StrictMode>
-        <RouterProvider router={router}/>
+        <RouterProvider router={router} />
     </React.StrictMode>,
 );
