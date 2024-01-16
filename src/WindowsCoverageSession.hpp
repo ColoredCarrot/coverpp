@@ -17,6 +17,10 @@ public:
 
     std::optional<std::filesystem::path> trace(CoverageSink& sink, VirtualAddress va);
 
+    std::optional<std::pair<std::filesystem::path, Tracepoint>> resolve_tracepoint(VirtualAddress va);
+
+    DiaAccessor& dia();
+
 private:
     CoverageParams m_params;
 

@@ -60,20 +60,14 @@ namespace coverpp
 HtmlExporter::HtmlExporter(std::filesystem::path output_directory) : m_dir{std::move(output_directory)}
 {}
 
-void HtmlExporter::export_report(const BasicReport& covered, const BasicReport& reachable)
+void HtmlExporter::run(const BasicReport& covered, const BasicReport& reachable)
 {
     std::filesystem::create_directories(m_dir);
 
     for (const auto& [source_file_path, reachable_tracepoints] : reachable.file_reports())
     {
         const auto it = covered.file_reports().find(source_file_path);
-        if (it == covered.file_reports().end())
-        {
-            // No coverage in entire file
-            continue;
-        }
-
-        const auto& covered_lines = it->second.covered_lines();
+        const auto& covered_lines = it != covered.file_reports().end() ? it->second.covered_lines() : std::set<unsigned>{};
 
         //TODO relativize source_file against project dir -> include remaining dir path
         const std::filesystem::path output_file_path = m_dir / (source_file_path.filename().concat(".html"));

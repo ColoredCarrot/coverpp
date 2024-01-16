@@ -1,4 +1,4 @@
-#include "SourceFileReportGenerator.hpp"
+#include "SourceFileExporter.hpp"
 
 #include <cstdio>
 #include <print>
@@ -7,7 +7,7 @@
 
 namespace coverpp
 {
-SourceFileReportGenerator::SourceFileReportGenerator(std::filesystem::path output_directory)
+SourceFileExporter::SourceFileExporter(std::filesystem::path output_directory)
     : m_dir{std::move(output_directory)}
 {}
 
@@ -37,7 +37,7 @@ std::istream& operator>>(std::istream& is, Line& line)
 }
 }
 
-void SourceFileReportGenerator::generate_report(const BasicReport& report, const BasicReport& reachability_report)
+void SourceFileExporter::run(const BasicReport& report, const BasicReport& reachability_report)
 {
     std::filesystem::create_directories(m_dir);
 

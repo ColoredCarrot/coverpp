@@ -5,11 +5,12 @@ cmake_policy(SET CMP0091 NEW)
 
 add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/MP>")
 
-set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+#set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 include(FetchContent)
 include(InstallRequiredSystemLibraries)
 include(cmake/CMakeRC.cmake)
+include(cmake/CopyAsanDLLs.cmake)
 
 cmrc_add_resource_library(coverpp-resources ALIAS coverpp::rc NAMESPACE coverpp_rc
     "src/resources/html-exporter/index.html"
@@ -39,15 +40,20 @@ add_executable(coverpp
         src/DiaAccessor.hpp
         src/file_util.cpp
         src/file_util.hpp
-        src/report/SourceFileReportGenerator.cpp
-        src/report/SourceFileReportGenerator.hpp
-        src/report/ReportGenerator.hpp
+        src/exporter/SourceFileExporter.cpp
+        src/exporter/SourceFileExporter.hpp
+        src/exporter/Exporter.hpp
         src/report/CoverageProcessor.cpp
         src/report/CoverageProcessor.hpp
         src/report/BasicReport.cpp
         src/report/BasicReport.hpp
         src/exporter/html/HtmlExporter.cpp
         src/exporter/html/HtmlExporter.hpp
+        src/seh_descriptions.hpp
+        src/seh_descriptions.cpp
+        src/util/encodings_util.cpp
+        src/util/encodings_util.hpp
+        src/util/math_util.hpp
 )
 # TODO Once CMake 3.28 is supported:
 #[[add_executable(coverpp)
@@ -64,13 +70,11 @@ target_sources(coverpp
         "src/DebugEngine.cpp"
 )]]
 
-# TODO copy clang_rt.asan_dynamic-x86_64.dll just like the other dll
-# D:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.38.33130\bin\Hostx86\x64
-# D:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.38.33130\bin\Hostx64\x64
-add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>" "$<$<C_COMPILER_ID:MSVC>:/fsanitize=address>")
-add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>" "$<$<CXX_COMPILER_ID:MSVC>:/fsanitize=address>")
-set_property(TARGET coverpp PROPERTY
-        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+#add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>" "$<$<C_COMPILER_ID:MSVC>:/fsanitize=address>")
+#add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>" "$<$<CXX_COMPILER_ID:MSVC>:/fsanitize=address>")
+
+#set_property(TARGET coverpp PROPERTY
+#        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 target_compile_options(coverpp PUBLIC "$<$<C_COMPILER_ID:MSVC>:/Zc:char8_t->")
 
@@ -99,15 +103,6 @@ add_custom_command(TARGET coverpp POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${DIASDK_DLL}" $<TARGET_FILE_DIR:coverpp>
 )
 
-set(MSVC_DLL_DIR [=[D:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.38.33130\bin\Hostx64\x64\]=])
-set(MSVC_DLL_LIST
-    "${MSVC_DLL_DIR}clang_rt.asan_dynamic-x86_64.dll"
-    "${MSVC_DLL_DIR}clang_rt.asan_dbg_dynamic-x86_64.dll"
-)
-foreach (dll ${MSVC_DLL_LIST})
-    add_custom_command(TARGET coverpp POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${dll}" $<TARGET_FILE_DIR:coverpp>
-    )
-endforeach ()
+copy_asan_dlls(coverpp)
 
 add_subdirectory(example-sut)

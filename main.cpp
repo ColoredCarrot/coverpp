@@ -2,9 +2,11 @@
 #include "src/com_utils.hpp"
 #include "src/CoverageSink.hpp"
 #include "src/WindowsCoverageSession.hpp"
-#include "src/report/SourceFileReportGenerator.hpp"
+#include "src/exporter/SourceFileExporter.hpp"
 #include "src/report/CoverageProcessor.hpp"
 #include "src/exporter/html/HtmlExporter.hpp"
+#include "src/seh_descriptions.hpp"
+#include "src/util/encodings_util.hpp"
 
 #include <CLI11.hpp>
 #include <print>
@@ -22,13 +24,6 @@
 
 
 #define THROW_LAST_ERROR_IF_NOT(x) THROW_LAST_ERROR_IF(!(x))
-
-int exec(std::convertible_to<std::string_view> auto&& ... parts)
-{
-    std::string s;
-    (s.append(parts).append(" "), ...);
-    return std::system(s.c_str());
-}
 
 
 template<typename T>
@@ -85,11 +80,17 @@ std::intptr_t get_base_address(HANDLE process)
         NULL); // Output of EnumProcessModules, giving the number of bytes requires to store all modules handles in the lphModule array
 
     if (!EnumProcessModules(process, lphModule, sizeof(lphModule), &lpcbNeeded))
-        return NULL; // Impossible to read modules
+    {
+        // Impossible to read modules
+        return NULL;
+    }
 
     TCHAR szModName[MAX_PATH];
     if (!GetModuleFileNameEx(process, lphModule[0], szModName, sizeof(szModName) / sizeof(TCHAR)))
-        return NULL; // Impossible to get module info
+    {
+        // Impossible to get module info
+        return NULL;
+    }
 
     const auto hmodule = lphModule[0]; // Module 0 is apparently always the EXE itself, returning its address
 
@@ -122,6 +123,14 @@ static bool is_exit_path(const std::filesystem::path& file)
 {
     // Tests for paths like minkernel\crts\ucrt\src\appcrt\startup\exit.cpp
 
+    if (std::ranges::contains_subrange(
+        file | std::ranges::to<std::vector>(),
+        std::filesystem::path{"a/_work/1/s/src/vctools/crt"} | std::ranges::to<std::vector>()
+    ))
+    {
+        return true;
+    }
+
     if (file.has_root_directory() || file.has_root_name() || file.has_root_path())
     {
         return false;
@@ -129,6 +138,26 @@ static bool is_exit_path(const std::filesystem::path& file)
 
     auto it = file.begin();
     return it != file.end() && *it == "minkernel";
+}
+
+std::string get_loaded_dll_name(HANDLE process, const LOAD_DLL_DEBUG_INFO& info)
+{
+    if (!info.lpImageName)
+    {
+        return "<unknown>";
+    }
+
+    char* ptr_in_debuggee;
+    THROW_LAST_ERROR_IF_NOT(
+        ReadProcessMemory(process, info.lpImageName, &ptr_in_debuggee, sizeof(ptr_in_debuggee), nullptr));
+
+    SIZE_T len;
+    char buf[512];
+    (ReadProcessMemory(process, ptr_in_debuggee, buf, sizeof(buf) - 2, &len));
+    buf[len] = '\0';
+    buf[len + 1] = '\0';
+
+    return info.fUnicode ? coverpp::windows::utf16le_to_utf8((const wchar_t*) buf) : std::string{(const char*) buf};
 }
 
 int run_with_coverage(const coverpp::CoverageParams& params)
@@ -165,14 +194,16 @@ int run_with_coverage(const coverpp::CoverageParams& params)
 
     std::unordered_map<DWORD, HANDLE> thread_handles;
 
-    int exit_code = 0;
+    // TODO: Running under ASAN is bad (what if only coverpp under ASAN, but not the SUT? <-- untested) because that generates many exceptions all the time
+    //  because ASAN uses SEH under the hood, see e.g. https://github.com/catchorg/Catch2/issues/2286#issuecomment-927974627
+
     bool first_breakpoint = true;
-    while (true)
+    std::optional<int> exit_code;
+    do
     {
         DEBUG_EVENT evt;
         THROW_LAST_ERROR_IF_NOT(WaitForDebugEventEx(&evt, INFINITE));
 
-        bool is_exit = false;
         DWORD continue_status = DBG_CONTINUE;
         switch (evt.dwDebugEventCode)
         {
@@ -203,9 +234,8 @@ int run_with_coverage(const coverpp::CoverageParams& params)
         }
         case EXIT_PROCESS_DEBUG_EVENT:
         {
-            is_exit = true;
             exit_code = static_cast<int>(evt.u.ExitProcess.dwExitCode);
-            std::println("Process finished with exit code {}", exit_code);
+            std::println("Process finished with exit code {}", *exit_code);
             break;
         }
         case EXCEPTION_DEBUG_EVENT:
@@ -215,11 +245,14 @@ int run_with_coverage(const coverpp::CoverageParams& params)
             const InstructionPointer ip{(std::uintptr_t) evt.u.Exception.ExceptionRecord.ExceptionAddress};
             const auto va = breakpoint_driver.ip_to_va(ip);
 
+            continue_status = DBG_EXCEPTION_NOT_HANDLED;
+
             if (evt.u.Exception.ExceptionRecord.ExceptionCode == STATUS_BREAKPOINT)
             {
                 if (first_breakpoint)
                 {
                     first_breakpoint = false;
+                    continue_status = DBG_EXCEPTION_HANDLED;
                     break;
                 }
 
@@ -256,7 +289,16 @@ int run_with_coverage(const coverpp::CoverageParams& params)
             }
             else
             {
-                std::println("exc");
+                const bool first_chance = evt.u.Exception.dwFirstChance;
+                const auto& record = evt.u.Exception.ExceptionRecord;
+                const auto tracepoint = coverage_session.resolve_tracepoint(va);
+                std::println(
+                    "{} {} encountered at {}",
+                    first_chance ? "First-chance" : "Unhandled",
+                    coverpp::describe_seh_exception(record.ExceptionCode, record.ExceptionInformation),
+                    tracepoint ? std::format("{}:{}", tracepoint->first.u8string(), tracepoint->second.lineBegin)
+                               : std::format("{}", record.ExceptionAddress)
+                );
                 continue_status = DBG_EXCEPTION_NOT_HANDLED;
             }
 
@@ -265,32 +307,44 @@ int run_with_coverage(const coverpp::CoverageParams& params)
         case RIP_EVENT:
         {
             std::println("RIP! {} - {}", evt.u.RipInfo.dwError, evt.u.RipInfo.dwType);
-            is_exit = true;
             exit_code = 99;
+            break;
+        }
+        case LOAD_DLL_DEBUG_EVENT:
+        {
+            // We need to manually release the DLL handle once we're done with it
+            wil::unique_handle dll{evt.u.LoadDll.hFile};
+            std::println("Loaded DLL: {}", get_loaded_dll_name(hProcess, evt.u.LoadDll));
+            break;
+        }
+        case UNLOAD_DLL_DEBUG_EVENT:
+        case EXIT_THREAD_DEBUG_EVENT:
+        {
+            // Nothing to do
+            break;
+        }
+        default:
+        {
+            std::println(std::cerr, "Unknown debug event code: 0x{:X}", evt.dwDebugEventCode);
             break;
         }
         }
 
         THROW_LAST_ERROR_IF_NOT(ContinueDebugEvent(evt.dwProcessId, evt.dwThreadId, continue_status));
-
-        if (is_exit)
-        {
-            break;
-        }
-    }
+    } while (!exit_code);
 
     std::println("reached: {}", sink);
 
-    coverpp::SourceFileReportGenerator report_generator{params.out_dir};
+    coverpp::SourceFileExporter report_generator{params.out_dir};
     coverpp::BasicReport report = coverpp::process_coverage_sink(sink);
     coverpp::BasicReport reachable_report = coverpp::process_coverage_sink(reachable);
-    report_generator.generate_report(report, reachable_report);
+    report_generator.run(report, reachable_report);
 
     coverpp::HtmlExporter exporter{params.out_dir};
 
-    exporter.export_report(report, reachable_report);
+    exporter.run(report, reachable_report);
 
-    return exit_code;
+    return *exit_code;
 }
 
 struct CoInitializeGuard
@@ -336,6 +390,7 @@ int main(int argc, char** argv)
                      params.program.u8string(),
                      params.debug_info.u8string(),
                      absolute(params.out_dir).u8string());
+        std::println("");
     }
 
     try
@@ -343,23 +398,10 @@ int main(int argc, char** argv)
         CoInitializeGuard guard;
 
         return run_with_coverage(params);
-    } catch (const wil::ResultException& ex)
+    }
+    catch (const wil::ResultException& ex)
     {
         std::println(std::cerr, "Windows Exception: {}", ex.what());
+        return 1;
     }
-
-    return 0;
-
-//    std::string cmake = "cmake";
-//
-//    if (exec(cmake, "--version") != 0)
-//    {
-//        std::println(std::cerr, "CMake not found");
-//        return 1;
-//    }
-//
-//    exec(cmake, "-S", project_dir.u8string(), "-B", "covercpp-work", "-G \"Visual Studio 17 2022\"");
-//    exec(cmake, "--build", "covercpp-work");
-//
-//    return 0;
 }

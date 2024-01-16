@@ -142,4 +142,31 @@ std::optional<std::filesystem::path> WindowsCoverageSession::trace(CoverageSink&
 
     return file;
 }
+
+std::optional<std::pair<std::filesystem::path, Tracepoint>>
+WindowsCoverageSession::resolve_tracepoint(VirtualAddress va)
+{
+    wil::com_ptr<IDiaEnumLineNumbers> line_numbers;
+    THROW_IF_FAILED(m_dia.session().findLinesByVA(va.value, 1, line_numbers.put()));
+
+    const auto file = get_file_by_line_numbers(*line_numbers);
+
+    if (file)
+    {
+        auto line_number = get_single_item<IDiaLineNumber>(*line_numbers);
+        return std::pair{*file, Tracepoint{
+            .lineBegin = get_dword(line_number, &IDiaLineNumber::get_lineNumber),
+            .columnBegin = get_dword(line_number, &IDiaLineNumber::get_columnNumber),
+            .lineEnd = get_dword(line_number, &IDiaLineNumber::get_lineNumberEnd),
+            .columnEnd = get_dword(line_number, &IDiaLineNumber::get_columnNumberEnd),
+        }};
+    }
+
+    return std::nullopt;
+}
+
+DiaAccessor& WindowsCoverageSession::dia()
+{
+    return m_dia;
+}
 }

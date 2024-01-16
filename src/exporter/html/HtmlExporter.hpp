@@ -1,15 +1,15 @@
 #pragma once
 
-#include "../../report/BasicReport.hpp"
+#include "../Exporter.hpp"
 
 namespace coverpp
 {
-class HtmlExporter
+class HtmlExporter : public Exporter
 {
 public:
     explicit HtmlExporter(std::filesystem::path output_directory);
 
-    void export_report(const BasicReport& covered, const BasicReport& reachable);
+    void run(const BasicReport& covered, const BasicReport& reachable) override;
 
 private:
     std::filesystem::path m_dir;
