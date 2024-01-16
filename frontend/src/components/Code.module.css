@@ -1,0 +1,7 @@
+.Code {
+    color: inherit;
+}
+
+body[data-theme="dark"] {
+    color: rgba(178, 184, 185);
+}

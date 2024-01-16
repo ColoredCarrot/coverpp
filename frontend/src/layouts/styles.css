@@ -1,0 +1,36 @@
+body {
+    margin: 0;
+    font-family: sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+button {
+    user-select: none;
+}
+
+body.debug-outlines * {
+    outline: 1px solid #f00 !important;
+}
+
+
+body {
+    --color-bg: white;
+    background-color: var(--color-bg);
+}
+
+body[data-theme="dark"] {
+    --color-bg: #3c3f41;
+}
+
+main {
+    width: min(100%, 50rem);
+    margin-inline: auto;
+}

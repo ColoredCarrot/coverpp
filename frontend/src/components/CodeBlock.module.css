@@ -1,0 +1,9 @@
+.CodeBlock {
+    padding: 0.5rem 0.7rem;
+
+    background-color: rgb(246, 248, 250);
+}
+
+body[data-theme="dark"] .CodeBlock {
+    background-color: rgb(37, 38, 41);
+}

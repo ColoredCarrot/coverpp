@@ -1,0 +1,8 @@
+/node_modules
+/build
+/dist
+/pnpm-lock.yaml
+
+/backend
+
+/.idea
