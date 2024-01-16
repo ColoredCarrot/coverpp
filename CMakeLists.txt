@@ -80,11 +80,17 @@ target_sources(coverpp
 #set_property(TARGET coverpp PROPERTY
 #        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
-target_compile_options(coverpp PUBLIC "$<$<C_COMPILER_ID:MSVC>:/Zc:char8_t->")
+target_compile_options(coverpp PUBLIC "$<$<C_COMPILER_ID:MSVC>:/utf-8>" "$<$<C_COMPILER_ID:MSVC>:/Zc:char8_t->")
+target_compile_definitions(coverpp PRIVATE "_WIN32_WINNT=0x0A00") # Windows 10 and above
 
 # DIA SDK
 find_package(DiaSDK REQUIRED)
-target_include_directories(coverpp PUBLIC ${DIASDK_INCLUDE_DIRS} "${CMAKE_SOURCE_DIR}/third_party/CLI11/include")
+target_include_directories(coverpp PUBLIC
+        ${DIASDK_INCLUDE_DIRS}
+        "${CMAKE_SOURCE_DIR}/third_party/CLI11/include"
+        "${CMAKE_SOURCE_DIR}/third_party/asio/include"
+        "${CMAKE_SOURCE_DIR}/third_party/Crow/include"
+)
 target_link_libraries(coverpp ${DIASDK_LIBRARIES} coverpp::rc)
 
 # WIL
