@@ -44,6 +44,8 @@ WindowsCoverageSession::WindowsCoverageSession(CoverageParams params)
 
 CoverageSink WindowsCoverageSession::collect_source_lines()
 {
+    // TODO: For each source file, ensure that its Last Modified timestamp is <= timestamp of exe
+
     auto dia_source_files = m_dia.enum_source_files();
 
     coverpp::CoverageSink sink;

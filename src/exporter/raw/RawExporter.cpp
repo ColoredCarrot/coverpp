@@ -43,6 +43,8 @@ static const char* utf8_data(const std::string& s)
 #endif
 void RawExporter::run(const BasicReport& covered, const BasicReport& reachable, const std::filesystem::path& out_dir)
 {
+    // TODO use protobuf so we don't have to code this in C++, JS, Java, ...
+
     static const std::set<unsigned> empty_set{};
 
     std::filesystem::path file_path = out_dir / "report.coverpp";
