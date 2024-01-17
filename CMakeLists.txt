@@ -8,9 +8,11 @@ add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/MP>")
 #set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 include(FetchContent)
-include(InstallRequiredSystemLibraries)
 include(cmake/CMakeRC.cmake)
 include(cmake/CopyAsanDLLs.cmake)
+
+set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
+include(InstallRequiredSystemLibraries)
 
 cmrc_add_resource_library(coverpp-resources ALIAS coverpp::rc NAMESPACE coverpp_rc
     "src/resources/html-exporter/index.html"
@@ -100,7 +102,7 @@ target_include_directories(coverpp PUBLIC
         "${CMAKE_SOURCE_DIR}/third_party/asio/include"
         "${CMAKE_SOURCE_DIR}/third_party/Crow/include"
 )
-target_link_libraries(coverpp ${DIASDK_LIBRARIES} coverpp::rc)
+target_link_libraries(coverpp PRIVATE ${DIASDK_LIBRARIES} coverpp::rc)
 
 # WIL
 set(WIL_BUILD_PACKAGING OFF)
@@ -114,7 +116,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(wil)
 
 #$<$<CONFIG:DEBUG>:-wholearchive:clang_rt.asan_dbg-x86_64.lib$<SEMICOLON>-NODEFAULTLIB:LIBCMTD>
-target_link_libraries(coverpp WIL)
+target_link_libraries(coverpp PRIVATE WIL)
 
 # Copy DIA SDK DLL to same directory as .exe
 # See https://stackoverflow.com/questions/10671916/how-to-copy-dll-files-into-the-same-folder-as-the-executable-using-cmake
