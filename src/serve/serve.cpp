@@ -56,9 +56,26 @@ int serve(const ServeOptions& options)
         return make_file_response(weakly_canonical(requested_path));
     });
 
-    app.route_dynamic();
+    CROW_ROUTE(app, "/<path>")([&](const std::filesystem::path& requested_path) {
+        const auto path = webapp_path / requested_path;
 
-    CROW_CATCHALL_ROUTE(app)([&] {
+        if (std::filesystem::is_regular_file(path))
+        {
+            std::string extension = path.extension().string();
+            if (extension.starts_with("."))
+            {
+                extension.erase(extension.begin());
+            }
+            return make_file_response(path, crow::response::get_mime_type(extension));
+        }
+        else
+        {
+            // Fall back to always serve index.html (client-side routing)
+            return make_file_response(webapp_path / "index.html", "text/html; charset=utf-8");
+        }
+    });
+
+    CROW_ROUTE(app, "/")([&] {
         return make_file_response(webapp_path / "index.html", "text/html; charset=utf-8");
     });
 
