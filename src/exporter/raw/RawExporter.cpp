@@ -9,8 +9,10 @@ namespace coverpp
 RawExporter::RawExporter(std::filesystem::path out_dir) : AbstractFileExporter(std::move(out_dir))
 {}
 
+#ifdef __JETBRAINS_IDE__
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "Simplify"
+#endif
 template<std::integral T>
 static T to_little_endian(T value)
 {
@@ -28,7 +30,9 @@ static T to_little_endian(T value)
         return value;
     }
 }
+#ifdef __JETBRAINS_IDE__
 #pragma clang diagnostic pop
+#endif
 
 #if defined(__JETBRAINS_IDE__) || defined(__INTELLISENSE__)
 static const char* utf8_data(const std::u8string& s)
