@@ -1,9 +1,4 @@
-import {
-    createHashHistory,
-    NotFoundRoute,
-    Router,
-    RouterProvider,
-} from "@tanstack/react-router";
+import { NotFoundRoute, Router, RouterProvider } from "@tanstack/react-router";
 import React from "react";
 import { createRoot as createReactRoot } from "react-dom/client";
 import { routes } from "#/routes";
@@ -20,7 +15,6 @@ const router = new Router({
     routeTree,
     defaultPreload: "intent",
     notFoundRoute,
-    history: createHashHistory(),
 });
 
 declare module "@tanstack/react-router" {
