@@ -126,4 +126,10 @@ add_custom_command(TARGET coverpp POST_BUILD
 
 copy_asan_dlls(coverpp)
 
+
+set_target_properties(coverpp PROPERTIES OUTPUT_NAME "cover++")
+
+install(TARGETS coverpp)
+
+
 add_subdirectory(example-sut)
