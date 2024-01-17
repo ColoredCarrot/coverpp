@@ -24,31 +24,42 @@ static std::optional<std::string> read_file(const std::filesystem::path& file)
     return std::string{bytes.data(), static_cast<std::size_t>(size)};
 }
 
+static crow::response
+make_file_response(const std::filesystem::path& file, std::string_view content_type = "text/plain")
+{
+    if (!std::filesystem::is_regular_file(file))
+    {
+        return crow::response{404, "text/plain", "404 Not Found"};
+    }
+
+    auto content = read_file(file);
+    if (!content)
+    {
+        return crow::response{404, "text/plain", "404 Not Found"};
+    }
+
+    crow::response response;
+    response.body = *std::move(content);
+    response.set_header("Content-Length", std::format("{}", response.body.size()));
+    response.set_header("Content-Type", std::string{content_type});
+    return response;
+}
+
 int serve(const ServeOptions& options)
 {
-    const std::filesystem::path webapp_path{""};
+//    const std::filesystem::path webapp_path{options.coverpp_install_dir / "webapp"};
+    const std::filesystem::path webapp_path{R"(G:\Voidev\Official\Projects\C++\Cover++\frontend\dist)"};
 
     crow::SimpleApp app;
 
-    CROW_ROUTE(app, "/src/<path>")([&](const std::filesystem::path& requested_path) {
-        const auto path = weakly_canonical(requested_path);
+    CROW_ROUTE(app, "/src/<path>")([](const std::filesystem::path& requested_path) {
+        return make_file_response(weakly_canonical(requested_path));
+    });
 
-        if (!std::filesystem::is_regular_file(path))
-        {
-            return crow::response{404, "text/plain", "404 Not Found"};
-        }
+    app.route_dynamic();
 
-        auto content = read_file(path);
-        if (!content)
-        {
-            return crow::response{404, "text/plain", "404 Not Found"};
-        }
-
-        crow::response response;
-        response.body = *std::move(content);
-        response.set_header("Content-Length", std::format("{}", response.body.size()));
-        response.set_header("Content-Type", "text/plain");
-        return response;
+    CROW_CATCHALL_ROUTE(app)([&] {
+        return make_file_response(webapp_path / "index.html", "text/html; charset=utf-8");
     });
 
     auto future = app
