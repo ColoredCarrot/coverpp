@@ -388,6 +388,7 @@ struct CoInitializeGuard
 };
 
 int main(int argc, char** argv)
+try
 {
 #ifdef _WIN32
     // Tell the console to interpret outputted bytes as UTF-8
@@ -414,20 +415,26 @@ int main(int argc, char** argv)
     run_app->add_flag("--print-first-chance-seh", params.print_first_chance_seh_exceptions,
                       "Print first-chance SEH exceptions to the console");
 
-    coverpp::ServeOptions serve_options;
+    coverpp::ServeOptions serve_options{.report_path{"./coverpp-repoart/report.coverpp"}};
     const auto serve_app = app.add_subcommand("view", "View coverage results in your browser");
     serve_app->alias("serve");
     serve_app->add_option("-p,--port", serve_options.port)->default_val(8080)->check(CLI::NonNegativeNumber);
-    serve_app->add_option("-d,--data", serve_options.report_path)
-        ->check(CLI::ExistingFile)
-        ->default_val("./coverpp-report/report.coverpp");
+    serve_app->add_option("-d,--data", serve_options.report_path)->check(CLI::ExistingFile);
     serve_app->add_option("--coverpp-install-dir", serve_options.coverpp_install_dir)
         ->check(CLI::ExistingDirectory)
         ->required(argc == 0)
         ->default_val(
             argc == 0 ? std::string{""} : std::filesystem::weakly_canonical(argv[0]).parent_path().u8string());
 
-    CLI11_PARSE(app, argc, argv);
+    try
+    {
+        app.parse(argc, argv);
+    }
+    catch (const CLI::ParseError& e)
+    {
+        std::cout << (e.get_exit_code() == 0 ? coverpp::Color::blue : coverpp::Color::red);
+        return app.exit(e);
+    };
 
     if (*serve_app)
     {
@@ -457,4 +464,12 @@ int main(int argc, char** argv)
         std::println(std::cerr, "Windows Exception: {}", ex.what());
         return 1;
     }
+}
+catch (const std::exception& ex)
+{
+    std::println(std::cerr, "Error: {}", ex.what());
+}
+catch (...)
+{
+    std::println(std::cerr, "Unknown error");
 }
