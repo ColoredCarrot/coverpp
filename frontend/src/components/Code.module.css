@@ -3,5 +3,41 @@
 }
 
 body[data-theme="dark"] {
-    color: rgba(178, 184, 185);
+    color: rgb(178, 184, 185);
+}
+
+.Line {
+    display: inline-block;
+    width: 100%;
+}
+
+
+body {
+    --color-bg-line-success: rgb(204, 255, 216);
+    --color-bg-line-success-faded: rgb(230, 255, 236);
+    --color-bg-line-danger: rgb(255, 215, 213);
+    --color-bg-line-danger-faded: rgb(255, 235, 233);
+    --color-bg-line-warn: rgb(255, 254, 204);
+    --color-bg-line-warn-faded: rgb(255, 255, 230);
+}
+
+body[data-theme="dark"] {
+    --color-bg-line-success: #1c4428;
+    --color-bg-line-success-faded: #12261e;
+    --color-bg-line-danger: #542426;
+    --color-bg-line-danger-faded: #25171c;
+    --color-bg-line-warn: #525424;
+    --color-bg-line-warn-faded: #252517;
+}
+
+.CovFull {
+    background-color: var(--color-bg-line-success);
+}
+
+.CovPartial {
+    background-color: var(--color-bg-line-warn);
+}
+
+.CovNone {
+    background-color: var(--color-bg-line-danger);
 }

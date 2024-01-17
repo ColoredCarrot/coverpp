@@ -1,6 +1,13 @@
 import { Element, ElementContent, Root, RootContent } from "hast";
 
-export function starryNightGutter(tree: Root) {
+export function starryNightGutter(
+    tree: Root,
+    createLine?: (children: ElementContent[], line: number) => Element,
+) {
+    if (createLine === undefined) {
+        createLine = createDefaultLine;
+    }
+
     const replacement: RootContent[] = [];
     const search = /\r?\n|\r/g;
     let index = -1;
@@ -71,7 +78,7 @@ export function starryNightGutter(tree: Root) {
     tree.children = replacement;
 }
 
-function createLine(children: ElementContent[], line: number): Element {
+function createDefaultLine(children: ElementContent[], line: number): Element {
     return {
         type: "element",
         tagName: "span",
