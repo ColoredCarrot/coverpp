@@ -23,5 +23,11 @@ export default {
             "Cross-Origin-Opener-Policy": "same-origin",
             "Cross-Origin-Embedder-Policy": "require-corp",
         },
+        fs: {
+            // Allow access to the Cover++ project directory
+            allow: [".."],
+        },
+        // Only listen on localhost; don't expose ourselves to the outside world
+        host: "localhost",
     },
 } satisfies UserConfig;

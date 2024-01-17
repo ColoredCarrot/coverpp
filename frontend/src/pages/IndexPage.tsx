@@ -1,8 +1,17 @@
-import {Suspense} from "react";
-import CodeBlock from "#/components/CodeBlock";
+import { Suspense } from "react";
+import CoverageCodeBlock from "#/components/CoverageCodeBlock";
+import { LineCoverage } from "#/coverage/FileCoverage";
 
 export default function IndexPage() {
-    return <Suspense fallback={"Highlighting..."}>
-        <CodeBlock content={'int main()\n{\n    return 1;\n}'}/>
-    </Suspense>;
+    return (
+        <Suspense fallback={"Highlighting..."}>
+            <CoverageCodeBlock
+                coverage={{
+                    filePath:
+                        "G:\\Voidev\\Official\\Projects\\C++\\Cover++\\example-sut\\sut-main.cpp",
+                    lines: [LineCoverage.Full],
+                }}
+            />
+        </Suspense>
+    );
 }
