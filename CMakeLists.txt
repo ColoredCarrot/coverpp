@@ -63,6 +63,10 @@ add_executable(coverpp
         src/serve/ServeOptions.hpp
         src/serve/serve.cpp
         src/serve/serve.hpp
+        src/util/open_browser.cpp
+        src/util/open_browser.hpp
+        src/util/console_color.cpp
+        src/util/console_color.hpp
 )
 # TODO Once CMake 3.28 is supported:
 #[[add_executable(coverpp)

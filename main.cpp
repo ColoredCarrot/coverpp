@@ -10,6 +10,7 @@
 #include "src/exporter/raw/RawExporter.hpp"
 #include "src/serve/ServeOptions.hpp"
 #include "src/serve/serve.hpp"
+#include "src/util/console_color.hpp"
 
 #include <CLI11.hpp>
 #include <print>
@@ -396,6 +397,8 @@ int main(int argc, char** argv)
     setvbuf(stdout, nullptr, _IOFBF, 1000);
 #endif
 
+    std::atexit([] { std::cout << coverpp::Style::reset; });
+
     CLI::App app{"Cover++"};
     app.failure_message(CLI::FailureMessage::help);
 
@@ -415,7 +418,14 @@ int main(int argc, char** argv)
     const auto serve_app = app.add_subcommand("view", "View coverage results in your browser");
     serve_app->alias("serve");
     serve_app->add_option("-p,--port", serve_options.port)->default_val(8080)->check(CLI::NonNegativeNumber);
-    serve_app->add_option("-d,--data")->check(CLI::ExistingFile)->default_val("./coverpp-report/report.coverpp");
+    serve_app->add_option("-d,--data", serve_options.report_path)
+        ->check(CLI::ExistingFile)
+        ->default_val("./coverpp-report/report.coverpp");
+    serve_app->add_option("--coverpp-install-dir", serve_options.coverpp_install_dir)
+        ->check(CLI::ExistingDirectory)
+        ->required(argc == 0)
+        ->default_val(
+            argc == 0 ? std::string{""} : std::filesystem::weakly_canonical(argv[0]).parent_path().u8string());
 
     CLI11_PARSE(app, argc, argv);
 
