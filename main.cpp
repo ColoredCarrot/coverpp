@@ -179,7 +179,11 @@ int run_with_coverage(const coverpp::CoverageParams& params)
     coverpp::windows::WindowsCoverageSession coverage_session{params};
 
     auto reachable = coverage_session.collect_source_lines();
-    std::println("reachable: {}", reachable);
+    if (params.verbosity >= 1)
+    {
+        std::println("Found {} reachable tracepoints",
+                     coverpp::styled<coverpp::ColorBold::cyan>(reachable.count_tracepoints()));
+    }
 
 
     // Step #2: Find address of main function
@@ -371,7 +375,11 @@ int run_with_coverage(const coverpp::CoverageParams& params)
         THROW_LAST_ERROR_IF_NOT(ContinueDebugEvent(evt.dwProcessId, evt.dwThreadId, continue_status));
     } while (!exit_code);
 
-    std::println("reached: {}", sink);
+    if (params.verbosity >= 1)
+    {
+        std::println("Reached {} tracepoints",
+                     coverpp::styled<coverpp::ColorBold::cyan>(sink.count_tracepoints()));
+    }
 
     coverpp::SourceFileExporter report_generator{params.out_dir};
     coverpp::BasicReport report = coverpp::process_coverage_sink(sink);

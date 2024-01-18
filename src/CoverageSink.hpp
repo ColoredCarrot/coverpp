@@ -27,6 +27,8 @@ public:
 
     const std::unordered_map<std::filesystem::path, std::set<Tracepoint>>& tracepoints() const;
 
+    std::size_t count_tracepoints() const;
+
 private:
     // Note: No duplicate tracepoints are recorded
     std::unordered_map<std::filesystem::path, std::set<Tracepoint>> m_tracepoints;

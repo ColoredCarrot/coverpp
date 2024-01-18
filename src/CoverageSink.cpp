@@ -6,9 +6,19 @@ void CoverageSink::track_coverage(const std::filesystem::path& source_file, cons
 {
     m_tracepoints[source_file].emplace(tracepoint);
 }
+
 const std::unordered_map<std::filesystem::path, std::set<Tracepoint>>& CoverageSink::tracepoints() const
 {
     return m_tracepoints;
+}
+
+std::size_t CoverageSink::count_tracepoints() const
+{
+    return std::ranges::fold_left(
+        std::views::values(m_tracepoints) | std::views::transform(std::ranges::size),
+        0,
+        std::plus{}
+    );
 }
 }
 
@@ -16,7 +26,7 @@ std::format_context::iterator
 std::formatter<coverpp::CoverageSink>::format(const coverpp::CoverageSink& sink, std::format_context& ctx) const
 {
     auto out = ctx.out();
-    for (const auto& [source_file, tracepoints]: sink.m_tracepoints)
+    for (const auto& [source_file, tracepoints] : sink.m_tracepoints)
     {
         out = std::format_to(
             out,
