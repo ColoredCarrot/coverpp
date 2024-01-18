@@ -69,6 +69,7 @@ add_executable(coverpp
         src/util/open_browser.hpp
         src/util/console_color.cpp
         src/util/console_color.hpp
+        src/polyfill/generator.hpp
 )
 # TODO Once CMake 3.28 is supported:
 #[[add_executable(coverpp)
