@@ -2,6 +2,8 @@
 #include "com_utils.hpp"
 #include "file_util.hpp"
 
+#include <print>
+
 namespace coverpp::windows
 {
 template<typename T>
@@ -127,6 +129,11 @@ std::optional<std::filesystem::path> WindowsCoverageSession::trace(CoverageSink&
     THROW_IF_FAILED(m_dia.session().findLinesByVA(va.value, 1, line_numbers.put()));
 
     const auto file = get_file_by_line_numbers(*line_numbers);
+
+    if (m_params.verbosity >= 5)
+    {
+        std::println("Hit tracepoint in {}", file ? file->u8string() : std::string{"(unknown file)"});
+    }
 
     if (file && coverpp::detail::path_is_subpath_of(*file, m_params.source_dir))
     {
