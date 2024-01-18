@@ -1,0 +1,2 @@
+asio version 1.29.0
+https://github.com/chriskohlhoff/asio/releases/tag/asio-1-29-0
