@@ -1,3 +1,5 @@
+#define __STDC_WANT_SECURE_LIB__ 1
+
 #include "sut-foo.hpp"
 
 #include <ranges>
@@ -18,6 +20,17 @@ int min(int a, int b) {
     return b;
 }
 
+void seh() {
+    __try {
+        int p = 1 + 2;
+        RaiseException(1, 0, 0, nullptr);
+        ++p;
+    }
+    __except(EXCEPTION_EXECUTE_HANDLER) {
+        int q = 1 + 2;
+    }
+}
+
 int main(int argc, char** argv) {
     const std::span<char*> args{argv, static_cast<std::size_t>(argc)};
 
@@ -32,6 +45,8 @@ int main(int argc, char** argv) {
     {
         add(1, i);
     }
+
+    seh();
 
     return min(1, 2);
 }
