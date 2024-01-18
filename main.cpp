@@ -164,6 +164,16 @@ std::string get_loaded_dll_name(HANDLE process, const LOAD_DLL_DEBUG_INFO& info)
     return info.fUnicode ? coverpp::windows::utf16le_to_utf8((const wchar_t*) buf) : std::string{(const char*) buf};
 }
 
+static std::wstring make_command_line_string(std::wstring_view module_name, std::string_view args)
+{
+    std::wstring s;
+    s.reserve(module_name.length() + 1 + args.length());
+    s.append(module_name);
+    s.push_back(' ');
+    s.append(coverpp::windows::utf8_to_utf16le(args));
+    return s;
+}
+
 int run_with_coverage(const coverpp::CoverageParams& params)
 {
     coverpp::windows::WindowsCoverageSession coverage_session{params};
@@ -187,8 +197,11 @@ int run_with_coverage(const coverpp::CoverageParams& params)
     si.cb = sizeof(si);
     PROCESS_INFORMATION pi{};
     // Inherit env and workdir from the coverage process
+    auto command_line = make_command_line_string(params.program.c_str(), params.program_args);
     THROW_LAST_ERROR_IF(!CreateProcessW(
-        params.program.c_str(), nullptr, nullptr, nullptr, false, DEBUG_ONLY_THIS_PROCESS, nullptr, nullptr, &si, &pi
+        params.program.c_str(), command_line.data(),
+        nullptr, nullptr, false, DEBUG_ONLY_THIS_PROCESS, nullptr, nullptr,
+        &si, &pi
     ));
 
     const HANDLE hProcess = pi.hProcess;
@@ -409,6 +422,7 @@ try
     run_app->add_option("-s,--source", params.source_dir, "Source directory")->check(
         CLI::ExistingDirectory)->required();
     run_app->add_option("-p,--program", params.program, "Executable")->check(CLI::ExistingFile)->required();
+    run_app->add_option("-a,--program-args", params.program_args, "Arguments to pass to the executable");
     run_app->add_option("-d,--debug-info", params.debug_info, "PDB file")->check(CLI::ExistingFile)->required();
     run_app->add_option("-o,--out-dir", params.out_dir, "Output directory")->default_val("./coverpp-report");
     run_app->add_flag("-v,--verbose", params.verbosity, "Print more messages to the console");

@@ -1,8 +1,11 @@
-//#define NOMINMAX
-//#include <windows.h>
 #include "sut-foo.hpp"
 
 #include <ranges>
+#include <string_view>
+#include <format>
+
+#define NOMINMAX
+#include <windows.h>
 
 int min(int a, int b) {
     if (a <= b) {
@@ -15,8 +18,15 @@ int min(int a, int b) {
     return b;
 }
 
-int main() {
-//    OutputDebugString("Hello, world!");
+int main(int argc, char** argv) {
+    const std::span<char*> args{argv, static_cast<std::size_t>(argc)};
+
+    auto args_str = args
+                    | std::views::transform([](char* arg) { return std::string_view{arg}; })
+                    | std::views::join_with(std::string_view{", "})
+                    | std::ranges::to<std::string>();
+
+    OutputDebugString(std::format("{} args: {}", argc, args_str).c_str());
 
     for (int i : std::views::iota(0, 10))
     {

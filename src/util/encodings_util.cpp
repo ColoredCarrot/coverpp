@@ -36,4 +36,31 @@ std::string utf16le_to_utf8(std::wstring_view utf16le)
 
     return utf8;
 }
+
+std::wstring utf8_to_utf16le(std::string_view utf8)
+{
+    // This is not an optimization, but required, since MultiByteToWideChar returns 0 to indicate an error
+    if (utf8.empty())
+    {
+        return {};
+    }
+
+    const int utf8_length{detail::convert_or_clamp<int>(utf8.length())};
+
+    const int utf16le_length{MultiByteToWideChar(
+        CP_UTF8, 0,
+        utf8.data(), utf8_length,
+        nullptr, 0
+    )};
+    THROW_LAST_ERROR_IF(utf16le_length == 0);
+
+    std::wstring utf16le(utf16le_length, '\0');
+    THROW_LAST_ERROR_IF(!MultiByteToWideChar(
+        CP_UTF8, 0,
+        utf8.data(), utf8_length,
+        utf16le.data(), utf16le_length
+    ));
+
+    return utf16le;
+}
 }
