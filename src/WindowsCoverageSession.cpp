@@ -2,8 +2,6 @@
 #include "com_utils.hpp"
 #include "file_util.hpp"
 
-#include <print>
-
 namespace coverpp::windows
 {
 template<typename T>
@@ -19,6 +17,14 @@ static V get_dword(const wil::com_ptr<T>& com, HRESULT (T::* f)(V*))
 {
     V v;
     THROW_IF_FAILED(((*com).*f)(&v));
+    return v;
+}
+
+template<std::integral V, typename T>
+static V get_dword_r(T& com, HRESULT (T::* f)(V*))
+{
+    V v;
+    THROW_IF_FAILED((com.*f)(&v));
     return v;
 }
 
@@ -44,13 +50,12 @@ WindowsCoverageSession::WindowsCoverageSession(CoverageParams params)
 
 }
 
-CoverageSink WindowsCoverageSession::collect_source_lines()
+std::generator<std::pair<const std::filesystem::path&, IDiaLineNumber&>> WindowsCoverageSession::enum_source_lines()
 {
     // TODO: For each source file, ensure that its Last Modified timestamp is <= timestamp of exe
 
     auto dia_source_files = m_dia.enum_source_files();
 
-    coverpp::CoverageSink sink;
     COVERPP_FOR_EACH_COM_ITEM(IDiaSourceFile, dia_source_file, *dia_source_files)
     {
         std::filesystem::path file = get_string(dia_source_file, &IDiaSourceFile::get_fileName);
@@ -71,19 +76,27 @@ CoverageSink WindowsCoverageSession::collect_source_lines()
 
             COVERPP_FOR_EACH_COM_ITEM(IDiaLineNumber, dia_line_number, *dia_enum_line_numbers)
             {
-                sink.track_coverage(
-                    file,
-                    {
-                        .lineBegin = get_dword(dia_line_number, &IDiaLineNumber::get_lineNumber),
-                        .columnBegin = get_dword(dia_line_number, &IDiaLineNumber::get_columnNumber),
-                        .lineEnd = get_dword(dia_line_number, &IDiaLineNumber::get_lineNumberEnd),
-                        .columnEnd = get_dword(dia_line_number, &IDiaLineNumber::get_columnNumberEnd),
-                    }
-                );
+                co_yield {file, *dia_line_number};
             }
         }
     }
+}
 
+CoverageSink WindowsCoverageSession::collect_source_lines()
+{
+    coverpp::CoverageSink sink;
+    for (const auto& [file, dia_line_number] : enum_source_lines())
+    {
+        sink.track_coverage(
+            file,
+            {
+                .lineBegin = get_dword_r(dia_line_number, &IDiaLineNumber::get_lineNumber),
+                .columnBegin = get_dword_r(dia_line_number, &IDiaLineNumber::get_columnNumber),
+                .lineEnd = get_dword_r(dia_line_number, &IDiaLineNumber::get_lineNumberEnd),
+                .columnEnd = get_dword_r(dia_line_number, &IDiaLineNumber::get_columnNumberEnd),
+            }
+        );
+    }
     return sink;
 }
 
@@ -129,11 +142,6 @@ std::optional<std::filesystem::path> WindowsCoverageSession::trace(CoverageSink&
     THROW_IF_FAILED(m_dia.session().findLinesByVA(va.value, 1, line_numbers.put()));
 
     const auto file = get_file_by_line_numbers(*line_numbers);
-
-    if (m_params.verbosity >= 5)
-    {
-        std::println("Hit tracepoint in {}", file ? file->u8string() : std::string{"(unknown file)"});
-    }
 
     if (file && coverpp::detail::path_is_subpath_of(*file, m_params.source_dir))
     {

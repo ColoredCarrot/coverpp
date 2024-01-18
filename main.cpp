@@ -234,11 +234,22 @@ int run_with_coverage(const coverpp::CoverageParams& params)
             breakpoint_driver.set_base_address(
                 InstructionPointer{(std::uintptr_t) evt.u.CreateProcessInfo.lpBaseOfImage});
             const auto main_entry_ip = breakpoint_driver.va_to_ip(main_entry_va);
-            breakpoint_driver.set_breakpoint(main_entry_ip);
-            if (params.verbosity >= 2)
+
+            // Set breakpoints at all reachable locations
+            for (const auto& [source_file, dia_line_number] : coverage_session.enum_source_lines())
             {
-                std::println("Set breakpoint for main() at {}", main_entry_ip);
+                coverpp::VirtualAddress va;
+                THROW_IF_FAILED(dia_line_number.get_virtualAddress(&va.value));
+                const auto ip = breakpoint_driver.va_to_ip(va);
+
+                breakpoint_driver.set_breakpoint(ip);
+
+                if (params.verbosity >= 5)
+                {
+                    std::println("Set breakpoint at {}", ip);
+                }
             }
+
             break;
         }
         case CREATE_THREAD_DEBUG_EVENT:
@@ -284,7 +295,7 @@ int run_with_coverage(const coverpp::CoverageParams& params)
                     break;
                 }
 
-                if (params.verbosity >= 1)
+                if (params.verbosity >= 5)
                 {
                     std::println(
                         "Breakpoint hit at {}",
@@ -295,14 +306,15 @@ int run_with_coverage(const coverpp::CoverageParams& params)
                     );
                 }
 
+                coverage_session.trace(sink, va);
+
                 // Set the TF (Trap Flag, bit 8) in the EFLAGS register.
                 // When this flag is set, the processor traps after every instruction with STATUS_SINGLE_STEP.
                 CONTEXT context{};
                 context.ContextFlags = CONTEXT_CONTROL;
                 THROW_LAST_ERROR_IF_NOT(GetThreadContext(hThread, &context));
-                context.EFlags |= (1 << 8) | (1 << 16);
+//                context.EFlags |= (1 << 8) | (1 << 16);
                 --context.Rip; // Decrement because we get here *after* the INT3 instruction executed
-//                context.Dr6 |= 1 << 14;
                 THROW_LAST_ERROR_IF_NOT(SetThreadContext(hThread, &context));
 
                 breakpoint_driver.remove_breakpoint(ip);

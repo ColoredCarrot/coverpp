@@ -3,6 +3,7 @@
 #include "CoverageEngine.hpp"
 #include "DiaAccessor.hpp"
 #include "types.hpp"
+#include "polyfill/generator.hpp"
 
 namespace coverpp::windows
 {
@@ -10,6 +11,8 @@ class WindowsCoverageSession : public CoverageSession
 {
 public:
     explicit WindowsCoverageSession(CoverageParams params);
+
+    std::generator<std::pair<const std::filesystem::path&, IDiaLineNumber&>> enum_source_lines();
 
     CoverageSink collect_source_lines() override;
 
