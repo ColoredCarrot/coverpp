@@ -31,15 +31,19 @@ static void enable_color_support()
     }
     color_support_enabled = true;
 
-    const HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-    THROW_LAST_ERROR_IF(h == INVALID_HANDLE_VALUE);
+    const auto enable_color = [](HANDLE h) {
+        THROW_LAST_ERROR_IF(h == INVALID_HANDLE_VALUE); // NOLINT(*-lambda-function-name)
 
-    DWORD mode;
-    THROW_LAST_ERROR_IF(not GetConsoleMode(h, &mode));
+        DWORD mode;
+        THROW_LAST_ERROR_IF(not GetConsoleMode(h, &mode)); // NOLINT(*-lambda-function-name)
 
-    mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+        mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
 
-    THROW_LAST_ERROR_IF(not SetConsoleMode(h, mode));
+        THROW_LAST_ERROR_IF(not SetConsoleMode(h, mode)); // NOLINT(*-lambda-function-name)
+    };
+
+    enable_color(GetStdHandle(STD_OUTPUT_HANDLE));
+    enable_color(GetStdHandle(STD_ERROR_HANDLE));
 }
 
 template<ColorControl T>

@@ -47,8 +47,15 @@ make_file_response(const std::filesystem::path& file, std::string_view content_t
 
 int serve(const ServeOptions& options)
 {
-//    const std::filesystem::path webapp_path{options.coverpp_install_dir / "webapp"};
-    const std::filesystem::path webapp_path{R"(G:\Voidev\Official\Projects\C++\Cover++\frontend\dist)"};
+    const std::filesystem::path webapp_path{options.coverpp_install_dir / "webapp"};
+
+    if (!std::filesystem::is_directory(webapp_path))
+    {
+        throw std::runtime_error{
+            std::format("Failed to find webapp at {}\nSpecify an alternative installation directory with {}",
+                        webapp_path.u8string(),
+                        styled<ColorBold::gray>("--coverpp-install-dir <dir>"))};
+    }
 
     crow::SimpleApp app;
 
