@@ -2,7 +2,7 @@ import path from "node:path";
 import react from "@vitejs/plugin-react";
 import { UserConfig } from "vite";
 import svgr from "vite-plugin-svgr";
-import { viteSingleFile } from "vite-plugin-singlefile";
+// import { viteSingleFile } from "vite-plugin-singlefile";
 
 export default {
     plugins: [
@@ -10,7 +10,7 @@ export default {
             babel: { plugins: ["@babel/plugin-syntax-import-attributes"] },
         }),
         svgr(),
-        viteSingleFile(),
+        // viteSingleFile(),
     ],
     resolve: {
         alias: {
