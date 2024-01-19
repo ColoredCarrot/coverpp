@@ -13,33 +13,47 @@
 namespace coverpp
 {
 
+enum class ColorSupportStatus
+{
+    uninitialized,
+    on,
+    off,
+};
+
 static void enable_color_support()
 {
-    static bool color_support_enabled{false};
+    using
+    enum ColorSupportStatus;
+
+    static ColorSupportStatus color_support_enabled{uninitialized};
     static std::mutex mutex;
 
-    if (color_support_enabled)
+    if (color_support_enabled != uninitialized)
     {
         return;
     }
 
     std::lock_guard guard{mutex};
 
-    if (color_support_enabled)
+    if (color_support_enabled != uninitialized)
     {
         return;
     }
-    color_support_enabled = true;
+    color_support_enabled = on;
 
     const auto enable_color = [](HANDLE h) {
         THROW_LAST_ERROR_IF(h == INVALID_HANDLE_VALUE); // NOLINT(*-lambda-function-name)
 
         DWORD mode;
-        THROW_LAST_ERROR_IF(not GetConsoleMode(h, &mode)); // NOLINT(*-lambda-function-name)
+        if (!GetConsoleMode(h, &mode))
+        {
+            color_support_enabled = off;
+            return;
+        }
 
         mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
 
-        THROW_LAST_ERROR_IF(not SetConsoleMode(h, mode)); // NOLINT(*-lambda-function-name)
+        SetConsoleMode(h, mode);
     };
 
     enable_color(GetStdHandle(STD_OUTPUT_HANDLE));
