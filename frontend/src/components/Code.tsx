@@ -1,7 +1,7 @@
 import useStarryNight from "#/hooks/useStarryNight";
 import { toJsxRuntime } from "hast-util-to-jsx-runtime";
 import { Fragment, jsx, jsxs } from "react/jsx-runtime";
-import { memo } from "react";
+import { memo, useDeferredValue } from "react";
 import "./themes/tritanopia.css";
 import { starryNightGutter } from "#/util/hast-util-starry-night-gutter";
 import styles from "./Code.module.css";
@@ -46,7 +46,9 @@ const Code = memo(function Code(props: CodeProps) {
 
     // Since highlighting takes a long time, we could fall back to Prism.js highlighting while it's loading
 
-    const tree = starryNight.highlight(props.content, "source.c++");
+    const content = useDeferredValue(props.content);
+
+    const tree = starryNight.highlight(content, "source.c++");
     starryNightGutter(
         tree,
         props.coverage ? makeCreateLine(props.coverage) : undefined,
