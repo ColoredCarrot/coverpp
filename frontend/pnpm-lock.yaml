@@ -65,6 +65,9 @@ dependencies:
   express:
     specifier: ^4.18.2
     version: 4.18.2
+  flatbuffers:
+    specifier: ^23.5.26
+    version: 23.5.26
   hast-util-to-html:
     specifier: ^9.0.0
     version: 9.0.0
@@ -3295,6 +3298,10 @@ packages:
       flatted: 3.2.9
       keyv: 4.5.4
       rimraf: 3.0.2
+
+  /flatbuffers@23.5.26:
+    resolution: {integrity: sha512-vE+SI9vrJDwi1oETtTIFldC/o9GsVKRM+s6EL0nQgxXlYV1Vc4Tk30hj4xGICftInKQKj1F3up2n8UbIVobISQ==}
+    dev: false
 
   /flatted@3.2.9:
     resolution: {integrity: sha512-36yxDn5H7OFZQla0/jFJmbIKTdZAQHngCedGxiMmpNfEZM0sdEeT+WczLQrjK6D7o2aiyLYDnkw0R3JK0Qv1RQ==}

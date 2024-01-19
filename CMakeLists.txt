@@ -125,16 +125,27 @@ FetchContent_MakeAvailable(wil flatbuffers)
 #$<$<CONFIG:DEBUG>:-wholearchive:clang_rt.asan_dbg-x86_64.lib$<SEMICOLON>-NODEFAULTLIB:LIBCMTD>
 
 build_flatbuffers(
-        "${CMAKE_CURRENT_SOURCE_DIR}/schemas/coverage_report.fbs"
-        ""
-        coverpp-schemas
-        ""
-        "${CMAKE_CURRENT_SOURCE_DIR}/_generated/include"
-        ""
-        ""
+        #[[flatbuffers_schemas]]     "${CMAKE_CURRENT_SOURCE_DIR}/schemas/coverage_report.fbs"
+        #[[schema_include_dirs]]     ""
+        #[[custom_target_name]]      coverpp-schemas
+        #[[additional_dependencies]] ""
+        #[[generated_includes_dir]]  "${CMAKE_CURRENT_SOURCE_DIR}/_generated/include"
+        #[[binary_schemas_dir]]      ""
+        #[[copy_text_schemas_dir]]   ""
 )
 
-add_dependencies(coverpp coverpp-schemas)
+set(FLATBUFFERS_FLATC_SCHEMA_EXTRA_ARGS "--ts")
+build_flatbuffers(
+        #[[flatbuffers_schemas]]     "${CMAKE_CURRENT_SOURCE_DIR}/schemas/coverage_report.fbs"
+        #[[schema_include_dirs]]     ""
+        #[[custom_target_name]]      coverpp-schemas-frontend
+        #[[additional_dependencies]] ""
+        #[[generated_includes_dir]]  "${CMAKE_CURRENT_SOURCE_DIR}/_generated/frontend"
+        #[[binary_schemas_dir]]      ""
+        #[[copy_text_schemas_dir]]   ""
+)
+
+add_dependencies(coverpp coverpp-schemas coverpp-schemas-frontend)
 
 target_link_libraries(coverpp PRIVATE WIL flatbuffers)
 
