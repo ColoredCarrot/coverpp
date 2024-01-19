@@ -1,92 +1,42 @@
 #include "RawExporter.hpp"
 #include "../../util/math_util.hpp"
 
+#include <coverage_report_generated.h>
+
 #include <fstream>
-#include <string>
+#include <ranges>
 
 namespace coverpp
 {
 RawExporter::RawExporter(std::filesystem::path out_dir) : AbstractFileExporter(std::move(out_dir))
 {}
 
-#ifdef __JETBRAINS_IDE__
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "Simplify"
-#endif
-template<std::integral T>
-static T to_little_endian(T value)
-{
-    if constexpr (std::endian::native == std::endian::little)
-    {
-        return value;
-    }
-    else if constexpr (std::endian::native == std::endian::big)
-    {
-        return std::byteswap(value);
-    }
-    else
-    {
-        static_assert(sizeof(T) == 1, "Mixed-endian environments are not supported");
-        return value;
-    }
-}
-#ifdef __JETBRAINS_IDE__
-#pragma clang diagnostic pop
-#endif
-
-#if defined(__JETBRAINS_IDE__) || defined(__INTELLISENSE__)
-static const char* utf8_data(const std::u8string& s)
-{
-    return reinterpret_cast<const char*>(s.data());
-}
-#else
-static const char* utf8_data(const std::string& s)
-{
-    return s.data();
-}
-#endif
 void RawExporter::run(const BasicReport& covered, const BasicReport& reachable, const std::filesystem::path& out_dir)
 {
-    // TODO use protobuf so we don't have to code this in C++, JS, Java, ...
-
     static const std::set<unsigned> empty_set{};
 
     std::filesystem::path file_path = out_dir / "report.coverpp";
 
-    std::ofstream file{file_path, std::ios_base::out | std::ios_base::trunc | std::ios_base::binary};
-
-    const auto write_integral = [&file](std::integral auto value) {
-        value = to_little_endian(value);
-        file.write(reinterpret_cast<const char*>(&value), sizeof(value));
-    };
-
-    file << start_magic;
-
+    flatbuffers::FlatBufferBuilder builder{1024};
+    std::vector<flatbuffers::Offset<Coverpp::FileReport>> file_reports;
     for (const auto& [source_file, reachable_lines] : reachable.file_reports())
     {
         const auto it = covered.file_reports().find(source_file);
         const auto& covered_lines = it != covered.file_reports().end() ? it->second.covered_lines() : empty_set;
 
-        // Write source file path (UTF-8) with length prefix
-        const auto source_file_path = source_file.u8string();
-        write_integral(source_file_path.size());
-        file.write(utf8_data(source_file_path), detail::convert_or_clamp<std::streamsize>(source_file_path.size()));
+        auto source_file_path = builder.CreateString(source_file.u8string());
 
-        // Write reachable lines with total prefix
-        write_integral(reachable_lines.covered_lines().size());
-        for (unsigned line : reachable_lines.covered_lines())
-        {
-            write_integral(line);
-        }
+        auto reachable_lines_v = builder.CreateVector(reachable_lines.covered_lines() | std::ranges::to<std::vector>());
+        auto covered_lines_v = builder.CreateVector(covered_lines | std::ranges::to<std::vector>());
 
-        // Write covered lines with total prefix
-        write_integral(covered_lines.size());
-        for (unsigned line : covered_lines)
-        {
-            write_integral(line);
-        }
+        file_reports.push_back(
+            Coverpp::CreateFileReport(builder, source_file_path, reachable_lines_v, covered_lines_v));
     }
+    auto coverage_report = Coverpp::CreateCoverageReportDirect(builder, &file_reports);
+    builder.Finish(coverage_report);
 
-    file << end_magic;
+    std::ofstream file{file_path, std::ios_base::out | std::ios_base::trunc | std::ios_base::binary};
+    file.exceptions(std::ios_base::badbit | std::ios_base::failbit);
+    file.write(reinterpret_cast<const char*>(builder.GetBufferPointer()), builder.GetSize());
 }
 }

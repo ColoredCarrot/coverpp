@@ -1,0 +1,13 @@
+namespace Coverpp;
+
+table FileReport {
+  path:string;
+  reachable_lines:[uint32];
+  covered_lines:[uint32];
+}
+
+table CoverageReport {
+  file_reports:[FileReport];
+}
+
+root_type CoverageReport;

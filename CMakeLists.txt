@@ -114,10 +114,29 @@ FetchContent_Declare(
         GIT_TAG v1.0.231216.1
 )
 
-FetchContent_MakeAvailable(wil)
+FetchContent_Declare(
+        flatbuffers
+        GIT_REPOSITORY https://github.com/google/flatbuffers.git
+        GIT_TAG v23.5.26
+)
+
+FetchContent_MakeAvailable(wil flatbuffers)
 
 #$<$<CONFIG:DEBUG>:-wholearchive:clang_rt.asan_dbg-x86_64.lib$<SEMICOLON>-NODEFAULTLIB:LIBCMTD>
-target_link_libraries(coverpp PRIVATE WIL)
+
+build_flatbuffers(
+        "${CMAKE_CURRENT_SOURCE_DIR}/schemas/coverage_report.fbs"
+        ""
+        coverpp-schemas
+        ""
+        "${CMAKE_CURRENT_SOURCE_DIR}/_generated/include"
+        ""
+        ""
+)
+
+add_dependencies(coverpp coverpp-schemas)
+
+target_link_libraries(coverpp PRIVATE WIL flatbuffers)
 
 # Copy DIA SDK DLL to same directory as .exe
 # See https://stackoverflow.com/questions/10671916/how-to-copy-dll-files-into-the-same-folder-as-the-executable-using-cmake
