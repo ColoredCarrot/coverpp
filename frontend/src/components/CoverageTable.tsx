@@ -6,18 +6,12 @@ import {
     flexRender,
     getCoreRowModel,
     Row,
-    RowData,
-    RowModel,
     Table,
     useReactTable,
-    memo as tanStackTableMemo,
 } from "@tanstack/react-table";
 import { useState } from "react";
-import { isDev } from "#/environment";
-
-function cls(...classes: readonly string[]): string {
-    return classes.join(" ");
-}
+import cls from "#/util/cls";
+import getExpandedRowModelNoFilter from "#/util/getExpandedRowModelNoFilter";
 
 type Entry = {
     path: string;
@@ -70,12 +64,11 @@ function Head({ table }: CommonProps) {
 function DataRow({ row }: { row: Row<Entry> }) {
     return (
         <div
-            className={styles.Row}
-            style={{
-                "--indent": row.depth,
-                height: row.getIsAllParentsExpanded() ? "1.5rem" : 0,
-                opacity: row.getIsAllParentsExpanded() ? 1 : 0,
-            }}
+            className={cls(styles.Row, [
+                styles.contracted,
+                !row.getIsAllParentsExpanded(),
+            ])}
+            style={{ "--indent": row.depth }}
         >
             <div>
                 {row.getCanExpand() ? (
@@ -94,7 +87,7 @@ function DataRow({ row }: { row: Row<Entry> }) {
                     )
                 ) : (
                     <IconChevronRight
-                        className={styles.ExpandChevron}
+                        className={styles.HiddenChevron}
                         size={"1.2rem"}
                         style={{ opacity: 0 }}
                     />
@@ -158,62 +151,4 @@ export default function CoverageTable() {
             <Body table={table} />
         </div>
     );
-}
-
-/**
- * Same as the default `getExpandedRowModel`,
- * except that non-expanded rows aren't actually filtered out.
- * Useful if you want to manually filter out those rows,
- * e.g. to implement animations.
- */
-export function getExpandedRowModelNoFilter<TData extends RowData>(): (
-    table: Table<TData>,
-) => () => RowModel<TData> {
-    return table =>
-        tanStackTableMemo(
-            () => [
-                table.getState().expanded,
-                table.getPreExpandedRowModel(),
-                table.options.paginateExpandedRows,
-            ],
-            (expanded, rowModel, paginateExpandedRows) => {
-                if (
-                    !rowModel.rows.length ||
-                    (expanded !== true && !Object.keys(expanded ?? {}).length)
-                ) {
-                    return rowModel;
-                }
-
-                if (!paginateExpandedRows) {
-                    // Only expand rows at this point if they are being paginated
-                    return rowModel;
-                }
-
-                return expandRows(rowModel);
-            },
-            {
-                key: isDev() && "getExpandedRowModelNoFilter",
-                debug: () => table.options.debugAll ?? table.options.debugTable,
-            },
-        );
-}
-
-export function expandRows<TData extends RowData>(rowModel: RowModel<TData>) {
-    const expandedRows: Row<TData>[] = [];
-
-    const handleRow = (row: Row<TData>) => {
-        expandedRows.push(row);
-
-        if (row.subRows?.length /*&& row.getIsExpanded()*/) {
-            row.subRows.forEach(handleRow);
-        }
-    };
-
-    rowModel.rows.forEach(handleRow);
-
-    return {
-        rows: expandedRows,
-        flatRows: rowModel.flatRows,
-        rowsById: rowModel.rowsById,
-    };
 }
