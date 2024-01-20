@@ -1,70 +1,135 @@
 import styles from "./CoverageTable.module.css";
 import { IconChevronDown, IconChevronRight } from "@tabler/icons-react";
+import {
+    createColumnHelper,
+    ExpandedState,
+    flexRender,
+    getCoreRowModel,
+    getExpandedRowModel,
+    Row,
+    Table,
+    useReactTable,
+} from "@tanstack/react-table";
+import { useState } from "react";
 
 function cls(...classes: readonly string[]): string {
     return classes.join(" ");
 }
 
+type Entry = {
+    path: string;
+    totalCovered: number;
+    totalReachable: number;
+    children?: Entry[];
+};
+
+const percentNumberFormat = new Intl.NumberFormat("en-US", {
+    style: "percent",
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+});
+
+const helper = createColumnHelper<Entry>();
+const columns = [
+    helper.accessor("path", {
+        header: "Source file",
+        cell: ctx => <code>{ctx.getValue()}</code>,
+    }),
+    helper.accessor("totalCovered", { header: "Covered" }),
+    helper.accessor("totalReachable", { header: "Total" }),
+    helper.display({
+        header: "Percent",
+        cell: ctx =>
+            percentNumberFormat.format(
+                ctx.row.original.totalCovered / ctx.row.original.totalReachable,
+            ),
+    }),
+];
+
+type CommonProps = { table: Table<Entry> };
+
+function Head({ table }: CommonProps) {
+    return (
+        <div className={cls(styles.Row, styles.Head)}>
+            <div />
+            {table.getLeafHeaders().map(header => (
+                <div key={header.id}>
+                    {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext(),
+                    )}
+                </div>
+            ))}
+        </div>
+    );
+}
+
+function DataRow({ row }: { row: Row<Entry> }) {
+    return (
+        <div className={styles.Row} style={{ "--indent": row.depth }}>
+            <div>
+                {row.getCanExpand() ? (
+                    row.getIsExpanded() ? (
+                        <IconChevronDown size={"1.2rem"} />
+                    ) : (
+                        <IconChevronRight size={"1.2rem"} />
+                    )
+                ) : (
+                    <IconChevronRight size={"1.2rem"} style={{ opacity: 0 }} />
+                )}
+            </div>
+            {row.getVisibleCells().map(cell => (
+                <div key={cell.id}>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </div>
+            ))}
+        </div>
+    );
+}
+
+function Body({ table }: { table: Table<Entry> }) {
+    return table.getRowModel().rows.map(row => <DataRow key={row.id} row={row} />);
+}
+
 export default function CoverageTable() {
+    const [expanded, setExpanded] = useState<ExpandedState>(true);
+
+    const table = useReactTable({
+        data: [
+            {
+                path: "foo/bar",
+                totalCovered: 12,
+                totalReachable: 36,
+                children: [
+                    { path: "baz.cpp", totalCovered: 10, totalReachable: 22 },
+                    {
+                        path: "lib",
+                        totalCovered: 2,
+                        totalReachable: 14,
+                        children: [
+                            {
+                                path: "util.cpp",
+                                totalCovered: 2,
+                                totalReachable: 14,
+                            },
+                        ],
+                    },
+                ],
+            },
+            { path: "src/main.cpp", totalCovered: 12, totalReachable: 36 },
+        ],
+        columns,
+        state: { expanded },
+        onExpandedChange: setExpanded,
+        getSubRows: row => row.children,
+        getCoreRowModel: getCoreRowModel(),
+        getExpandedRowModel: getExpandedRowModel(),
+    });
+
     return (
         <div className={styles.CoverageTable}>
-            <div className={cls(styles.Row, styles.Head)}>
-                <div />
-                <div>Source file</div>
-                <div>Covered</div>
-                <div>Total</div>
-                <div>Percent</div>
-            </div>
-
-            <div className={styles.Row}>
-                <div>
-                    <IconChevronRight size={"1.2rem"} />
-                </div>
-                <div>
-                    <code>/project/src/foo/main.cpp</code>
-                </div>
-                <div>142</div>
-                <div>190</div>
-                <div>71%</div>
-            </div>
-
-            <div className={styles.Row}>
-                <div>
-                    <IconChevronDown size={"1.2rem"} />
-                </div>
-                <div>
-                    <code>/project/src/foo/lib</code>
-                </div>
-                <div>142</div>
-                <div>190</div>
-                <div>71%</div>
-            </div>
-
-            <div style={{ "--indent": 1 }}>
-                <div className={styles.Row}>
-                    <div>
-                        <IconChevronRight size={"1.2rem"} />
-                    </div>
-                    <div>
-                        <code>string_helper.cpp</code>
-                    </div>
-                    <div>142</div>
-                    <div>190</div>
-                    <div>71%</div>
-                </div>
-            </div>
-
-            <div className={styles.Row}>
-                <div>
-                    <IconChevronRight size={"1.2rem"} />
-                </div>
-                <div>
-                    <code>/project/src/foo/main.cpp</code>
-                </div>
-                <div>142</div>
-                <div>190</div>
-                <div>71%</div>
-            </div>
+            <Head table={table} />
+            <Body table={table} />
         </div>
     );
 }
