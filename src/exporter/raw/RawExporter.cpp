@@ -13,9 +13,36 @@ RawExporter::RawExporter(std::filesystem::path out_file, std::filesystem::path s
     : m_out_file(std::move(out_file)), m_source_root(std::move(source_root))
 {}
 
-static std::filesystem::path find_root(const std::filesystem::path&)
+static Coverpp::Report::StatsT& operator+=(Coverpp::Report::StatsT& stats, const Coverpp::Report::StatsT& more)
 {
+    stats.total_reachable += more.total_reachable;
+    stats.total_covered += more.total_covered;
+    return stats;
+}
 
+static std::unique_ptr<Coverpp::Report::StatsT> calculate_stats(std::vector<Coverpp::Report::PathReportUnion>& reports)
+{
+    auto stats = std::make_unique<Coverpp::Report::StatsT>();
+    for (auto& report : reports)
+    {
+        if (auto* directory_report = report.AsDirectoryReport())
+        {
+            auto child_stats = calculate_stats(directory_report->children);
+            *stats += *child_stats;
+            directory_report->stats = std::move(child_stats);
+        }
+        else if (auto* child_file_report = report.AsFileReport())
+        {
+            stats->total_reachable += child_file_report->reachable_lines.size();
+            stats->total_covered += child_file_report->covered_lines.size();
+        }
+    }
+    return stats;
+}
+
+static void calculate_stats(Coverpp::Report::RootT& root)
+{
+    root.stats = calculate_stats(root.children);
 }
 
 void RawExporter::run(const BasicReport& covered, const BasicReport& reachable)
@@ -92,6 +119,8 @@ void RawExporter::run(const BasicReport& covered, const BasicReport& reachable)
         file_report.reachable_lines = reachable_lines.covered_lines() | std::ranges::to<std::vector>();
         file_report.covered_lines = covered_lines | std::ranges::to<std::vector>();
     }
+
+    calculate_stats(root);
 
     Coverpp::Report::CoverageReportT result;
     result.roots.push_back(std::move(root));
