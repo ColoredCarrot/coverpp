@@ -1,0 +1,26 @@
+.CoverageTable {
+    white-space: nowrap;
+
+    font-size: 0.9rem;
+
+    --indent: 0;
+}
+
+.Row {
+    margin-left: calc(var(--indent, 0) * 2rem);
+
+    display: grid;
+    grid-template-columns: 2rem 1fr 4rem 4rem 4rem;
+
+    padding-block: 0.4rem;
+}
+
+.Head {
+    position: sticky;
+    top: 0;
+
+    background: var(--color-bg);
+
+    text-align: left;
+    font-weight: normal;
+}

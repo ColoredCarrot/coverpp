@@ -8,6 +8,9 @@ dependencies:
   '@babel/plugin-syntax-import-attributes':
     specifier: ^7.23.3
     version: 7.23.3(@babel/core@7.23.7)
+  '@tabler/icons-react':
+    specifier: ^2.46.0
+    version: 2.46.0(react@18.2.0)
   '@tanstack/react-router':
     specifier: ^1.1.6
     version: 1.4.6(react-dom@18.2.0)(react@18.2.0)
@@ -1243,6 +1246,20 @@ packages:
       svg-parser: 2.0.4
     transitivePeerDependencies:
       - supports-color
+    dev: false
+
+  /@tabler/icons-react@2.46.0(react@18.2.0):
+    resolution: {integrity: sha512-X8MRxuslIOFqMjAo+GvUZDpjlOwNYNJTuOsHXf/NBvVI6ygqUf0FUNsDLLA5fQ6k6KtRwxMlgGB+eR8ZG1UP0g==}
+    peerDependencies:
+      react: ^16.5.1 || ^17.0.0 || ^18.0.0
+    dependencies:
+      '@tabler/icons': 2.46.0
+      prop-types: 15.8.1
+      react: 18.2.0
+    dev: false
+
+  /@tabler/icons@2.46.0:
+    resolution: {integrity: sha512-Q5G8Pj5IO+Uhc6pszpu5/hGYY018JwEzzvmuqr+gKJtfIvAHA3umpwUilMRLEy89p+WCP+YsDhicMhfBCCv1qA==}
     dev: false
 
   /@tanstack/history@1.4.6:
