@@ -4,7 +4,10 @@ import { createRoot as createReactRoot } from "react-dom/client";
 import { routes } from "#/routes";
 import NotFoundPage from "#/pages/NotFoundPage";
 
-const routeTree = routes.root.addChildren([routes.index]);
+const routeTree = routes.root.addChildren([
+    routes.index,
+    routes.coverageReport,
+]);
 
 const notFoundRoute = new NotFoundRoute({
     getParentRoute: () => routes.root,
