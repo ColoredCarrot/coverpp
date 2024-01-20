@@ -13,11 +13,11 @@ import { useState } from "react";
 import cls from "#/util/cls";
 import getExpandedRowModelNoFilter from "#/util/getExpandedRowModelNoFilter";
 
-type Entry = {
+export type Scope = {
     path: string;
     totalCovered: number;
     totalReachable: number;
-    children?: Entry[];
+    children?: Scope[];
 };
 
 const percentNumberFormat = new Intl.NumberFormat("en-US", {
@@ -26,7 +26,7 @@ const percentNumberFormat = new Intl.NumberFormat("en-US", {
     maximumFractionDigits: 1,
 });
 
-const helper = createColumnHelper<Entry>();
+const helper = createColumnHelper<Scope>();
 const columns = [
     helper.accessor("path", {
         header: "Source file",
@@ -43,7 +43,7 @@ const columns = [
     }),
 ];
 
-type CommonProps = { table: Table<Entry> };
+type CommonProps = { table: Table<Scope> };
 
 function Head({ table }: CommonProps) {
     return (
@@ -61,7 +61,7 @@ function Head({ table }: CommonProps) {
     );
 }
 
-function DataRow({ row }: { row: Row<Entry> }) {
+function DataRow({ row }: { row: Row<Scope> }) {
     return (
         <div
             className={cls(styles.Row, [
@@ -102,41 +102,17 @@ function DataRow({ row }: { row: Row<Entry> }) {
     );
 }
 
-function Body({ table }: { table: Table<Entry> }) {
+function Body({ table }: { table: Table<Scope> }) {
     return table
         .getRowModel()
         .rows.map(row => <DataRow key={row.id} row={row} />);
 }
 
-const testData: Entry[] = [
-    {
-        path: "foo/bar",
-        totalCovered: 12,
-        totalReachable: 36,
-        children: [
-            { path: "baz.cpp", totalCovered: 10, totalReachable: 22 },
-            {
-                path: "lib",
-                totalCovered: 2,
-                totalReachable: 14,
-                children: [
-                    {
-                        path: "util.cpp",
-                        totalCovered: 2,
-                        totalReachable: 14,
-                    },
-                ],
-            },
-        ],
-    },
-    { path: "src/main.cpp", totalCovered: 12, totalReachable: 36 },
-];
-
-export default function CoverageTable() {
+export default function CoverageTable(props: { scopes: Scope[] }) {
     const [expanded, setExpanded] = useState<ExpandedState>(true);
 
     const table = useReactTable({
-        data: testData,
+        data: props.scopes,
         columns,
         state: { expanded },
         onExpandedChange: setExpanded,

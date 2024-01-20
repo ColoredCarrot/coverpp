@@ -1,6 +1,6 @@
 import { routes } from "#/routes";
 import { isDev } from "#/environment";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { parseCoverage } from "#/coverage/CoverageParser";
 import {
     CoverageReportT,
@@ -12,6 +12,7 @@ import {
 import { FileCoverage, LineCoverage } from "#/coverage/FileCoverage";
 import RemoteCoverageCodeBlock from "#/components/RemoteCoverageCodeBlock";
 import GaugeComponent from "react-gauge-component";
+import CoverageTable, { Scope } from "#/components/CoverageTable";
 
 const makeSourceFileUrl: (sourceFile: string) => string = isDev()
     ? sourceFile => "/@fs/" + sourceFile
@@ -91,13 +92,45 @@ export default function CoverageReportPage() {
     const report = fileContent.content;
 
     return report.roots.map(root => (
-        <>
-            <LargeStats stats={root.stats ?? new StatsT()} />
-            <CoverageRoot key={root.path as string} root={root} />
-        </>
+        <Root key={root.path as string} root={root} />
     ));
 
     // return <RemoteCoverageCodeBlock coverage={fileContent.content[0]} />;
+}
+
+function Root(props: { root: RootT }) {
+    const scopes = useMemo(() => [getScope(props.root)], [props.root]);
+    //LargeStats stats={root.stats ?? new StatsT()} />
+    //<CoverageRoot key={root.path as string} root={root} />
+    return <CoverageTable scopes={scopes} />;
+}
+
+function getScope(report: RootT | DirectoryReportT | FileReportT): Scope {
+    if (report instanceof DirectoryReportT) {
+        const stats = report.stats ?? new StatsT();
+        return {
+            path: report.name as string,
+            totalCovered: Number(stats.totalCovered ?? 0),
+            totalReachable: Number(stats.totalReachable ?? 0),
+            children: report.children?.map(getScope),
+        };
+    }
+
+    if (report instanceof FileReportT) {
+        return {
+            path: report.path as string,
+            totalCovered: report.coveredLines?.length ?? 0,
+            totalReachable: report.reachableLines?.length ?? 0,
+        };
+    }
+
+    const stats = report.stats ?? new StatsT();
+    return {
+        path: report.path as string,
+        totalCovered: Number(stats.totalCovered),
+        totalReachable: Number(stats.totalReachable),
+        children: report.children?.map(getScope),
+    };
 }
 
 function CoverageRoot(props: { root: RootT }) {
