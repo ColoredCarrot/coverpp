@@ -5,12 +5,15 @@ import {
     ExpandedState,
     flexRender,
     getCoreRowModel,
-    getExpandedRowModel,
     Row,
+    RowData,
+    RowModel,
     Table,
     useReactTable,
+    memo as tanStackTableMemo,
 } from "@tanstack/react-table";
 import { useState } from "react";
+import { isDev } from "#/environment";
 
 function cls(...classes: readonly string[]): string {
     return classes.join(" ");
@@ -66,7 +69,14 @@ function Head({ table }: CommonProps) {
 
 function DataRow({ row }: { row: Row<Entry> }) {
     return (
-        <div className={styles.Row} style={{ "--indent": row.depth }}>
+        <div
+            className={styles.Row}
+            style={{
+                "--indent": row.depth,
+                height: row.getIsAllParentsExpanded() ? "1.5rem" : 0,
+                opacity: row.getIsAllParentsExpanded() ? 1 : 0,
+            }}
+        >
             <div>
                 {row.getCanExpand() ? (
                     row.getIsExpanded() ? (
@@ -139,7 +149,7 @@ export default function CoverageTable() {
         onExpandedChange: setExpanded,
         getSubRows: row => row.children,
         getCoreRowModel: getCoreRowModel(),
-        getExpandedRowModel: getExpandedRowModel(),
+        getExpandedRowModel: getExpandedRowModelNoFilter(),
     });
 
     return (
@@ -148,4 +158,62 @@ export default function CoverageTable() {
             <Body table={table} />
         </div>
     );
+}
+
+/**
+ * Same as the default `getExpandedRowModel`,
+ * except that non-expanded rows aren't actually filtered out.
+ * Useful if you want to manually filter out those rows,
+ * e.g. to implement animations.
+ */
+export function getExpandedRowModelNoFilter<TData extends RowData>(): (
+    table: Table<TData>,
+) => () => RowModel<TData> {
+    return table =>
+        tanStackTableMemo(
+            () => [
+                table.getState().expanded,
+                table.getPreExpandedRowModel(),
+                table.options.paginateExpandedRows,
+            ],
+            (expanded, rowModel, paginateExpandedRows) => {
+                if (
+                    !rowModel.rows.length ||
+                    (expanded !== true && !Object.keys(expanded ?? {}).length)
+                ) {
+                    return rowModel;
+                }
+
+                if (!paginateExpandedRows) {
+                    // Only expand rows at this point if they are being paginated
+                    return rowModel;
+                }
+
+                return expandRows(rowModel);
+            },
+            {
+                key: isDev() && "getExpandedRowModelNoFilter",
+                debug: () => table.options.debugAll ?? table.options.debugTable,
+            },
+        );
+}
+
+export function expandRows<TData extends RowData>(rowModel: RowModel<TData>) {
+    const expandedRows: Row<TData>[] = [];
+
+    const handleRow = (row: Row<TData>) => {
+        expandedRows.push(row);
+
+        if (row.subRows?.length /*&& row.getIsExpanded()*/) {
+            row.subRows.forEach(handleRow);
+        }
+    };
+
+    rowModel.rows.forEach(handleRow);
+
+    return {
+        rows: expandedRows,
+        flatRows: rowModel.flatRows,
+        rowsById: rowModel.rowsById,
+    };
 }

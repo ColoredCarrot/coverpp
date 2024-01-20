@@ -12,7 +12,9 @@
     display: grid;
     grid-template-columns: 2rem 1fr 4rem 4rem 4rem;
 
-    padding-block: 0.4rem;
+    background: var(--color-bg);
+
+    transition: all 180ms ease-in-out;
 }
 
 .Head {
