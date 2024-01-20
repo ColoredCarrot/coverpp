@@ -32,14 +32,24 @@ const columns = [
         header: "Source file",
         cell: ctx => <code>{ctx.getValue()}</code>,
     }),
-    helper.accessor("totalCovered", { header: "Covered" }),
-    helper.accessor("totalReachable", { header: "Total" }),
+    helper.accessor("totalCovered", {
+        header: "Covered",
+        cell: ctx => <div className={styles.Number}>{ctx.getValue()}</div>,
+    }),
+    helper.accessor("totalReachable", {
+        header: "Total",
+        cell: ctx => <div className={styles.Number}>{ctx.getValue()}</div>,
+    }),
     helper.display({
         header: "Percent",
-        cell: ctx =>
-            percentNumberFormat.format(
-                ctx.row.original.totalCovered / ctx.row.original.totalReachable,
-            ),
+        cell: ctx => (
+            <div className={styles.Number}>
+                {percentNumberFormat.format(
+                    ctx.row.original.totalCovered /
+                        ctx.row.original.totalReachable,
+                )}
+            </div>
+        ),
     }),
 ];
 
@@ -50,7 +60,7 @@ function Head({ table }: CommonProps) {
         <div className={cls(styles.Row, styles.Head)}>
             <div />
             {table.getLeafHeaders().map(header => (
-                <div key={header.id}>
+                <div key={header.id} className={styles.HeadColumn}>
                     {flexRender(
                         header.column.columnDef.header,
                         header.getContext(),
