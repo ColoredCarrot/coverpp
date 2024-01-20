@@ -393,15 +393,16 @@ int run_with_coverage(const coverpp::CoverageParams& params)
                      coverpp::styled<coverpp::ColorBold::cyan>(sink.count_tracepoints()));
     }
 
-    coverpp::SourceFileExporter report_generator{params.out_dir};
     coverpp::BasicReport report = coverpp::process_coverage_sink(sink);
     coverpp::BasicReport reachable_report = coverpp::process_coverage_sink(reachable);
+
+    /*coverpp::SourceFileExporter report_generator{params.out_dir};
     report_generator.run(report, reachable_report);
 
     coverpp::HtmlExporter exporter{params.out_dir};
-    exporter.run(report, reachable_report);
+    exporter.run(report, reachable_report);*/
 
-    coverpp::RawExporter raw_exporter{params.out_dir};
+    coverpp::RawExporter raw_exporter{params.out_dir / "report.coverpp", params.source_dir};
     raw_exporter.run(report, reachable_report);
 
     return *exit_code;

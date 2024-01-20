@@ -37,6 +37,11 @@ std::string utf16le_to_utf8(std::wstring_view utf16le)
     return utf8;
 }
 
+std::string windows::utf16le_to_utf8(wchar_t utf16le)
+{
+    return utf16le_to_utf8(std::wstring_view{&utf16le, 1});
+}
+
 std::wstring utf8_to_utf16le(std::string_view utf8)
 {
     // This is not an optimization, but required, since MultiByteToWideChar returns 0 to indicate an error

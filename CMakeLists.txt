@@ -124,6 +124,7 @@ FetchContent_MakeAvailable(wil flatbuffers)
 
 #$<$<CONFIG:DEBUG>:-wholearchive:clang_rt.asan_dbg-x86_64.lib$<SEMICOLON>-NODEFAULTLIB:LIBCMTD>
 
+set(FLATBUFFERS_FLATC_SCHEMA_EXTRA_ARGS "--gen-object-api")
 build_flatbuffers(
         #[[flatbuffers_schemas]]     "${CMAKE_CURRENT_SOURCE_DIR}/schemas/coverage_report.fbs"
         #[[schema_include_dirs]]     ""
@@ -134,7 +135,7 @@ build_flatbuffers(
         #[[copy_text_schemas_dir]]   ""
 )
 
-set(FLATBUFFERS_FLATC_SCHEMA_EXTRA_ARGS "--ts")
+set(FLATBUFFERS_FLATC_SCHEMA_EXTRA_ARGS "--ts" "--gen-object-api")
 build_flatbuffers(
         #[[flatbuffers_schemas]]     "${CMAKE_CURRENT_SOURCE_DIR}/schemas/coverage_report.fbs"
         #[[schema_include_dirs]]     ""

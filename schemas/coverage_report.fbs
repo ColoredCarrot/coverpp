@@ -1,4 +1,4 @@
-namespace Coverpp;
+namespace Coverpp.Report;
 
 table FileReport {
   path:string;
@@ -6,8 +6,29 @@ table FileReport {
   covered_lines:[uint32];
 }
 
+table Stats {
+  total_reachable:uint64;
+  total_covered:uint64;
+  //total_files:uint32;
+}
+
+union PathReport { FileReport, DirectoryReport }
+
+table DirectoryReport {
+  name:string; // Relative path without any directory separators (e.g. "foo")
+  children:[PathReport];
+  stats:Stats;
+}
+
+table Root {
+  path:string; // Non-processed path to the source root without a trailing directory separator (e.g. "C:\my\cool\project\src")
+  directory_separator:string; // Most likely a forward or backward slash, used to reconstruct the original path
+  children:[PathReport];
+  stats:Stats;
+}
+
 table CoverageReport {
-  file_reports:[FileReport];
+  roots:[Root] (native_inline);
 }
 
 root_type CoverageReport;

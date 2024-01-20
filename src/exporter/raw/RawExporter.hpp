@@ -1,17 +1,18 @@
 #pragma once
 
-#include "../AbstractFileExporter.hpp"
+#include "../Exporter.hpp"
 
 namespace coverpp
 {
-class RawExporter : public AbstractFileExporter
+class RawExporter : public Exporter
 {
 public:
-    explicit RawExporter(std::filesystem::path out_dir);
+    RawExporter(std::filesystem::path out_file, std::filesystem::path source_root);
 
-    using AbstractFileExporter::run;
+    void run(const BasicReport& covered, const BasicReport& reachable) override;
 
-protected:
-    void run(const BasicReport& covered, const BasicReport& reachable, const std::filesystem::path& out_dir) override;
+private:
+    std::filesystem::path m_out_file;
+    std::filesystem::path m_source_root;
 };
 }
