@@ -102,7 +102,12 @@ function Root(props: { root: RootT }) {
     const scopes = useMemo(() => [getScope(props.root)], [props.root]);
     //LargeStats stats={root.stats ?? new StatsT()} />
     //<CoverageRoot key={root.path as string} root={root} />
-    return <CoverageTable scopes={scopes} />;
+    return (
+        <CoverageTable
+            scopes={scopes}
+            pathSeparator={(props.root.directorySeparator ?? "/") as string}
+        />
+    );
 }
 
 function getScope(report: RootT | DirectoryReportT | FileReportT): Scope {

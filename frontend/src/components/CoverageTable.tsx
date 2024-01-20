@@ -9,7 +9,7 @@ import {
     Table,
     useReactTable,
 } from "@tanstack/react-table";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import cls from "#/util/cls";
 import getExpandedRowModelNoFilter from "#/util/getExpandedRowModelNoFilter";
 
@@ -108,11 +108,24 @@ function Body({ table }: { table: Table<Scope> }) {
         .rows.map(row => <DataRow key={row.id} row={row} />);
 }
 
-export default function CoverageTable(props: { scopes: Scope[] }) {
+export default function CoverageTable(props: {
+    scopes: Scope[];
+    pathSeparator: string;
+    flattenSingleChildScopes?: boolean;
+}) {
     const [expanded, setExpanded] = useState<ExpandedState>(true);
 
+    const data = useMemo(() => {
+        if (!(props.flattenSingleChildScopes ?? true)) {
+            return props.scopes;
+        }
+        const flattened = props.scopes.slice();
+        flattenScopeTree(flattened, props.pathSeparator);
+        return flattened;
+    }, [props.scopes, props.pathSeparator, props.flattenSingleChildScopes]);
+
     const table = useReactTable({
-        data: props.scopes,
+        data,
         columns,
         state: { expanded },
         onExpandedChange: setExpanded,
@@ -127,4 +140,32 @@ export default function CoverageTable(props: { scopes: Scope[] }) {
             <Body table={table} />
         </div>
     );
+}
+
+/**
+ * Flatten the given scope tree.
+ *
+ * Specifically, if a scope contains only one child, the parent scope
+ * is merged with the child scope (their paths are concatenated).
+ *
+ * @param scopes Scope tree to flatten
+ * @param pathSeparator Separator to be placed between concatenated paths
+ */
+function flattenScopeTree(scopes: Scope[], pathSeparator: string) {
+    for (const scope of scopes) {
+        if (scope.children === undefined) {
+            continue;
+        }
+
+        flattenScopeTree(scope.children, pathSeparator);
+
+        if (scope.children.length !== 1) {
+            continue;
+        }
+        const child = scope.children[0];
+
+        // Merge scope with its child
+        scope.path += pathSeparator + child.path;
+        scope.children = child.children;
+    }
 }
