@@ -24,3 +24,7 @@
     text-align: left;
     font-weight: normal;
 }
+
+.ExpandChevron {
+    user-select: none;
+}

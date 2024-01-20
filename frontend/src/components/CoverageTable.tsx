@@ -70,12 +70,24 @@ function DataRow({ row }: { row: Row<Entry> }) {
             <div>
                 {row.getCanExpand() ? (
                     row.getIsExpanded() ? (
-                        <IconChevronDown size={"1.2rem"} />
+                        <IconChevronDown
+                            className={styles.ExpandChevron}
+                            size={"1.2rem"}
+                            onClick={row.getToggleExpandedHandler()}
+                        />
                     ) : (
-                        <IconChevronRight size={"1.2rem"} />
+                        <IconChevronRight
+                            className={styles.ExpandChevron}
+                            size={"1.2rem"}
+                            onClick={row.getToggleExpandedHandler()}
+                        />
                     )
                 ) : (
-                    <IconChevronRight size={"1.2rem"} style={{ opacity: 0 }} />
+                    <IconChevronRight
+                        className={styles.ExpandChevron}
+                        size={"1.2rem"}
+                        style={{ opacity: 0 }}
+                    />
                 )}
             </div>
             {row.getVisibleCells().map(cell => (
@@ -88,36 +100,40 @@ function DataRow({ row }: { row: Row<Entry> }) {
 }
 
 function Body({ table }: { table: Table<Entry> }) {
-    return table.getRowModel().rows.map(row => <DataRow key={row.id} row={row} />);
+    return table
+        .getRowModel()
+        .rows.map(row => <DataRow key={row.id} row={row} />);
 }
+
+const testData: Entry[] = [
+    {
+        path: "foo/bar",
+        totalCovered: 12,
+        totalReachable: 36,
+        children: [
+            { path: "baz.cpp", totalCovered: 10, totalReachable: 22 },
+            {
+                path: "lib",
+                totalCovered: 2,
+                totalReachable: 14,
+                children: [
+                    {
+                        path: "util.cpp",
+                        totalCovered: 2,
+                        totalReachable: 14,
+                    },
+                ],
+            },
+        ],
+    },
+    { path: "src/main.cpp", totalCovered: 12, totalReachable: 36 },
+];
 
 export default function CoverageTable() {
     const [expanded, setExpanded] = useState<ExpandedState>(true);
 
     const table = useReactTable({
-        data: [
-            {
-                path: "foo/bar",
-                totalCovered: 12,
-                totalReachable: 36,
-                children: [
-                    { path: "baz.cpp", totalCovered: 10, totalReachable: 22 },
-                    {
-                        path: "lib",
-                        totalCovered: 2,
-                        totalReachable: 14,
-                        children: [
-                            {
-                                path: "util.cpp",
-                                totalCovered: 2,
-                                totalReachable: 14,
-                            },
-                        ],
-                    },
-                ],
-            },
-            { path: "src/main.cpp", totalCovered: 12, totalReachable: 36 },
-        ],
+        data: testData,
         columns,
         state: { expanded },
         onExpandedChange: setExpanded,
