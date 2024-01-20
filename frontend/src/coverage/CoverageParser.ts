@@ -1,12 +1,14 @@
-import { Coverpp } from "./../../../_generated/frontend/coverage_report";
+import * as Report from "./../../../_generated/frontend/coverpp/report";
+import { CoverageReportT } from "./../../../_generated/frontend/coverpp/report";
 import * as flatbuffers from "flatbuffers";
-import { FileCoverage, LineCoverage } from "#/coverage/FileCoverage";
 
-export function parseCoverage(raw: Uint8Array): FileCoverage[] {
+export function parseCoverage(raw: Uint8Array): CoverageReportT {
     const buffer = new flatbuffers.ByteBuffer(raw);
     const coverageReport =
-        Coverpp.CoverageReport.getRootAsCoverageReport(buffer);
+        Report.CoverageReport.getRootAsCoverageReport(buffer).unpack();
 
+    return coverageReport;
+    /*
     const res: FileCoverage[] = [];
     for (
         let i = 0, limit = coverageReport.fileReportsLength();
@@ -41,5 +43,5 @@ export function parseCoverage(raw: Uint8Array): FileCoverage[] {
             lines,
         });
     }
-    return res;
+    return res;*/
 }
