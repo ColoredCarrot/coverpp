@@ -1,15 +1,17 @@
 import { routes } from "#/routes";
 import { isDev } from "#/environment";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { parseCoverage } from "#/coverage/CoverageParser";
 import {
     CoverageReportT,
     DirectoryReportT,
     FileReportT,
     RootT,
+    StatsT,
 } from "../../../_generated/frontend/coverpp/report";
 import { FileCoverage, LineCoverage } from "#/coverage/FileCoverage";
 import RemoteCoverageCodeBlock from "#/components/RemoteCoverageCodeBlock";
+import GaugeComponent from "react-gauge-component";
 
 const makeSourceFileUrl: (sourceFile: string) => string = isDev()
     ? sourceFile => "/@fs/" + sourceFile
@@ -89,7 +91,10 @@ export default function CoverageReportPage() {
     const report = fileContent.content;
 
     return report.roots.map(root => (
-        <CoverageRoot key={root.path as string} root={root} />
+        <>
+            <LargeStats stats={root.stats ?? new StatsT()} />
+            <CoverageRoot key={root.path as string} root={root} />
+        </>
     ));
 
     // return <RemoteCoverageCodeBlock coverage={fileContent.content[0]} />;
@@ -155,5 +160,62 @@ function flatten(
                   dirSeparator,
                   report.children,
               ),
+    );
+}
+
+function CoverageDirectoryOrFile(props: {
+    report: DirectoryReportT | FileReportT;
+}) {
+    return props.report instanceof DirectoryReportT ? (
+        <CoverageDirectory directory={props.report} />
+    ) : (
+        <></>
+    );
+}
+
+function CoverageDirectory(props: { directory: DirectoryReportT }) {
+    return <div></div>;
+}
+
+const percentCoveredNumberFormat = new Intl.NumberFormat("en-US", {
+    style: "percent",
+    maximumFractionDigits: 1,
+});
+
+function LargeStats(props: { stats: StatsT }) {
+    const id = useId();
+
+    return (
+        <GaugeComponent
+            id={id}
+            arc={{
+                colorArray: ["#EA4228", "#F5CD19", "#5BE12C"],
+                subArcs: [
+                    { length: 1 / 3 },
+                    { length: 1 / 3 },
+                    { length: 1 / 3 },
+                ],
+            }}
+            value={
+                Number(props.stats.totalCovered ?? 0) /
+                Number(props.stats.totalReachable ?? 0)
+            }
+            minValue={0}
+            maxValue={1}
+            labels={{
+                valueLabel: {
+                    matchColorWithArc: true,
+                    formatTextValue: (v: number) =>
+                        percentCoveredNumberFormat.format(v),
+                    maxDecimalDigits: 10,
+                },
+                tickLabels: {
+                    defaultTickValueConfig: {
+                        formatTextValue: (v: number) =>
+                            percentCoveredNumberFormat.format(v),
+                    },
+                },
+            }}
+        />
     );
 }
