@@ -50,36 +50,39 @@
     text-align: end;
 }
 
-
 :root {
     --dialog-transition-duration: 180ms;
 }
 
-.DialogTransition_enter, .DialogTransition_leave {
+.DialogTransition_enter,
+.DialogTransition_leave {
     transition: scale var(--dialog-transition-duration) ease-in-out;
 }
 
-.DialogTransition_enterFrom, .DialogTransition_leaveTo {
+.DialogTransition_enterFrom,
+.DialogTransition_leaveTo {
     scale: 0;
 }
 
-.DialogTransition_enterTo, .DialogTransition_leaveFrom {
+.DialogTransition_enterTo,
+.DialogTransition_leaveFrom {
     scale: 1;
 }
 
-
-.DialogTransitionBackdrop_enter, .DialogTransitionBackdrop_leave {
+.DialogTransitionBackdrop_enter,
+.DialogTransitionBackdrop_leave {
     transition: opacity var(--dialog-transition-duration) ease-in-out;
 }
 
-.DialogTransitionBackdrop_enterFrom, .DialogTransitionBackdrop_leaveTo {
+.DialogTransitionBackdrop_enterFrom,
+.DialogTransitionBackdrop_leaveTo {
     opacity: 0;
 }
 
-.DialogTransitionBackdrop_enterTo, .DialogTransitionBackdrop_leaveFrom {
+.DialogTransitionBackdrop_enterTo,
+.DialogTransitionBackdrop_leaveFrom {
     opacity: 1;
 }
-
 
 .DialogBackdrop {
     position: fixed;

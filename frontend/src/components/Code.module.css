@@ -11,7 +11,6 @@ body[data-theme="dark"] {
     width: 100%;
 }
 
-
 body {
     --color-bg-line-success: rgb(204, 255, 216);
     --color-bg-line-success-faded: rgb(230, 255, 236);

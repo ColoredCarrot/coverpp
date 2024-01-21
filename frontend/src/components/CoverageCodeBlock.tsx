@@ -5,5 +5,7 @@ export default function CoverageCodeBlock(props: {
     coverage: FileCoverage;
     content: string;
 }) {
-    return <CodeBlock content={props.content} coverage={props.coverage.lines} />;
+    return (
+        <CodeBlock content={props.content} coverage={props.coverage.lines} />
+    );
 }

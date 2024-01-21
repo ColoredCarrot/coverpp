@@ -20,7 +20,6 @@ body.debug-outlines * {
     outline: 1px solid #f00 !important;
 }
 
-
 body {
     --color-bg: white;
     --color-bg-dialog: rgb(255, 255, 255);
