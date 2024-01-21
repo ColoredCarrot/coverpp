@@ -59,6 +59,16 @@ int serve(const ServeOptions& options)
 
     crow::SimpleApp app;
 
+    CROW_ROUTE(app, "/ctx")([&] {
+        return crow::json::wvalue({
+                                      {"coverppOk", true},
+                                  });
+    });
+
+    CROW_ROUTE(app, "/ctx/report")([&] {
+        return make_file_response(options.report_path, "application/octet-stream");
+    });
+
     CROW_ROUTE(app, "/src/<path>")([](const std::filesystem::path& requested_path) {
         return make_file_response(weakly_canonical(requested_path));
     });

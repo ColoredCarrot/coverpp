@@ -450,7 +450,7 @@ try
     run_app->add_flag("--print-first-chance-seh", params.print_first_chance_seh_exceptions,
                       "Print first-chance SEH exceptions to the console");
 
-    coverpp::ServeOptions serve_options{.report_path{"./coverpp-repoart/report.coverpp"}};
+    coverpp::ServeOptions serve_options{.report_path{"./coverpp-report/report.coverpp"}};
     const auto serve_app = app.add_subcommand("view", "View coverage results in your browser");
     serve_app->alias("serve");
     serve_app->add_option("-p,--port", serve_options.port)->default_val(8080)->check(CLI::NonNegativeNumber);
