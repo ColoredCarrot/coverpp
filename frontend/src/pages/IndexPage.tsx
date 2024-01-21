@@ -1,5 +1,5 @@
-import { routes } from "#/routes";
 import CoverageReport from "#/components/CoverageReport";
+import { routes } from "#/routes";
 
 export default function IndexPage() {
     const data = routes.index.useLoaderData();

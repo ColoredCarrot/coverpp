@@ -1,9 +1,9 @@
 import { RootRoute, Route, lazyRouteComponent } from "@tanstack/react-router";
+import { CoverageReportT } from "#/_generated/coverpp/report/coverage-report";
+import { parseCoverage } from "#/coverage/CoverageParser";
+import { isDev } from "#/environment";
 import IndexPage from "#/pages/IndexPage";
 import { Root } from "#/Root";
-import { parseCoverage } from "#/coverage/CoverageParser";
-import { CoverageReportT } from "#/_generated/coverpp/report/coverage-report";
-import { isDev } from "#/environment";
 
 const root = new RootRoute({
     component: Root,

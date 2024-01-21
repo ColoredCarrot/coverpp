@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { CoverageReportT } from "#/_generated/coverpp/report";
+import CoverageReport from "#/components/CoverageReport";
 import { parseCoverage } from "#/coverage/CoverageParser";
 import { isDev } from "#/environment";
 import { routes } from "#/routes";
-import CoverageReport from "#/components/CoverageReport";
 
 const makeSourceFileUrl: (sourceFile: string) => string = isDev()
     ? sourceFile => "/@fs/" + sourceFile
