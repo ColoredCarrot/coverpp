@@ -10,6 +10,7 @@ import {
     flexRender,
     getCoreRowModel,
     useReactTable,
+    getSortedRowModel,
 } from "@tanstack/react-table";
 import { Fragment, useMemo, useState } from "react";
 import styles from "./CoverageTable.module.css";
@@ -117,14 +118,11 @@ const columns = [
         header: "Total",
         cell: ctx => <div className={styles.Number}>{ctx.getValue()}</div>,
     }),
-    helper.display({
+    helper.accessor(scope => scope.totalCovered / scope.totalReachable, {
         header: "Percent",
         cell: ctx => (
             <div className={styles.Number}>
-                {percentNumberFormat.format(
-                    ctx.row.original.totalCovered /
-                        ctx.row.original.totalReachable,
-                )}
+                {percentNumberFormat.format(ctx.getValue())}
             </div>
         ),
     }),
@@ -137,7 +135,11 @@ function Head({ table }: CommonProps) {
         <div className={cls(styles.Row, styles.Head)}>
             <div />
             {table.getLeafHeaders().map(header => (
-                <div key={header.id} className={styles.HeadColumn}>
+                <div
+                    key={header.id}
+                    className={styles.HeadColumn}
+                    onClick={header.column.getToggleSortingHandler()}
+                >
                     {flexRender(
                         header.column.columnDef.header,
                         header.getContext(),
@@ -220,6 +222,7 @@ export default function CoverageTable(props: {
         getSubRows: row => row.children,
         getCoreRowModel: getCoreRowModel(),
         getExpandedRowModel: getExpandedRowModelNoFilter(),
+        getSortedRowModel: getSortedRowModel(),
         meta: {
             pathSeparator: props.pathSeparator,
             getCoverageLines: props.getCoverageLines,
