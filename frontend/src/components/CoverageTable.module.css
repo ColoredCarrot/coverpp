@@ -24,6 +24,29 @@
     transition: opacity 180ms ease-in-out, height 180ms ease-in-out;
 }
 
+.RowIcon {
+    width: 1.1rem;
+    height: 1.1rem;
+}
+
+.FilterInput {
+    width: 100%;
+    background-color: inherit;
+    border: none;
+    border-bottom: 2px solid var(--color-border);
+    caret-color: var(--color-main);
+    color: inherit; /* Browser defaults to black */
+
+    &:hover {
+        border-color: var(--color-border-hover);
+    }
+
+    &:focus {
+        border-color: var(--color-main);
+        outline: none; /* Get rid of default browser styling */
+    }
+}
+
 .HeadColumn {
     display: flex;
     flex-direction: row;
@@ -60,6 +83,10 @@ body[data-theme="dark"] {
 
 .Number {
     text-align: end;
+}
+
+.RowsHiddenWarningText {
+    color: var(--color-disabled-light);
 }
 
 :root {

@@ -26,6 +26,10 @@ body {
     --color-link: rgb(15, 91, 153);
     --color-link-hover: rgb(255, 0, 140);
     --color-border-hover: rgb(128, 198, 255);
+    --color-disabled-light: rgb(153, 153, 153);
+
+    --color-border: rgb(197, 209, 219);
+    --color-main: rgb(0, 128, 229);
 
     background-color: var(--color-bg);
 }
@@ -36,6 +40,10 @@ body[data-theme="dark"] {
     --color-link: rgb(133, 166, 227);
     --color-link-hover: rgb(224, 103, 178);
     --color-border-hover: rgb(77, 100, 148);
+    --color-disabled-light: rgb(135, 135, 135);
+
+    --color-border: rgb(90, 93, 99);
+    --color-main: rgb(53, 116, 240);
 }
 
 main {

@@ -21,7 +21,7 @@ export default function CoverageReport(props: { report: CoverageReportT }) {
 function Root(props: { root: RootT }) {
     const [scopes, leafRegistry] = useMemo((): [Scope[], FileReportT[]] => {
         const leafRegistry: FileReportT[] = [];
-        return [[getScope(props.root, leafRegistry)], leafRegistry];
+        return [[getRootScope(props.root, leafRegistry)], leafRegistry];
     }, [props.root]);
 
     return (
@@ -40,39 +40,57 @@ function Root(props: { root: RootT }) {
     );
 }
 
+function getRootScope(report: RootT, leafRegistry: FileReportT[]): Scope {
+    const stats = report.stats ?? new StatsT();
+    const directorySeparator = (report.directorySeparator || "/") as string;
+    return {
+        path: report.path as string,
+        fullPath: report.path as string,
+        totalCovered: Number(stats.totalCovered),
+        totalReachable: Number(stats.totalReachable),
+        children: report.children?.map(child =>
+            getScope(
+                child,
+                leafRegistry,
+                report.path + directorySeparator,
+                directorySeparator,
+            ),
+        ),
+    };
+}
+
 function getScope(
-    report: RootT | DirectoryReportT | FileReportT,
+    report: DirectoryReportT | FileReportT,
     leafRegistry: FileReportT[],
+    prefix: string,
+    directorySeparator: string,
 ): Scope {
     if (report instanceof DirectoryReportT) {
         const stats = report.stats ?? new StatsT();
         return {
             path: report.name as string,
+            fullPath: prefix + report.name,
             totalCovered: Number(stats.totalCovered ?? 0),
             totalReachable: Number(stats.totalReachable ?? 0),
             children: report.children?.map(child =>
-                getScope(child, leafRegistry),
+                getScope(
+                    child,
+                    leafRegistry,
+                    prefix + report.name + directorySeparator,
+                    directorySeparator,
+                ),
             ),
         };
     }
 
-    if (report instanceof FileReportT) {
-        const id = leafRegistry.length;
-        leafRegistry.push(report);
-        return {
-            path: report.path as string,
-            totalCovered: report.coveredLines?.length ?? 0,
-            totalReachable: report.reachableLines?.length ?? 0,
-            leafId: id,
-        };
-    }
-
-    const stats = report.stats ?? new StatsT();
+    const id = leafRegistry.length;
+    leafRegistry.push(report);
     return {
         path: report.path as string,
-        totalCovered: Number(stats.totalCovered),
-        totalReachable: Number(stats.totalReachable),
-        children: report.children?.map(child => getScope(child, leafRegistry)),
+        fullPath: prefix + report.path,
+        totalCovered: report.coveredLines?.length ?? 0,
+        totalReachable: report.reachableLines?.length ?? 0,
+        leafId: id,
     };
 }
 

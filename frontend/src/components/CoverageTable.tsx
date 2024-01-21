@@ -3,20 +3,23 @@ import {
     IconArrowsSort,
     IconChevronDown,
     IconChevronRight,
+    IconSearch,
     IconSortAscending,
     IconSortDescending,
 } from "@tabler/icons-react";
 import {
     CellContext,
+    createColumnHelper,
     ExpandedState,
+    FilterFn,
+    flexRender,
+    getCoreRowModel,
+    getFilteredRowModel,
+    getSortedRowModel,
     Row,
     Table,
     TableMeta,
-    createColumnHelper,
-    flexRender,
-    getCoreRowModel,
     useReactTable,
-    getSortedRowModel,
 } from "@tanstack/react-table";
 import { Fragment, useMemo, useState } from "react";
 import styles from "./CoverageTable.module.css";
@@ -28,6 +31,7 @@ import getExpandedRowModelNoFilter from "#/util/getExpandedRowModelNoFilter";
 
 export type Scope = {
     path: string;
+    fullPath: string;
     totalCovered: number;
     totalReachable: number;
     children?: Scope[];
@@ -50,16 +54,15 @@ function ScopePathCell({ ctx }: { ctx: CellContext<Scope, string> }) {
     const [open, setOpen] = useState(false);
 
     const tableMeta = ctx.table.options.meta as CoverageTableMeta;
-    const pathSeparator = tableMeta.pathSeparator;
 
-    const fullPath = [...ctx.row.getParentRows(), ctx.row]
-        .map(row => row.original.path)
-        .join(pathSeparator);
+    const fullPath = ctx.row.original.fullPath;
+    const leafId = ctx.row.original.leafId;
 
-    const path = <code>{ctx.getValue()}</code>;
-    return !ctx.row.originalSubRows?.length ? (
+    return leafId !== undefined ? (
         <>
-            <LinkButton onClick={() => setOpen(true)}>{path}</LinkButton>
+            <LinkButton onClick={() => setOpen(true)}>
+                {<code>{ctx.getValue()}</code>}
+            </LinkButton>
             <Transition show={open} as={Fragment}>
                 <Dialog
                     onClose={() => setOpen(false)}
@@ -95,7 +98,7 @@ function ScopePathCell({ ctx }: { ctx: CellContext<Scope, string> }) {
                                     coverage={{
                                         filePath: fullPath,
                                         lines: tableMeta.getCoverageLines(
-                                            ctx.row.original.leafId!,
+                                            leafId,
                                         ),
                                     }}
                                 />
@@ -106,23 +109,32 @@ function ScopePathCell({ ctx }: { ctx: CellContext<Scope, string> }) {
             </Transition>
         </>
     ) : (
-        path
+        <code>{ctx.getValue()}</code>
     );
 }
+
+const pathFilterFn: FilterFn<Scope> = (row, _, filterValue: string) => {
+    return row.original.fullPath
+        .toLowerCase()
+        .includes(filterValue.toLowerCase());
+};
 
 const helper = createColumnHelper<Scope>();
 const columns = [
     helper.accessor("path", {
         header: "Source file",
-        cell: ctx => <ScopePathCell ctx={ctx} />,
+        cell: ctx => <ScopePathCell key={ctx.cell.id} ctx={ctx} />,
+        filterFn: pathFilterFn,
     }),
     helper.accessor("totalCovered", {
         header: "Covered",
         cell: ctx => <div className={styles.Number}>{ctx.getValue()}</div>,
+        enableColumnFilter: false,
     }),
     helper.accessor("totalReachable", {
         header: "Total",
         cell: ctx => <div className={styles.Number}>{ctx.getValue()}</div>,
+        enableColumnFilter: false,
     }),
     helper.accessor(scope => scope.totalCovered / scope.totalReachable, {
         header: "Percent",
@@ -131,6 +143,7 @@ const columns = [
                 {percentNumberFormat.format(ctx.getValue())}
             </div>
         ),
+        enableColumnFilter: false,
     }),
 ];
 
@@ -138,7 +151,16 @@ type CommonProps = { table: Table<Scope> };
 
 function Head({ table }: CommonProps) {
     return (
-        <div className={cls(styles.Row, styles.Head)}>
+        <div className={styles.Head}>
+            <Headers table={table} />
+            <Filter table={table} />
+        </div>
+    );
+}
+
+function Headers({ table }: CommonProps) {
+    return (
+        <div className={cls(styles.Row)}>
             <div />
             {table.getLeafHeaders().map(header => {
                 const sorted = header.column.getIsSorted();
@@ -172,6 +194,35 @@ function Head({ table }: CommonProps) {
     );
 }
 
+function Filter({ table }: CommonProps) {
+    return (
+        <div className={styles.Row}>
+            <div>
+                <IconSearch className={styles.RowIcon} />
+            </div>
+
+            {table.getLeafHeaders().map(header => (
+                <div key={header.id}>
+                    {header.column.getCanFilter() && (
+                        <input
+                            type="text"
+                            className={styles.FilterInput}
+                            value={
+                                (header.column.getFilterValue() ?? "") as string
+                            }
+                            onChange={e =>
+                                header.column.setFilterValue(
+                                    e.currentTarget.value,
+                                )
+                            }
+                        />
+                    )}
+                </div>
+            ))}
+        </div>
+    );
+}
+
 function DataRow({ row }: { row: Row<Scope> }) {
     return (
         <div
@@ -185,21 +236,24 @@ function DataRow({ row }: { row: Row<Scope> }) {
                 {row.getCanExpand() ? (
                     row.getIsExpanded() ? (
                         <IconChevronDown
-                            className={styles.ExpandChevron}
-                            size={"1.2rem"}
+                            className={cls(
+                                styles.ExpandChevron,
+                                styles.RowIcon,
+                            )}
                             onClick={row.getToggleExpandedHandler()}
                         />
                     ) : (
                         <IconChevronRight
-                            className={styles.ExpandChevron}
-                            size={"1.2rem"}
+                            className={cls(
+                                styles.ExpandChevron,
+                                styles.RowIcon,
+                            )}
                             onClick={row.getToggleExpandedHandler()}
                         />
                     )
                 ) : (
                     <IconChevronRight
-                        className={styles.HiddenChevron}
-                        size={"1.2rem"}
+                        className={cls(styles.HiddenChevron, styles.RowIcon)}
                         style={{ opacity: 0 }}
                     />
                 )}
@@ -244,17 +298,38 @@ export default function CoverageTable(props: {
         getSubRows: row => row.children,
         getCoreRowModel: getCoreRowModel(),
         getExpandedRowModel: getExpandedRowModelNoFilter(),
+        getFilteredRowModel: getFilteredRowModel(),
         getSortedRowModel: getSortedRowModel(),
+        filterFromLeafRows: true,
         meta: {
             pathSeparator: props.pathSeparator,
             getCoverageLines: props.getCoverageLines,
         } satisfies CoverageTableMeta,
     });
 
+    const numRowsFilteredOut =
+        table.getPreFilteredRowModel().flatRows.length -
+        table.getFilteredRowModel().flatRows.length;
+
+    const filteredOutWarning =
+        numRowsFilteredOut > 0 ? (
+            <>
+                <div style={{ height: "0.6rem" }} />
+                <div className={styles.Row}>
+                    <div />
+                    <div className={styles.RowsHiddenWarningText}>
+                        {numRowsFilteredOut}{" "}
+                        {numRowsFilteredOut === 1 ? "row" : "rows"} hidden
+                    </div>
+                </div>
+            </>
+        ) : undefined;
+
     return (
         <div className={styles.CoverageTable}>
             <Head table={table} />
             <Body table={table} />
+            {filteredOutWarning}
         </div>
     );
 }
@@ -283,6 +358,7 @@ function flattenScopeTree(scopes: Scope[], pathSeparator: string) {
 
         // Merge scope with its child
         scope.path += pathSeparator + child.path;
+        scope.fullPath = child.fullPath;
         scope.children = child.children;
     }
 }
