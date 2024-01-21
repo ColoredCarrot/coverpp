@@ -7,6 +7,11 @@ export function parseCoverage(raw: Uint8Array): CoverageReportT {
     const coverageReport =
         Report.CoverageReport.getRootAsCoverageReport(buffer).unpack();
 
+    // Heuristic: Flatbuffers doesn't reject malformed input, but just returns a default-constructed object
+    if (raw.length > 100 && !coverageReport.roots?.length) {
+        throw new Error("Malformed coverage report");
+    }
+
     return coverageReport;
     /*
     const res: FileCoverage[] = [];

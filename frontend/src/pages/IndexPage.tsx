@@ -1,49 +1,12 @@
-import { Suspense } from "react";
-import RemoteCoverageCodeBlock from "#/components/RemoteCoverageCodeBlock";
-import { LineCoverage } from "#/coverage/FileCoverage";
+import { routes } from "#/routes";
+import CoverageReport from "#/components/CoverageReport";
 
 export default function IndexPage() {
-    return (
-        <Suspense fallback={"Highlighting..."}>
-            <RemoteCoverageCodeBlock
-                coverage={{
-                    filePath:
-                        "G:\\Voidev\\Official\\Projects\\C++\\Cover++\\example-sut\\sut-main.cpp",
-                    lines: [
-                        LineCoverage.Full,
-                        LineCoverage.Full,
-                        LineCoverage.Full,
-                        LineCoverage.Full,
-                        LineCoverage.Full,
-                        LineCoverage.Full,
-                        LineCoverage.Full,
-                        LineCoverage.Full,
-                        LineCoverage.Full,
-                        LineCoverage.Full,
-                        LineCoverage.None,
-                        LineCoverage.None,
-                        LineCoverage.None,
-                        LineCoverage.None,
-                        LineCoverage.None,
-                        LineCoverage.None,
-                        LineCoverage.None,
-                        LineCoverage.Partial,
-                        LineCoverage.Partial,
-                        LineCoverage.Partial,
-                        LineCoverage.Partial,
-                        LineCoverage.Partial,
-                        LineCoverage.Partial,
-                        LineCoverage.Partial,
-                        LineCoverage.Partial,
-                        LineCoverage.Partial,
-                        LineCoverage.Partial,
-                        LineCoverage.Partial,
-                        LineCoverage.Partial,
-                        LineCoverage.Partial,
-                        LineCoverage.Partial,
-                    ],
-                }}
-            />
-        </Suspense>
-    );
+    const data = routes.index.useLoaderData();
+
+    if (data.status === "error") {
+        return <p>{data.statusCode + " " + data.statusText}</p>;
+    }
+
+    return <CoverageReport report={data.report} />;
 }
