@@ -21,7 +21,7 @@
         opacity: 0;
     }
 
-    transition: all 180ms ease-in-out;
+    transition: opacity 180ms ease-in-out, height 180ms ease-in-out;
 }
 
 .HeadColumn:not(:nth-child(2)) {
