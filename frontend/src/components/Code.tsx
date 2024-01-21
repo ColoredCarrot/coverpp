@@ -1,5 +1,6 @@
 import useStarryNight from "#/hooks/useStarryNight";
 import { toJsxRuntime } from "hast-util-to-jsx-runtime";
+// @ts-expect-error This import doesn't seem to be resolved for some reason, but it still works
 import { Fragment, jsx, jsxs } from "react/jsx-runtime";
 import { memo, useDeferredValue } from "react";
 import "./themes/tritanopia.css";
