@@ -1,5 +1,11 @@
 import { Dialog, Transition } from "@headlessui/react";
-import { IconChevronDown, IconChevronRight } from "@tabler/icons-react";
+import {
+    IconArrowsSort,
+    IconChevronDown,
+    IconChevronRight,
+    IconSortAscending,
+    IconSortDescending,
+} from "@tabler/icons-react";
 import {
     CellContext,
     ExpandedState,
@@ -134,18 +140,34 @@ function Head({ table }: CommonProps) {
     return (
         <div className={cls(styles.Row, styles.Head)}>
             <div />
-            {table.getLeafHeaders().map(header => (
-                <div
-                    key={header.id}
-                    className={styles.HeadColumn}
-                    onClick={header.column.getToggleSortingHandler()}
-                >
-                    {flexRender(
-                        header.column.columnDef.header,
-                        header.getContext(),
-                    )}
-                </div>
-            ))}
+            {table.getLeafHeaders().map(header => {
+                const sorted = header.column.getIsSorted();
+                const SortIcon =
+                    sorted === false
+                        ? IconArrowsSort
+                        : sorted === "asc"
+                          ? IconSortAscending
+                          : IconSortDescending;
+
+                const sortIconColor = sorted
+                    ? "var(--color-sort-icon-active)"
+                    : undefined;
+
+                return (
+                    <div
+                        key={header.id}
+                        className={styles.HeadColumn}
+                        onClick={header.column.getToggleSortingHandler()}
+                    >
+                        <SortIcon size={"1rem"} color={sortIconColor} />
+                        <div style={{ width: "0.2rem" }} />
+                        {flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                        )}
+                    </div>
+                );
+            })}
         </div>
     );
 }

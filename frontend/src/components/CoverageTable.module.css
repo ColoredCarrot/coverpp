@@ -10,7 +10,7 @@
     margin-left: calc(var(--indent, 0) * 2rem);
 
     display: grid;
-    grid-template-columns: 2rem 1fr 4rem 4rem 4rem;
+    grid-template-columns: 2rem 1fr 5rem 4.3rem 5.3rem;
 
     background: var(--color-bg);
 
@@ -24,8 +24,20 @@
     transition: opacity 180ms ease-in-out, height 180ms ease-in-out;
 }
 
+.HeadColumn {
+    display: flex;
+    flex-direction: row;
+    user-select: none;
+
+    --color-sort-icon-active: rgb(255, 0, 140);
+}
+
 .HeadColumn:not(:nth-child(2)) {
-    text-align: end;
+    justify-content: end;
+}
+
+body[data-theme="dark"] {
+    --color-sort-icon-active: rgb(255, 0, 140);
 }
 
 .Head {
