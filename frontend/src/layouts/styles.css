@@ -43,3 +43,8 @@ main {
     width: min(100%, 50rem);
     margin-inline: auto;
 }
+
+html {
+    /* Workaround for a nasty issue in headlessui, see https://github.com/tailwindlabs/headlessui/issues/762 */
+    padding-right: 0 !important;
+}
