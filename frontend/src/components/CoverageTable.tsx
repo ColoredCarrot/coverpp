@@ -9,16 +9,16 @@ import {
 } from "@tabler/icons-react";
 import {
     CellContext,
-    createColumnHelper,
     ExpandedState,
     FilterFn,
+    Row,
+    Table,
+    TableMeta,
+    createColumnHelper,
     flexRender,
     getCoreRowModel,
     getFilteredRowModel,
     getSortedRowModel,
-    Row,
-    Table,
-    TableMeta,
     useReactTable,
 } from "@tanstack/react-table";
 import { Fragment, useMemo, useState } from "react";
@@ -160,7 +160,7 @@ function Head({ table }: CommonProps) {
 
 function Headers({ table }: CommonProps) {
     return (
-        <div className={cls(styles.Row)}>
+        <div className={styles.Row}>
             <div />
             {table.getLeafHeaders().map(header => {
                 const sorted = header.column.getIsSorted();
