@@ -75,7 +75,6 @@ function useReport(reportPath: string): FileContent {
 }
 
 export default function CoverageReportPage() {
-    // @ts-expect-error TaStack Router's type system doesn't appear to like _splat
     const { _splat: reportPath } = routes.coverageReport.useParams();
 
     const fileContent = useReport(reportPath);
