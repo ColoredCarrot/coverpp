@@ -28,7 +28,7 @@ function Root(props: { root: RootT }) {
         <div>
             <h2>Code Coverage Report</h2>
             <CoverageStatsOverview stats={props.root.stats ?? new StatsT()} />
-            <div style={{ height: "2rem" }} />
+            <div style={{ height: "3rem" }} />
             <CoverageTable
                 scopes={scopes}
                 pathSeparator={(props.root.directorySeparator ?? "/") as string}
