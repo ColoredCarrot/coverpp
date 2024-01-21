@@ -11,11 +11,11 @@ import {
     TableMeta,
     useReactTable,
 } from "@tanstack/react-table";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import cls from "#/util/cls";
 import getExpandedRowModelNoFilter from "#/util/getExpandedRowModelNoFilter";
 import LinkButton from "#/components/LinkButton";
-import { Dialog } from "@headlessui/react";
+import { Dialog, Transition } from "@headlessui/react";
 import RemoteCoverageCodeBlock from "#/components/RemoteCoverageCodeBlock";
 import { LineCoverage } from "#/coverage/FileCoverage";
 
@@ -53,29 +53,50 @@ function ScopePathCell({ ctx }: { ctx: CellContext<Scope, string> }) {
     return !ctx.row.originalSubRows?.length ? (
         <>
             <LinkButton onClick={() => setOpen(true)}>{path}</LinkButton>
-            <Dialog
-                open={open}
-                onClose={() => setOpen(false)}
-                className={styles.Dialog}
-            >
-                <div className={styles.DialogBackdrop} aria-hidden />
+            <Transition show={open} as={Fragment}>
+                <Dialog
+                    onClose={() => setOpen(false)}
+                    className={styles.Dialog}
+                >
+                    <Transition.Child
+                        as={Fragment}
+                        enter={styles.DialogTransitionBackdrop_enter}
+                        enterFrom={styles.DialogTransitionBackdrop_enterFrom}
+                        enterTo={styles.DialogTransitionBackdrop_enterTo}
+                        leave={styles.DialogTransitionBackdrop_leave}
+                        leaveFrom={styles.DialogTransitionBackdrop_leaveFrom}
+                        leaveTo={styles.DialogTransitionBackdrop_leaveTo}
+                    >
+                        <div className={styles.DialogBackdrop} aria-hidden />
+                    </Transition.Child>
 
-                <div className={styles.DialogPanelContainer}>
-                    <Dialog.Panel className={styles.DialogPanel}>
-                        <Dialog.Title className={styles.DialogTitle}>
-                            <code>{fullPath}</code>
-                        </Dialog.Title>
-                        <RemoteCoverageCodeBlock
-                            coverage={{
-                                filePath: fullPath,
-                                lines: tableMeta.getCoverageLines(
-                                    ctx.row.original.leafId!,
-                                ),
-                            }}
-                        />
-                    </Dialog.Panel>
-                </div>
-            </Dialog>
+                    <div className={styles.DialogPanelContainer}>
+                        <Transition.Child
+                            as={Fragment}
+                            enter={styles.DialogTransition_enter}
+                            enterFrom={styles.DialogTransition_enterFrom}
+                            enterTo={styles.DialogTransition_enterTo}
+                            leave={styles.DialogTransition_leave}
+                            leaveFrom={styles.DialogTransition_leaveFrom}
+                            leaveTo={styles.DialogTransition_leaveTo}
+                        >
+                            <Dialog.Panel className={styles.DialogPanel}>
+                                <Dialog.Title className={styles.DialogTitle}>
+                                    <code>{fullPath}</code>
+                                </Dialog.Title>
+                                <RemoteCoverageCodeBlock
+                                    coverage={{
+                                        filePath: fullPath,
+                                        lines: tableMeta.getCoverageLines(
+                                            ctx.row.original.leafId!,
+                                        ),
+                                    }}
+                                />
+                            </Dialog.Panel>
+                        </Transition.Child>
+                    </div>
+                </Dialog>
+            </Transition>
         </>
     ) : (
         path
