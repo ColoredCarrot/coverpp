@@ -24,6 +24,7 @@ export function starryNightGutter(
 
             while (match) {
                 // Nodes in this line.
+                // @ts-expect-error Hast's type system seems pretty rough...
                 const line: ElementContent[] = tree.children.slice(
                     start,
                     index,
@@ -62,11 +63,11 @@ export function starryNightGutter(
         }
     }
 
+    // @ts-expect-error Hast's type system seems pretty rough...
     const line: ElementContent[] = tree.children.slice(start);
     // Prepend text from a partial matched earlier text.
     if (startTextRemainder) {
         line.unshift({ type: "text", value: startTextRemainder });
-        startTextRemainder = "";
     }
 
     if (line.length > 0) {
