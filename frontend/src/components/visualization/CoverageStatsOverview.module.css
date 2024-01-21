@@ -1,0 +1,27 @@
+.CoverageStatsOverview {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    align-items: center;
+}
+
+.Percent {
+    grid-column: 1;
+}
+
+.CoveredLoC {
+    grid-column: 2;
+}
+
+.ReachableLoC {
+    grid-column: 3;
+}
+
+.Display {
+    grid-row: 1;
+}
+
+.Label {
+    grid-row: 2;
+
+    text-align: center;
+}

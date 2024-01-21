@@ -1,6 +1,16 @@
-function cls(...classes: readonly (string | [string, boolean])[]): string {
+function cls(
+    ...classes: readonly (string | [string, boolean] | undefined)[]
+): string {
     return classes
-        .flatMap(c => (typeof c === "string" ? [c] : c[1] ? [c[0]] : []))
+        .flatMap(c =>
+            c === undefined
+                ? []
+                : typeof c === "string"
+                  ? [c]
+                  : c[1]
+                    ? [c[0]]
+                    : [],
+        )
         .join(" ");
 }
 

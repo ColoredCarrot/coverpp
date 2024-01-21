@@ -1,5 +1,4 @@
-import { useEffect, useId, useMemo, useState } from "react";
-import GaugeComponent from "react-gauge-component";
+import { useEffect, useMemo, useState } from "react";
 import {
     CoverageReportT,
     DirectoryReportT,
@@ -8,6 +7,7 @@ import {
     StatsT,
 } from "#/_generated/coverpp/report";
 import CoverageTable, { Scope } from "#/components/CoverageTable";
+import CoverageStatsOverview from "#/components/visualization/CoverageStatsOverview";
 import { parseCoverage } from "#/coverage/CoverageParser";
 import { LineCoverage } from "#/coverage/FileCoverage";
 import { isDev } from "#/environment";
@@ -104,7 +104,7 @@ function Root(props: { root: RootT }) {
     return (
         <div>
             <h2>Code Coverage Report</h2>
-            <StatsOverview stats={props.root.stats ?? new StatsT()} />
+            <CoverageStatsOverview stats={props.root.stats ?? new StatsT()} />
             <div style={{ height: "2rem" }} />
             <CoverageTable
                 scopes={scopes}
@@ -168,60 +168,5 @@ function toFileCoverageLines(fileReport: FileReportT): LineCoverage[] {
                 ? LineCoverage.Full
                 : LineCoverage.None
             : LineCoverage.NotApplicable,
-    );
-}
-
-const percentCoveredNumberFormat = new Intl.NumberFormat("en-US", {
-    style: "percent",
-    maximumFractionDigits: 1,
-});
-
-function StatsOverview(props: { stats: StatsT }) {
-    return (
-        <div>
-            <div style={{ width: "33.3333%" }}>
-                <CoveragePercentGauge stats={props.stats} />
-                <div style={{textAlign: "center"}}>Total coverage</div>
-            </div>
-        </div>
-    );
-}
-
-function CoveragePercentGauge(props: { stats: StatsT }) {
-    const id = useId();
-
-    return (
-        <GaugeComponent
-            id={id}
-            className=""
-            arc={{
-                colorArray: ["#EA4228", "#F5CD19", "#5BE12C"],
-                subArcs: [
-                    { length: 1 / 3 },
-                    { length: 1 / 3 },
-                    { length: 1 / 3 },
-                ],
-            }}
-            value={
-                Number(props.stats.totalCovered ?? 0) /
-                Number(props.stats.totalReachable ?? 0)
-            }
-            minValue={0}
-            maxValue={1}
-            labels={{
-                valueLabel: {
-                    matchColorWithArc: true,
-                    formatTextValue: (v: number) =>
-                        percentCoveredNumberFormat.format(v),
-                    maxDecimalDigits: 10,
-                },
-                tickLabels: {
-                    defaultTickValueConfig: {
-                        formatTextValue: (v: number) =>
-                            percentCoveredNumberFormat.format(v),
-                    },
-                },
-            }}
-        />
     );
 }
