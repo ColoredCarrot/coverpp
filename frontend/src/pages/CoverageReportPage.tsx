@@ -93,8 +93,6 @@ export default function CoverageReportPage() {
     return report.roots.map(root => (
         <Root key={root.path as string} root={root} />
     ));
-
-    // return <RemoteCoverageCodeBlock coverage={fileContent.content[0]} />;
 }
 
 function Root(props: { root: RootT }) {
@@ -102,16 +100,20 @@ function Root(props: { root: RootT }) {
         const leafRegistry: FileReportT[] = [];
         return [[getScope(props.root, leafRegistry)], leafRegistry];
     }, [props.root]);
-    //LargeStats stats={root.stats ?? new StatsT()} />
-    //<CoverageRoot key={root.path as string} root={root} />
+
     return (
-        <CoverageTable
-            scopes={scopes}
-            pathSeparator={(props.root.directorySeparator ?? "/") as string}
-            getCoverageLines={leafId =>
-                toFileCoverageLines(leafRegistry[leafId])
-            }
-        />
+        <div>
+            <h2>Code Coverage Report</h2>
+            <StatsOverview stats={props.root.stats ?? new StatsT()} />
+            <div style={{ height: "2rem" }} />
+            <CoverageTable
+                scopes={scopes}
+                pathSeparator={(props.root.directorySeparator ?? "/") as string}
+                getCoverageLines={leafId =>
+                    toFileCoverageLines(leafRegistry[leafId])
+                }
+            />
+        </div>
     );
 }
 
@@ -174,12 +176,24 @@ const percentCoveredNumberFormat = new Intl.NumberFormat("en-US", {
     maximumFractionDigits: 1,
 });
 
-function LargeStats(props: { stats: StatsT }) {
+function StatsOverview(props: { stats: StatsT }) {
+    return (
+        <div>
+            <div style={{ width: "33.3333%" }}>
+                <CoveragePercentGauge stats={props.stats} />
+                <div style={{textAlign: "center"}}>Total coverage</div>
+            </div>
+        </div>
+    );
+}
+
+function CoveragePercentGauge(props: { stats: StatsT }) {
     const id = useId();
 
     return (
         <GaugeComponent
             id={id}
+            className=""
             arc={{
                 colorArray: ["#EA4228", "#F5CD19", "#5BE12C"],
                 subArcs: [
