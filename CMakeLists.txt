@@ -146,6 +146,11 @@ build_flatbuffers(
         #[[copy_text_schemas_dir]]   ""
 )
 
+add_custom_command(
+        TARGET coverpp-schemas-frontend POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/_generated/frontend" "${CMAKE_CURRENT_SOURCE_DIR}/frontend/src/_generated"
+)
+
 add_dependencies(coverpp coverpp-schemas coverpp-schemas-frontend)
 
 target_link_libraries(coverpp PRIVATE WIL flatbuffers)

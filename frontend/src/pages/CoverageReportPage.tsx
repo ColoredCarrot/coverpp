@@ -8,7 +8,7 @@ import {
     FileReportT,
     RootT,
     StatsT,
-} from "../../../_generated/frontend/coverpp/report";
+} from "#/_generated/coverpp/report";
 import { FileCoverage, LineCoverage } from "#/coverage/FileCoverage";
 import RemoteCoverageCodeBlock from "#/components/RemoteCoverageCodeBlock";
 import GaugeComponent from "react-gauge-component";

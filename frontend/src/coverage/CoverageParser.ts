@@ -1,5 +1,5 @@
-import * as Report from "./../../../_generated/frontend/coverpp/report";
-import { CoverageReportT } from "./../../../_generated/frontend/coverpp/report";
+import * as Report from "#/_generated/coverpp/report";
+import { CoverageReportT } from "#/_generated/coverpp/report";
 import * as flatbuffers from "flatbuffers";
 
 export function parseCoverage(raw: Uint8Array): CoverageReportT {
