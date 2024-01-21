@@ -15,6 +15,7 @@
     background: var(--color-bg);
 
     height: 1.5rem;
+
     &.contracted {
         height: 0;
         opacity: 0;
@@ -47,4 +48,39 @@
 
 .Number {
     text-align: end;
+}
+
+.DialogBackdrop {
+    position: fixed;
+    inset: 0;
+    background: #00000030;
+}
+
+.Dialog {
+    position: relative;
+    z-index: 50;
+}
+
+.DialogPanelContainer {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+}
+
+.DialogPanel {
+    margin-inline: auto;
+    max-width: min(64rem, 90%);
+    max-height: min(64rem, 90%);
+
+    padding: 1rem 2rem;
+    border-radius: 0.8rem;
+
+    background: var(--color-bg);
+
+    overflow: auto;
+}
+
+.DialogTitle {
+    margin: 0;
 }

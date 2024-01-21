@@ -99,33 +99,48 @@ export default function CoverageReportPage() {
 }
 
 function Root(props: { root: RootT }) {
-    const scopes = useMemo(() => [getScope(props.root)], [props.root]);
+    const leafRegistry: FileReportT[] = [];
+    const scopes = useMemo(
+        () => [getScope(props.root, leafRegistry)],
+        [props.root],
+    );
     //LargeStats stats={root.stats ?? new StatsT()} />
     //<CoverageRoot key={root.path as string} root={root} />
     return (
         <CoverageTable
             scopes={scopes}
             pathSeparator={(props.root.directorySeparator ?? "/") as string}
+            getCoverageLines={leafId =>
+                toFileCoverageLines(leafRegistry[leafId])
+            }
         />
     );
 }
 
-function getScope(report: RootT | DirectoryReportT | FileReportT): Scope {
+function getScope(
+    report: RootT | DirectoryReportT | FileReportT,
+    leafRegistry: FileReportT[],
+): Scope {
     if (report instanceof DirectoryReportT) {
         const stats = report.stats ?? new StatsT();
         return {
             path: report.name as string,
             totalCovered: Number(stats.totalCovered ?? 0),
             totalReachable: Number(stats.totalReachable ?? 0),
-            children: report.children?.map(getScope),
+            children: report.children?.map(child =>
+                getScope(child, leafRegistry),
+            ),
         };
     }
 
     if (report instanceof FileReportT) {
+        const id = leafRegistry.length;
+        leafRegistry.push(report);
         return {
             path: report.path as string,
             totalCovered: report.coveredLines?.length ?? 0,
             totalReachable: report.reachableLines?.length ?? 0,
+            leafId: id,
         };
     }
 
@@ -134,7 +149,7 @@ function getScope(report: RootT | DirectoryReportT | FileReportT): Scope {
         path: report.path as string,
         totalCovered: Number(stats.totalCovered),
         totalReachable: Number(stats.totalReachable),
-        children: report.children?.map(getScope),
+        children: report.children?.map(child => getScope(child, leafRegistry)),
     };
 }
 

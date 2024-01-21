@@ -1,0 +1,26 @@
+.LinkButton {
+    /* Don't apply browser-default styling */
+    all: revert;
+
+    background: none;
+    border: none;
+    padding: 0;
+    text-decoration: none;
+    cursor: pointer;
+    color: var(--color-link);
+    user-select: auto;
+}
+
+.LinkButton:hover {
+    color: var(--color-link-hover);
+}
+
+.LinkButton:focus {
+    /* Remove default outline applied by Chrome */
+    outline: none;
+}
+
+/* E.g. when tabbing */
+.LinkButton:focus-visible {
+    box-shadow: 0 0 0 2px var(--color-border-hover);
+}

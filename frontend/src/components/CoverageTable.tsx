@@ -1,23 +1,30 @@
 import styles from "./CoverageTable.module.css";
 import { IconChevronDown, IconChevronRight } from "@tabler/icons-react";
 import {
+    CellContext,
     createColumnHelper,
     ExpandedState,
     flexRender,
     getCoreRowModel,
     Row,
     Table,
+    TableMeta,
     useReactTable,
 } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
 import cls from "#/util/cls";
 import getExpandedRowModelNoFilter from "#/util/getExpandedRowModelNoFilter";
+import LinkButton from "#/components/LinkButton";
+import { Dialog } from "@headlessui/react";
+import RemoteCoverageCodeBlock from "#/components/RemoteCoverageCodeBlock";
+import { LineCoverage } from "#/coverage/FileCoverage";
 
 export type Scope = {
     path: string;
     totalCovered: number;
     totalReachable: number;
     children?: Scope[];
+    leafId?: number;
 };
 
 const percentNumberFormat = new Intl.NumberFormat("en-US", {
@@ -26,11 +33,60 @@ const percentNumberFormat = new Intl.NumberFormat("en-US", {
     maximumFractionDigits: 1,
 });
 
+interface CoverageTableMeta extends TableMeta<Scope> {
+    pathSeparator: string;
+
+    getCoverageLines(leafId: number): LineCoverage[];
+}
+
+function ScopePathCell({ ctx }: { ctx: CellContext<Scope, string> }) {
+    const [open, setOpen] = useState(false);
+
+    const tableMeta = ctx.table.options.meta as CoverageTableMeta;
+    const pathSeparator = tableMeta.pathSeparator;
+
+    const fullPath = [...ctx.row.getParentRows(), ctx.row]
+        .map(row => row.original.path)
+        .join(pathSeparator);
+
+    const path = <code>{ctx.getValue()}</code>;
+    return !ctx.row.originalSubRows?.length ? (
+        <>
+            <LinkButton onClick={() => setOpen(true)}>{path}</LinkButton>
+            <Dialog
+                open={open}
+                onClose={() => setOpen(false)}
+                className={styles.Dialog}
+            >
+                <div className={styles.DialogBackdrop} aria-hidden />
+
+                <div className={styles.DialogPanelContainer}>
+                    <Dialog.Panel className={styles.DialogPanel}>
+                        <Dialog.Title className={styles.DialogTitle}>
+                            <code>{fullPath}</code>
+                        </Dialog.Title>
+                        <RemoteCoverageCodeBlock
+                            coverage={{
+                                filePath: fullPath,
+                                lines: tableMeta.getCoverageLines(
+                                    ctx.row.original.leafId!,
+                                ),
+                            }}
+                        />
+                    </Dialog.Panel>
+                </div>
+            </Dialog>
+        </>
+    ) : (
+        path
+    );
+}
+
 const helper = createColumnHelper<Scope>();
 const columns = [
     helper.accessor("path", {
         header: "Source file",
-        cell: ctx => <code>{ctx.getValue()}</code>,
+        cell: ctx => <ScopePathCell ctx={ctx} />,
     }),
     helper.accessor("totalCovered", {
         header: "Covered",
@@ -122,6 +178,7 @@ export default function CoverageTable(props: {
     scopes: Scope[];
     pathSeparator: string;
     flattenSingleChildScopes?: boolean;
+    getCoverageLines: (leafId: number) => LineCoverage[];
 }) {
     const [expanded, setExpanded] = useState<ExpandedState>(true);
 
@@ -142,6 +199,10 @@ export default function CoverageTable(props: {
         getSubRows: row => row.children,
         getCoreRowModel: getCoreRowModel(),
         getExpandedRowModel: getExpandedRowModelNoFilter(),
+        meta: {
+            pathSeparator: props.pathSeparator,
+            getCoverageLines: props.getCoverageLines,
+        } satisfies CoverageTableMeta,
     });
 
     return (
