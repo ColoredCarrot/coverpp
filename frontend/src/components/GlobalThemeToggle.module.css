@@ -1,0 +1,32 @@
+.GlobalThemeToggle {
+    --size: 4rem;
+
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: 100;
+
+    width: var(--size);
+    height: var(--size);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    cursor: pointer;
+    user-select: none;
+}
+
+.Icon {
+    display: block;
+    width: 90%;
+    height: 90%;
+}
+
+.IconSun {
+    color: #dad31d;
+}
+
+.IconMoon {
+    color: rgb(143, 185, 192);
+}
