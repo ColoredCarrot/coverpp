@@ -21,9 +21,7 @@ const index = new Route({
     path: "/",
     component: IndexPage,
     loader: async ({ abortController }): Promise<IndexRouteLoaderData> => {
-        const url = isDev()
-            ? "/@fs/G:/Voidev/Official/Projects/C++/Cover++/cmake-build-debug-visual-studio/Debug/coverpp-report/report.coverpp"
-            : "/ctx/report";
+        const url = isDev() ? "/@fs/" + __DEV_ABSOLUTE_PATH__ : "/ctx/report";
 
         const response = await fetch(url, {
             signal: abortController.signal,
