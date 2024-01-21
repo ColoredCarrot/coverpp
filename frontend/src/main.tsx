@@ -1,8 +1,8 @@
 import { NotFoundRoute, Router, RouterProvider } from "@tanstack/react-router";
 import React from "react";
 import { createRoot as createReactRoot } from "react-dom/client";
-import { routes } from "#/routes";
 import NotFoundPage from "#/pages/NotFoundPage";
+import { routes } from "#/routes";
 
 const routeTree = routes.root.addChildren([
     routes.index,

@@ -1,6 +1,6 @@
+import * as flatbuffers from "flatbuffers";
 import * as Report from "#/_generated/coverpp/report";
 import { CoverageReportT } from "#/_generated/coverpp/report";
-import * as flatbuffers from "flatbuffers";
 
 export function parseCoverage(raw: Uint8Array): CoverageReportT {
     const buffer = new flatbuffers.ByteBuffer(raw);

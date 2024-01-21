@@ -1,23 +1,23 @@
-import styles from "./CoverageTable.module.css";
+import { Dialog, Transition } from "@headlessui/react";
 import { IconChevronDown, IconChevronRight } from "@tabler/icons-react";
 import {
     CellContext,
-    createColumnHelper,
     ExpandedState,
-    flexRender,
-    getCoreRowModel,
     Row,
     Table,
     TableMeta,
+    createColumnHelper,
+    flexRender,
+    getCoreRowModel,
     useReactTable,
 } from "@tanstack/react-table";
 import { Fragment, useMemo, useState } from "react";
-import cls from "#/util/cls";
-import getExpandedRowModelNoFilter from "#/util/getExpandedRowModelNoFilter";
+import styles from "./CoverageTable.module.css";
 import LinkButton from "#/components/LinkButton";
-import { Dialog, Transition } from "@headlessui/react";
 import RemoteCoverageCodeBlock from "#/components/RemoteCoverageCodeBlock";
 import { LineCoverage } from "#/coverage/FileCoverage";
+import cls from "#/util/cls";
+import getExpandedRowModelNoFilter from "#/util/getExpandedRowModelNoFilter";
 
 export type Scope = {
     path: string;

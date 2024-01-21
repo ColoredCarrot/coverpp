@@ -1,7 +1,5 @@
-import { routes } from "#/routes";
-import { isDev } from "#/environment";
 import { useEffect, useId, useMemo, useState } from "react";
-import { parseCoverage } from "#/coverage/CoverageParser";
+import GaugeComponent from "react-gauge-component";
 import {
     CoverageReportT,
     DirectoryReportT,
@@ -9,10 +7,11 @@ import {
     RootT,
     StatsT,
 } from "#/_generated/coverpp/report";
-import { FileCoverage, LineCoverage } from "#/coverage/FileCoverage";
-import RemoteCoverageCodeBlock from "#/components/RemoteCoverageCodeBlock";
-import GaugeComponent from "react-gauge-component";
 import CoverageTable, { Scope } from "#/components/CoverageTable";
+import { parseCoverage } from "#/coverage/CoverageParser";
+import { LineCoverage } from "#/coverage/FileCoverage";
+import { isDev } from "#/environment";
+import { routes } from "#/routes";
 
 const makeSourceFileUrl: (sourceFile: string) => string = isDev()
     ? sourceFile => "/@fs/" + sourceFile
@@ -99,11 +98,10 @@ export default function CoverageReportPage() {
 }
 
 function Root(props: { root: RootT }) {
-    const leafRegistry: FileReportT[] = [];
-    const scopes = useMemo(
-        () => [getScope(props.root, leafRegistry)],
-        [props.root],
-    );
+    const [scopes, leafRegistry] = useMemo((): [Scope[], FileReportT[]] => {
+        const leafRegistry: FileReportT[] = [];
+        return [[getScope(props.root, leafRegistry)], leafRegistry];
+    }, [props.root]);
     //LargeStats stats={root.stats ?? new StatsT()} />
     //<CoverageRoot key={root.path as string} root={root} />
     return (
@@ -153,26 +151,6 @@ function getScope(
     };
 }
 
-function CoverageRoot(props: { root: RootT }) {
-    const flattened = flatten(
-        props.root.path as string,
-        props.root.directorySeparator as string,
-        props.root.children,
-    );
-
-    return (
-        <div>
-            <h4>{props.root.path as string}</h4>
-            {flattened.map(fileCoverage => (
-                <RemoteCoverageCodeBlock
-                    key={fileCoverage.filePath}
-                    coverage={fileCoverage}
-                />
-            ))}
-        </div>
-    );
-}
-
 function toFileCoverageLines(fileReport: FileReportT): LineCoverage[] {
     const reachableLines = fileReport.reachableLines ?? [];
     const coveredLines = fileReport.coveredLines ?? [];
@@ -189,45 +167,6 @@ function toFileCoverageLines(fileReport: FileReportT): LineCoverage[] {
                 : LineCoverage.None
             : LineCoverage.NotApplicable,
     );
-}
-
-function flatten(
-    path: string,
-    dirSeparator: string,
-    reports: readonly (DirectoryReportT | FileReportT)[] | undefined,
-): readonly FileCoverage[] {
-    if (reports === undefined) {
-        return [];
-    }
-
-    return reports.flatMap(report =>
-        report instanceof FileReportT
-            ? [
-                  {
-                      filePath: path + dirSeparator + report.path,
-                      lines: toFileCoverageLines(report),
-                  } satisfies FileCoverage,
-              ]
-            : flatten(
-                  path + dirSeparator + report.name,
-                  dirSeparator,
-                  report.children,
-              ),
-    );
-}
-
-function CoverageDirectoryOrFile(props: {
-    report: DirectoryReportT | FileReportT;
-}) {
-    return props.report instanceof DirectoryReportT ? (
-        <CoverageDirectory directory={props.report} />
-    ) : (
-        <></>
-    );
-}
-
-function CoverageDirectory(props: { directory: DirectoryReportT }) {
-    return <div></div>;
 }
 
 const percentCoveredNumberFormat = new Intl.NumberFormat("en-US", {

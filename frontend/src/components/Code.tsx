@@ -1,13 +1,13 @@
-import useStarryNight from "#/hooks/useStarryNight";
+import type { Element, ElementContent } from "hast";
 import { toJsxRuntime } from "hast-util-to-jsx-runtime";
+import { memo, useDeferredValue } from "react";
 // @ts-expect-error This import doesn't seem to be resolved for some reason, but it still works
 import { Fragment, jsx, jsxs } from "react/jsx-runtime";
-import { memo, useDeferredValue } from "react";
-import "./themes/tritanopia.css";
-import { starryNightGutter } from "#/util/hast-util-starry-night-gutter";
 import styles from "./Code.module.css";
+import "./themes/tritanopia.css";
 import { LineCoverage } from "#/coverage/FileCoverage";
-import { Element, ElementContent } from "hast";
+import useStarryNight from "#/hooks/useStarryNight";
+import { starryNightGutter } from "#/util/hast-util-starry-night-gutter";
 
 function makeCreateLine(coverage: LineCoverage[]) {
     return (children: ElementContent[], line: number): Element => {

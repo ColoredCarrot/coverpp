@@ -14,7 +14,7 @@ module.exports = {
         ],
     },
     reportUnusedDisableDirectives: true,
-    ignorePatterns: ["dist/*"],
+    ignorePatterns: ["dist/*", "src/_generated/*"],
     env: { browser: true, es2020: true, node: true },
     parserOptions: { ecmaVersion: "latest", sourceType: "module" },
     settings: {

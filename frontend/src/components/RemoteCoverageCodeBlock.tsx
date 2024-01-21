@@ -1,7 +1,7 @@
-import { FileCoverage } from "#/coverage/FileCoverage";
 import { useEffect, useState } from "react";
-import { isDev } from "#/environment";
 import CoverageCodeBlock from "#/components/CoverageCodeBlock";
+import { FileCoverage } from "#/coverage/FileCoverage";
+import { isDev } from "#/environment";
 
 const makeSourceFileUrl: (sourceFile: string) => string = isDev()
     ? sourceFile => "/@fs/" + sourceFile

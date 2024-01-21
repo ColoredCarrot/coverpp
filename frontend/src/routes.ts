@@ -1,6 +1,6 @@
-import { lazyRouteComponent, RootRoute, Route } from "@tanstack/react-router";
-import { Root } from "#/Root";
+import { RootRoute, Route, lazyRouteComponent } from "@tanstack/react-router";
 import IndexPage from "#/pages/IndexPage";
+import { Root } from "#/Root";
 
 const root = new RootRoute({
     component: Root,

@@ -1,5 +1,5 @@
-import Code, { CodeProps } from "#/components/Code";
 import styles from "./CodeBlock.module.css";
+import Code, { CodeProps } from "#/components/Code";
 
 export default function CodeBlock(props: CodeProps) {
     return (

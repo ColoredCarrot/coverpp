@@ -1,4 +1,4 @@
-import { Element, ElementContent, Root, RootContent } from "hast";
+import type { Element, ElementContent, Root, RootContent } from "hast";
 
 export function starryNightGutter(
     tree: Root,

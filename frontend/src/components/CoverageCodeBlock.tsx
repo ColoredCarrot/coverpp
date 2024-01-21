@@ -1,5 +1,5 @@
-import { FileCoverage } from "#/coverage/FileCoverage";
 import CodeBlock from "#/components/CodeBlock";
+import { FileCoverage } from "#/coverage/FileCoverage";
 
 export default function CoverageCodeBlock(props: {
     coverage: FileCoverage;
