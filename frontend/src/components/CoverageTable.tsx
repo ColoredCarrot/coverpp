@@ -21,7 +21,7 @@ import {
     getSortedRowModel,
     useReactTable,
 } from "@tanstack/react-table";
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, Ref, forwardRef, useMemo, useState } from "react";
 import styles from "./CoverageTable.module.css";
 import LinkButton from "#/components/LinkButton";
 import RemoteCoverageCodeBlock from "#/components/RemoteCoverageCodeBlock";
@@ -50,12 +50,33 @@ interface CoverageTableMeta extends TableMeta<Scope> {
     getCoverageLines(leafId: number): LineCoverage[];
 }
 
-function ScopePathCell({ ctx }: { ctx: CellContext<Scope, string> }) {
-    const [open, setOpen] = useState(false);
-
+const CoverageLinesDialogPanel = forwardRef(function CoverageLinesDialogPanel(
+    { ctx }: { ctx: CellContext<Scope, string> },
+    ref: Ref<HTMLDivElement>,
+) {
     const tableMeta = ctx.table.options.meta as CoverageTableMeta;
 
     const fullPath = ctx.row.original.fullPath;
+    const leafId = ctx.row.original.leafId!;
+
+    return (
+        <Dialog.Panel className={styles.DialogPanel} ref={ref}>
+            <Dialog.Title className={styles.DialogTitle}>
+                <code>{fullPath}</code>
+            </Dialog.Title>
+            <RemoteCoverageCodeBlock
+                coverage={{
+                    filePath: fullPath,
+                    lines: tableMeta.getCoverageLines(leafId),
+                }}
+            />
+        </Dialog.Panel>
+    );
+});
+
+function ScopePathCell({ ctx }: { ctx: CellContext<Scope, string> }) {
+    const [open, setOpen] = useState(false);
+
     const leafId = ctx.row.original.leafId;
 
     return leafId !== undefined ? (
@@ -90,19 +111,7 @@ function ScopePathCell({ ctx }: { ctx: CellContext<Scope, string> }) {
                             leaveFrom={styles.DialogTransition_leaveFrom}
                             leaveTo={styles.DialogTransition_leaveTo}
                         >
-                            <Dialog.Panel className={styles.DialogPanel}>
-                                <Dialog.Title className={styles.DialogTitle}>
-                                    <code>{fullPath}</code>
-                                </Dialog.Title>
-                                <RemoteCoverageCodeBlock
-                                    coverage={{
-                                        filePath: fullPath,
-                                        lines: tableMeta.getCoverageLines(
-                                            leafId,
-                                        ),
-                                    }}
-                                />
-                            </Dialog.Panel>
+                            <CoverageLinesDialogPanel ctx={ctx} />
                         </Transition.Child>
                     </div>
                 </Dialog>
