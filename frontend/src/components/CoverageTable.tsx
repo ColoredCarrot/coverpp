@@ -227,7 +227,7 @@ function DataRow({ row }: { row: Row<Scope> }) {
     return (
         <div
             className={cls(styles.Row, [
-                styles.contracted,
+                styles.collapsed,
                 !row.getIsAllParentsExpanded(),
             ])}
             style={{ "--indent": row.depth }}
