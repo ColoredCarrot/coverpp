@@ -1,6 +1,7 @@
 #define __STDC_WANT_SECURE_LIB__ 1
 
 #include "sut-foo.hpp"
+#include "ony/one/child.hpp"
 
 #include <ranges>
 #include <string_view>
@@ -40,6 +41,8 @@ int main(int argc, char** argv) {
                     | std::ranges::to<std::string>();
 
     OutputDebugString(std::format("{} args: {}", argc, args_str).c_str());
+
+    only_one_child();
 
     for (int i : std::views::iota(0, 10))
     {
