@@ -149,8 +149,8 @@ const columns = [
         cell: ctx => <div className={styles.Number}>{ctx.getValue()}</div>,
         enableColumnFilter: false,
     }),
-    helper.accessor("totalReachable", {
-        header: "Total",
+    helper.accessor(scope => scope.totalReachable - scope.totalCovered, {
+        header: "Miss.",
         cell: ctx => <div className={styles.Number}>{ctx.getValue()}</div>,
         enableColumnFilter: false,
     }),
