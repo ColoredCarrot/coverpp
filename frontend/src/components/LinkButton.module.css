@@ -1,4 +1,4 @@
-.LinkButton {
+.InlineLinkButton {
     /* Don't apply browser-default styling */
     all: revert;
 
@@ -11,16 +11,24 @@
     user-select: auto;
 }
 
-.LinkButton:hover {
+.InlineLinkButton:hover {
     color: var(--color-link-hover);
 }
 
-.LinkButton:focus {
+.InlineLinkButton:focus {
     /* Remove default outline applied by Chrome */
     outline: none;
 }
 
 /* E.g. when tabbing */
-.LinkButton:focus-visible {
+.InlineLinkButton:focus-visible {
     box-shadow: 0 0 0 2px var(--color-border-hover);
+}
+
+.LinkButton {
+    padding-inline: 1rem;
+}
+
+.LinkButton:first-child {
+    /*padding-inline-start: 0;*/
 }

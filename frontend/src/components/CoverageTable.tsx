@@ -23,7 +23,7 @@ import {
 } from "@tanstack/react-table";
 import { Fragment, Ref, forwardRef, useMemo, useState } from "react";
 import styles from "./CoverageTable.module.css";
-import LinkButton from "#/components/LinkButton";
+import LinkButton, { InlineLinkButton } from "#/components/LinkButton";
 import RemoteCoverageCodeBlock from "#/components/RemoteCoverageCodeBlock";
 import { LineCoverage } from "#/coverage/FileCoverage";
 import cls from "#/util/cls";
@@ -81,9 +81,9 @@ function ScopePathCell({ ctx }: { ctx: CellContext<Scope, string> }) {
 
     return leafId !== undefined ? (
         <>
-            <LinkButton onClick={() => setOpen(true)}>
+            <InlineLinkButton onClick={() => setOpen(true)}>
                 {<code>{ctx.getValue()}</code>}
-            </LinkButton>
+            </InlineLinkButton>
             <Transition show={open} as={Fragment}>
                 <Dialog
                     onClose={() => setOpen(false)}
@@ -191,7 +191,7 @@ function Headers({ table }: CommonProps) {
                         onClick={header.column.getToggleSortingHandler()}
                     >
                         <SortIcon size={"1rem"} color={sortIconColor} />
-                        <div style={{ width: "0.2rem" }} />
+                        <div style={{ width: "0.2rem", height: 0 }} />
                         {flexRender(
                             header.column.columnDef.header,
                             header.getContext(),
@@ -282,22 +282,61 @@ function Body({ table }: { table: Table<Scope> }) {
         .rows.map(row => <DataRow key={row.id} row={row} />);
 }
 
+function TitleRow({
+    table,
+    ...props
+}: {
+    table: Table<Scope>;
+    flattenCompletely: boolean;
+    setFlattenCompletely: (flattenCompletely: boolean) => void;
+}) {
+    const flattenCompletelyButton = props.flattenCompletely ? (
+        <LinkButton onClick={() => props.setFlattenCompletely(false)}>
+            Coarsen
+        </LinkButton>
+    ) : (
+        <LinkButton onClick={() => props.setFlattenCompletely(true)}>
+            Flatten
+        </LinkButton>
+    );
+
+    return (
+        <div className={styles.TitleRow}>
+            <LinkButton onClick={() => table.toggleAllRowsExpanded(true)}>
+                Expand all
+            </LinkButton>
+            <LinkButton onClick={() => table.toggleAllRowsExpanded(false)}>
+                Contract all
+            </LinkButton>
+            {flattenCompletelyButton}
+        </div>
+    );
+}
+
 export default function CoverageTable(props: {
     scopes: Scope[];
     pathSeparator: string;
     flattenSingleChildScopes?: boolean;
     getCoverageLines: (leafId: number) => LineCoverage[];
 }) {
+    const [shouldFlattenCompletely, setShouldFlattenCompletely] =
+        useState(false);
+
     const [expanded, setExpanded] = useState<ExpandedState>(true);
 
     const data = useMemo(() => {
         if (!(props.flattenSingleChildScopes ?? true)) {
             return props.scopes;
         }
-        const flattened = props.scopes.slice();
-        flattenScopeTree(flattened, props.pathSeparator);
-        return flattened;
-    }, [props.scopes, props.pathSeparator, props.flattenSingleChildScopes]);
+        return shouldFlattenCompletely
+            ? flattenScopeTreeCompletely(props.scopes)
+            : flattenScopeTree(props.scopes, props.pathSeparator);
+    }, [
+        props.scopes,
+        props.pathSeparator,
+        props.flattenSingleChildScopes,
+        shouldFlattenCompletely,
+    ]);
 
     const table = useReactTable({
         data,
@@ -336,11 +375,25 @@ export default function CoverageTable(props: {
 
     return (
         <div className={styles.CoverageTable}>
+            <TitleRow
+                table={table}
+                flattenCompletely={shouldFlattenCompletely}
+                setFlattenCompletely={setShouldFlattenCompletely}
+            />
             <Head table={table} />
             <Body table={table} />
             {filteredOutWarning}
         </div>
     );
+}
+
+function flattenScopeTree(
+    scopes: readonly Scope[],
+    pathSeparator: string,
+): Scope[] {
+    const flattened = scopes.slice();
+    flattenScopeTreeInplace(flattened, pathSeparator);
+    return flattened;
 }
 
 /**
@@ -352,13 +405,13 @@ export default function CoverageTable(props: {
  * @param scopes Scope tree to flatten
  * @param pathSeparator Separator to be placed between concatenated paths
  */
-function flattenScopeTree(scopes: Scope[], pathSeparator: string) {
+function flattenScopeTreeInplace(scopes: Scope[], pathSeparator: string) {
     for (const scope of scopes) {
         if (scope.children === undefined) {
             continue;
         }
 
-        flattenScopeTree(scope.children, pathSeparator);
+        flattenScopeTreeInplace(scope.children, pathSeparator);
 
         if (scope.children.length !== 1) {
             continue;
@@ -369,5 +422,22 @@ function flattenScopeTree(scopes: Scope[], pathSeparator: string) {
         scope.path += pathSeparator + child.path;
         scope.fullPath = child.fullPath;
         scope.children = child.children;
+    }
+}
+
+function flattenScopeTreeCompletely(scopes: readonly Scope[]): Scope[] {
+    const leafs: Scope[] = [];
+    findLeafs(scopes, leafs);
+    return leafs;
+}
+
+function findLeafs(scopes: readonly Scope[], result: Scope[]): void {
+    for (const scope of scopes) {
+        if (scope.leafId !== undefined) {
+            result.push(scope);
+        }
+        if (scope.children !== undefined) {
+            findLeafs(scope.children, result);
+        }
     }
 }

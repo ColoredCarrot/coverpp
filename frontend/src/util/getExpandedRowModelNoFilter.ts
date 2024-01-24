@@ -19,10 +19,7 @@ export default function getExpandedRowModelNoFilter<TData extends RowData>(): (
                 table.options.paginateExpandedRows,
             ],
             (expanded, rowModel, paginateExpandedRows) => {
-                if (
-                    !rowModel.rows.length ||
-                    (expanded !== true && !Object.keys(expanded ?? {}).length)
-                ) {
+                if (!rowModel.rows.length) {
                     return rowModel;
                 }
 
