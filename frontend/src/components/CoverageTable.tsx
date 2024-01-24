@@ -48,6 +48,8 @@ interface CoverageTableMeta extends TableMeta<Scope> {
     pathSeparator: string;
 
     getCoverageLines(leafId: number): LineCoverage[];
+
+    flattenCompletely: boolean;
 }
 
 const CoverageLinesDialogPanel = forwardRef(function CoverageLinesDialogPanel(
@@ -82,7 +84,14 @@ function ScopePathCell({ ctx }: { ctx: CellContext<Scope, string> }) {
     return leafId !== undefined ? (
         <>
             <InlineLinkButton onClick={() => setOpen(true)}>
-                {<code>{ctx.getValue()}</code>}
+                {
+                    <code>
+                        {(ctx.table.options.meta as CoverageTableMeta)
+                            .flattenCompletely
+                            ? ctx.row.original.fullPath
+                            : ctx.getValue()}
+                    </code>
+                }
             </InlineLinkButton>
             <Transition show={open} as={Fragment}>
                 <Dialog
@@ -319,8 +328,7 @@ export default function CoverageTable(props: {
     flattenSingleChildScopes?: boolean;
     getCoverageLines: (leafId: number) => LineCoverage[];
 }) {
-    const [shouldFlattenCompletely, setShouldFlattenCompletely] =
-        useState(false);
+    const [flattenCompletely, setFlattenCompletely] = useState(false);
 
     const [expanded, setExpanded] = useState<ExpandedState>(true);
 
@@ -328,14 +336,14 @@ export default function CoverageTable(props: {
         if (!(props.flattenSingleChildScopes ?? true)) {
             return props.scopes;
         }
-        return shouldFlattenCompletely
+        return flattenCompletely
             ? flattenScopeTreeCompletely(props.scopes)
             : flattenScopeTree(props.scopes, props.pathSeparator);
     }, [
         props.scopes,
         props.pathSeparator,
         props.flattenSingleChildScopes,
-        shouldFlattenCompletely,
+        flattenCompletely,
     ]);
 
     const table = useReactTable({
@@ -352,6 +360,7 @@ export default function CoverageTable(props: {
         meta: {
             pathSeparator: props.pathSeparator,
             getCoverageLines: props.getCoverageLines,
+            flattenCompletely,
         } satisfies CoverageTableMeta,
     });
 
@@ -377,8 +386,8 @@ export default function CoverageTable(props: {
         <div className={styles.CoverageTable}>
             <TitleRow
                 table={table}
-                flattenCompletely={shouldFlattenCompletely}
-                setFlattenCompletely={setShouldFlattenCompletely}
+                flattenCompletely={flattenCompletely}
+                setFlattenCompletely={setFlattenCompletely}
             />
             <Head table={table} />
             <Body table={table} />
