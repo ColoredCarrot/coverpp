@@ -439,7 +439,7 @@ try
 
     const auto run_app = app.add_subcommand("run");
 
-    coverpp::CoverageParams params;
+    coverpp::CoverageParams params{};
     run_app->add_option("-s,--source", params.source_dir, "Source directory")->check(
         CLI::ExistingDirectory)->required();
     run_app->add_option("-p,--program", params.program, "Executable")->check(CLI::ExistingFile)->required();
