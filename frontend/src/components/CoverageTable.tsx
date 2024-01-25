@@ -3,6 +3,8 @@ import {
     IconArrowsSort,
     IconChevronDown,
     IconChevronRight,
+    IconChevronsDown,
+    IconChevronsRight,
     IconSearch,
     IconSortAscending,
     IconSortDescending,
@@ -26,6 +28,7 @@ import styles from "./CoverageTable.module.css";
 import LinkButton, { InlineLinkButton } from "#/components/LinkButton";
 import RemoteCoverageCodeBlock from "#/components/RemoteCoverageCodeBlock";
 import { LineCoverage } from "#/coverage/FileCoverage";
+import useKeyDownState from "#/hooks/useKeyDownState";
 import cls from "#/util/cls";
 import getExpandedRowModelNoFilter from "#/util/getExpandedRowModelNoFilter";
 
@@ -50,6 +53,8 @@ interface CoverageTableMeta extends TableMeta<Scope> {
     getCoverageLines(leafId: number): LineCoverage[];
 
     flattenCompletely: boolean;
+
+    shiftDown: boolean;
 }
 
 const CoverageLinesDialogPanel = forwardRef(function CoverageLinesDialogPanel(
@@ -241,7 +246,57 @@ function Filter({ table }: CommonProps) {
     );
 }
 
-function DataRow({ row }: { row: Row<Scope> }) {
+function fullyExpandOrContractRow(row: Row<Scope>, expanded: boolean) {
+    row.toggleExpanded(expanded);
+    for (const subRow of row.subRows) {
+        fullyExpandOrContractRow(subRow, expanded);
+    }
+}
+
+function ExpandRowIcon({
+    row,
+    shiftDown,
+}: {
+    row: Row<Scope>;
+    shiftDown: boolean;
+}) {
+    if (!row.getCanExpand()) {
+        return (
+            <IconChevronRight
+                className={cls(styles.HiddenChevron, styles.RowIcon)}
+            />
+        );
+    }
+
+    const iconProps = {
+        className: cls(styles.ExpandChevron, styles.RowIcon),
+    };
+    return row.getIsExpanded() ? (
+        shiftDown ? (
+            <IconChevronsDown
+                {...iconProps}
+                onClick={() => fullyExpandOrContractRow(row, false)}
+            />
+        ) : (
+            <IconChevronDown
+                {...iconProps}
+                onClick={row.getToggleExpandedHandler()}
+            />
+        )
+    ) : shiftDown ? (
+        <IconChevronsRight
+            {...iconProps}
+            onClick={() => fullyExpandOrContractRow(row, true)}
+        />
+    ) : (
+        <IconChevronRight
+            {...iconProps}
+            onClick={row.getToggleExpandedHandler()}
+        />
+    );
+}
+
+function DataRow({ row, shiftDown }: { row: Row<Scope>; shiftDown: boolean }) {
     return (
         <div
             className={cls(styles.Row, [
@@ -251,30 +306,7 @@ function DataRow({ row }: { row: Row<Scope> }) {
             style={{ "--indent": row.depth }}
         >
             <div>
-                {row.getCanExpand() ? (
-                    row.getIsExpanded() ? (
-                        <IconChevronDown
-                            className={cls(
-                                styles.ExpandChevron,
-                                styles.RowIcon,
-                            )}
-                            onClick={row.getToggleExpandedHandler()}
-                        />
-                    ) : (
-                        <IconChevronRight
-                            className={cls(
-                                styles.ExpandChevron,
-                                styles.RowIcon,
-                            )}
-                            onClick={row.getToggleExpandedHandler()}
-                        />
-                    )
-                ) : (
-                    <IconChevronRight
-                        className={cls(styles.HiddenChevron, styles.RowIcon)}
-                        style={{ opacity: 0 }}
-                    />
-                )}
+                <ExpandRowIcon row={row} shiftDown={shiftDown} />
             </div>
             {row.getVisibleCells().map(cell => (
                 <div key={cell.id}>
@@ -288,7 +320,13 @@ function DataRow({ row }: { row: Row<Scope> }) {
 function Body({ table }: { table: Table<Scope> }) {
     return table
         .getRowModel()
-        .rows.map(row => <DataRow key={row.id} row={row} />);
+        .rows.map(row => (
+            <DataRow
+                key={row.id}
+                row={row}
+                shiftDown={(table.options.meta as CoverageTableMeta).shiftDown}
+            />
+        ));
 }
 
 function TitleRow({
@@ -332,6 +370,8 @@ export default function CoverageTable(props: {
 
     const [expanded, setExpanded] = useState<ExpandedState>(true);
 
+    const shiftDown = useKeyDownState("Shift");
+
     const data = useMemo(() => {
         if (!(props.flattenSingleChildScopes ?? true)) {
             return props.scopes;
@@ -361,6 +401,7 @@ export default function CoverageTable(props: {
             pathSeparator: props.pathSeparator,
             getCoverageLines: props.getCoverageLines,
             flattenCompletely,
+            shiftDown,
         } satisfies CoverageTableMeta,
     });
 

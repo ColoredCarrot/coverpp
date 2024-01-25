@@ -99,6 +99,7 @@ body[data-theme="dark"] {
 
 .HiddenChevron {
     pointer-events: none;
+    opacity: 0;
 }
 
 .Number {
