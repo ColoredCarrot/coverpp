@@ -2,6 +2,9 @@
 
 #include "sut-foo.hpp"
 #include "ony/one/child.hpp"
+#include "deep/deep.hpp"
+#include "deep/nested/a.hpp"
+#include "deep/nested/b.hpp"
 
 #include <ranges>
 #include <string_view>
@@ -43,6 +46,9 @@ int main(int argc, char** argv) {
     OutputDebugString(std::format("{} args: {}", argc, args_str).c_str());
 
     only_one_child();
+    deep();
+    a();
+    b();
 
     for (int i : std::views::iota(0, 10))
     {

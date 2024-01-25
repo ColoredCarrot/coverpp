@@ -5,6 +5,9 @@ set(CMAKE_CXX_STANDARD 23)
 
 include(../cmake/CopyAsanDLLs.cmake)
 
-add_executable(example-sut sut-main.cpp sut-foo.hpp)
+add_executable(example-sut sut-main.cpp sut-foo.hpp
+        deep/deep.hpp
+        deep/nested/a.hpp
+        deep/nested/b.hpp)
 
 copy_asan_dlls(example-sut)
