@@ -16,7 +16,7 @@ export default function useKeyDownState(key: string) {
             window.removeEventListener("keydown", downHandler);
             window.removeEventListener("keyup", upHandler);
         };
-    }, []);
+    }, [key]);
 
     return down;
 }

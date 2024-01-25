@@ -13,10 +13,6 @@ export default function CoverageReport({
 }: {
     report: CoverageReportT;
 }) {
-    if (report.roots.length === 0) {
-        return <p>No data</p>;
-    }
-
     const [scopes, leafRegistry] = useMemo((): [Scope[], FileReportT[]] => {
         const leafRegistry: FileReportT[] = [];
         return [
@@ -24,6 +20,10 @@ export default function CoverageReport({
             leafRegistry,
         ];
     }, [report.roots]);
+
+    if (report.roots.length === 0) {
+        return <p>No data</p>;
+    }
 
     return (
         <div>
