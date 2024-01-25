@@ -29,6 +29,7 @@ table Root {
 
 table CoverageReport {
   roots:[Root] (native_inline);
+  stats:Stats;
 }
 
 root_type CoverageReport;

@@ -124,6 +124,7 @@ void RawExporter::run(const BasicReport& covered, const BasicReport& reachable)
 
     Coverpp::Report::CoverageReportT result;
     result.roots.push_back(std::move(root));
+    result.stats = std::make_unique<Coverpp::Report::StatsT>(*result.roots[0].stats);
 
     flatbuffers::FlatBufferBuilder builder{1024};
     builder.Finish(Coverpp::Report::CoverageReport::Pack(builder, &result));

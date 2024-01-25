@@ -8,30 +8,34 @@ import CoverageTable, { Scope } from "#/components/CoverageTable";
 import CoverageStatsOverview from "#/components/visualization/CoverageStatsOverview";
 import { LineCoverage } from "#/coverage/FileCoverage";
 
-export default function CoverageReport(props: { report: CoverageReportT }) {
-    if (props.report.roots.length === 0) {
+export default function CoverageReport({
+    report,
+}: {
+    report: CoverageReportT;
+}) {
+    if (report.roots.length === 0) {
         return <p>No data</p>;
     }
 
-    return props.report.roots.map(root => (
-        <Root key={root.path as string} root={root} />
-    ));
-}
-
-function Root(props: { root: RootT }) {
     const [scopes, leafRegistry] = useMemo((): [Scope[], FileReportT[]] => {
         const leafRegistry: FileReportT[] = [];
-        return [[getRootScope(props.root, leafRegistry)], leafRegistry];
-    }, [props.root]);
+        return [
+            report.roots.map(root => getRootScope(root, leafRegistry)),
+            leafRegistry,
+        ];
+    }, [report.roots]);
 
     return (
         <div>
             <h2>Code Coverage Report</h2>
-            <CoverageStatsOverview stats={props.root.stats ?? new StatsT()} />
+            <CoverageStatsOverview stats={report.stats ?? new StatsT()} />
             <div style={{ height: "3rem" }} />
             <CoverageTable
                 scopes={scopes}
-                pathSeparator={(props.root.directorySeparator ?? "/") as string}
+                pathSeparator={
+                    // TODO support different separators per root
+                    (report.roots[0].directorySeparator ?? "/") as string
+                }
                 getCoverageLines={leafId =>
                     toFileCoverageLines(leafRegistry[leafId])
                 }
