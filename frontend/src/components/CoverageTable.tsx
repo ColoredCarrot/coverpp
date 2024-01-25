@@ -159,15 +159,21 @@ const columns = [
         cell: ctx => <div className={styles.Number}>{ctx.getValue()}</div>,
         enableColumnFilter: false,
     }),
-    helper.accessor(scope => scope.totalCovered / scope.totalReachable, {
-        header: "Percent",
-        cell: ctx => (
-            <div className={styles.Number}>
-                {percentNumberFormat.format(ctx.getValue())}
-            </div>
-        ),
-        enableColumnFilter: false,
-    }),
+    helper.accessor(
+        scope =>
+            scope.totalReachable === 0
+                ? 1
+                : scope.totalCovered / scope.totalReachable,
+        {
+            header: "Percent",
+            cell: ctx => (
+                <div className={styles.Number}>
+                    {percentNumberFormat.format(ctx.getValue())}
+                </div>
+            ),
+            enableColumnFilter: false,
+        },
+    ),
 ];
 
 type CommonProps = { table: Table<Scope> };
