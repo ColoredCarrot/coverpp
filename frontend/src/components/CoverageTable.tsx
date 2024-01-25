@@ -431,6 +431,7 @@ function flattenScopeTreeInplace(scopes: Scope[], pathSeparator: string) {
         scope.path += pathSeparator + child.path;
         scope.fullPath = child.fullPath;
         scope.children = child.children;
+        scope.leafId = child.leafId;
     }
 }
 
