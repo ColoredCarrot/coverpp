@@ -1,5 +1,10 @@
 .Code {
     color: inherit;
+
+    --gutter-left-width: 1.2rem;
+    --gutter-right-width: 0.2rem;
+    --line-height: 1.25em;
+    --line-number-height: 0.8em; /* A little smaller than the size of the code text (keep in mind the em unit is relative to --line-height) */
 }
 
 body[data-theme="dark"] {
@@ -9,6 +14,33 @@ body[data-theme="dark"] {
 .Line {
     display: inline-block;
     width: 100%;
+    height: var(--line-height);
+    line-height: calc(var(--line-height) * 0.95);
+    padding-inline-start: var(--gutter-left-width);
+    padding-inline-end: var(--gutter-right-width);
+
+    position: relative;
+}
+
+.Line:nth-child(5n)::before {
+    content: attr(data-line-number);
+    display: block;
+
+    /* Left-aligned (with a tiny margin), vertically centered */
+    position: absolute;
+    left: 0;
+    top: 50%;
+    translate: 0 -50%;
+    margin-left: 0.1rem;
+
+    /* Not full width so it doesn't go right up next to the line content */
+    width: calc(0.6 * var(--gutter-left-width));
+    height: var(--line-number-height);
+    font-size: var(--line-number-height);
+    line-height: var(--line-number-height);
+
+    /* Text is a number so right-align */
+    text-align: end;
 }
 
 body {
