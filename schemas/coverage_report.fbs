@@ -30,6 +30,7 @@ table Root {
 table CoverageReport {
   roots:[Root] (native_inline);
   stats:Stats;
+  timestamp:int64; // Milliseconds elapsed since the epoch at the time this report was generated
 }
 
 root_type CoverageReport;

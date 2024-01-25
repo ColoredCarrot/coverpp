@@ -123,6 +123,8 @@ void RawExporter::run(const BasicReport& covered, const BasicReport& reachable)
     calculate_stats(root);
 
     Coverpp::Report::CoverageReportT result;
+    result.timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()).count();
     result.roots.push_back(std::move(root));
     result.stats = std::make_unique<Coverpp::Report::StatsT>(*result.roots[0].stats);
 

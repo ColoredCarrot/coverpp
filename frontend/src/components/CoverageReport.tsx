@@ -28,6 +28,9 @@ export default function CoverageReport({
     return (
         <div>
             <h2>Code Coverage Report</h2>
+            <p>
+                Generated {formatDateTime(new Date(Number(report.timestamp)))}
+            </p>
             <CoverageStatsOverview stats={report.stats ?? new StatsT()} />
             <div style={{ height: "3rem" }} />
             <CoverageTable
@@ -42,6 +45,27 @@ export default function CoverageReport({
             />
         </div>
     );
+}
+
+function formatDateTime(theDate: Date) {
+    const weekday = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+    ][theDate.getDay()];
+
+    function pad(n: number) {
+        return n < 10 ? "0" + n : n;
+    }
+
+    const time = `${pad(theDate.getHours())}:${pad(theDate.getMinutes())}`;
+    const date = `${theDate.getFullYear()}-${pad(theDate.getMonth() + 1)}-${pad(theDate.getDate())}`;
+
+    return `on ${weekday}, ${date}, at ${time}`;
 }
 
 function getRootScope(report: RootT, leafRegistry: FileReportT[]): Scope {
