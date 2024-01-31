@@ -38,6 +38,7 @@ interface GaugeMath {
     innerRadius: number;
     outermostRadius: number;
     heightBelowCenterline: number;
+    innerHeightBelowCenterline: number;
 }
 
 function calculateGauge(props: GaugeProps): GaugeMath {
@@ -71,6 +72,8 @@ function calculateGauge(props: GaugeProps): GaugeMath {
         outermostRadius,
         heightBelowCenterline,
         innerRadius,
+        innerHeightBelowCenterline:
+            innerRadius * Math.sin(angles.end - Math.PI / 2),
     };
 }
 
@@ -104,6 +107,8 @@ export default function Gauge({
 
     const innerArcOuterRadius = math.innerRadius + innerArcWidth;
 
+    const valueColor = getColor(normalizedValue);
+
     return (
         <svg width={width} height={math.boundingHeight}>
             <Group top={math.outermostRadius + margins.top} left={width / 2}>
@@ -131,24 +136,30 @@ export default function Gauge({
                 >
                     {({ arcs, path }) => (
                         <>
-                            <path
-                                d={path(arcs[0]) || ""}
-                                fill={getColor(arcs[0].value)}
-                            />
+                            <path d={path(arcs[0]) ?? ""} fill={valueColor} />
                             <path
                                 className={styles.arcFillBackground}
-                                d={path(arcs[1]) || ""}
+                                d={path(arcs[1]) ?? ""}
                             />
                         </>
                     )}
                 </Shape.Pie>
+            </Group>
+            <Group
+                top={
+                    margins.top +
+                    math.outermostRadius +
+                    math.innerHeightBelowCenterline
+                }
+                left={width / 2}
+            >
                 <Text
-                    fill={getColor(normalizedValue)}
+                    className={styles.ValueText}
+                    fill={valueColor}
                     scaleToFit
                     width={(math.innerRadius - textMarginInline) * 2}
                     textAnchor="middle"
-                    verticalAnchor="start"
-                    className={styles.ValueText}
+                    verticalAnchor="end"
                 >
                     {formatValue(normalizedValue)}
                 </Text>
