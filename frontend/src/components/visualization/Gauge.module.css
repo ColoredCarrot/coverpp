@@ -1,0 +1,15 @@
+body {
+    --color-gauge-arc-background: #9f9f9f; /* TODO */
+}
+
+body[data-theme="dark"] {
+    --color-gauge-arc-background: #5c5c5c;
+}
+
+.arcFillBackground {
+    fill: var(--color-gauge-arc-background);
+}
+
+.ValueText {
+    text-shadow: black 1px 0.5px 0, black 0 0 0.03em, black 0 0 0.01em;
+}
