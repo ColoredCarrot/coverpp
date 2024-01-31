@@ -37,6 +37,8 @@
 
     /* Text is a number so right-align */
     text-align: end;
+
+    color: var(--color-text-disabled);
 }
 
 body {
