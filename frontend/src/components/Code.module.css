@@ -7,10 +7,6 @@
     --line-number-height: 0.8em; /* A little smaller than the size of the code text (keep in mind the em unit is relative to --line-height) */
 }
 
-body[data-theme="dark"] {
-    color: rgb(178, 184, 185);
-}
-
 .Line {
     display: inline-block;
     width: 100%;
