@@ -3,11 +3,7 @@ import * as Scale from "@visx/scale";
 import { Group } from "@visx/group";
 import * as Shape from "@visx/shape";
 import { Text } from "@visx/text";
-import {
-    animated,
-    useTransition,
-    to,
-} from "@react-spring/web";
+import { animated, useTransition, to } from "@react-spring/web";
 import { PieArcDatum, ProvidedProps } from "@visx/shape/lib/shapes/Pie";
 
 const getColor = Scale.scaleQuantile({
@@ -83,45 +79,41 @@ function calculateGauge(props: GaugeProps): GaugeMath {
     };
 }
 
-type AnimatedStyles = { startAngle: number; endAngle: number };
+/**
+ * The filled main arc of the gauge.
+ *
+ * Animated such that it starts out empty and expands left-to-right.
+ */
+function AnimatedMainArc(props: {
+    path: ProvidedProps<number>["path"];
+    arc: PieArcDatum<number>;
+    color: string;
+}) {
+    type AnimatedProps = Pick<PieArcDatum<number>, "endAngle">;
 
-function AnimatedArc<Datum>(
-    props: ProvidedProps<Datum> & {
-        getKey: (d: PieArcDatum<Datum>) => string;
-        getColor: (d: PieArcDatum<Datum>) => string;
-    },
-) {
-    const transitions = useTransition<PieArcDatum<Datum>, AnimatedStyles>(
-        props.arcs,
+    const transitions = useTransition<PieArcDatum<number>, AnimatedProps>(
+        [props.arc],
         {
-            from: (datum): AnimatedStyles => ({
-                startAngle: datum.startAngle,
+            // Animate from endAngle=startAngle to actual endAngle
+            from: (datum): AnimatedProps => ({
                 endAngle: datum.startAngle,
             }),
             enter: datum => ({ endAngle: datum.endAngle }),
-            keys: props.getKey,
         },
     );
 
-    const { path, getColor } = props;
-
-    return transitions((props, arc, { key }) => {
+    return transitions((animatedProps, arc) => {
         return (
-            <g key={key}>
-                <animated.path
-                    // compute interpolated path d attribute from intermediate angle values
-                    d={to(
-                        [props.startAngle, props.endAngle],
-                        (startAngle, endAngle) =>
-                            path({
-                                ...arc,
-                                startAngle,
-                                endAngle,
-                            }),
-                    )}
-                    fill={getColor(arc)}
-                />
-            </g>
+            <animated.path
+                // Make interpolated path d attribute from intermediate angle values
+                d={to(animatedProps.endAngle, endAngle =>
+                    props.path({
+                        ...arc,
+                        endAngle,
+                    }),
+                )}
+                fill={props.color}
+            />
         );
     });
 }
@@ -183,21 +175,26 @@ export default function Gauge({
                     endAngle={angles.end}
                     pieSort={null}
                 >
-                    {({ arcs, path, pie }) => (
-                        <AnimatedArc
-                            path={path}
-                            arcs={arcs}
-                            pie={pie}
-                            getColor={s => getColor(s.data)}
-                            getKey={s => s.index + ""}
-                        />
-                        // <>
-                        //     <path d={path(arcs[0]) ?? ""} fill={valueColor} />
-                        //     <path
-                        //         className={styles.arcFillBackground}
-                        //         d={path(arcs[1]) ?? ""}
-                        //     />
-                        // </>
+                    {({ arcs: [filledArc, unfilledArc], path }) => (
+                        <>
+                            {/* First, paint the arc that means "unfilled" */}
+                            <path
+                                className={styles.arcFillBackground}
+                                d={
+                                    path({
+                                        // Modify the unfilled arc so that it starts where the filled arc starts
+                                        ...unfilledArc,
+                                        startAngle: filledArc.startAngle,
+                                    }) ?? ""
+                                }
+                            />
+                            {/* Second, atop the unfilled arc, paint the filled arc */}
+                            <AnimatedMainArc
+                                path={path}
+                                arc={filledArc}
+                                color={valueColor}
+                            />
+                        </>
                     )}
                 </Shape.Pie>
             </Group>
