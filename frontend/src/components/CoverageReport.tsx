@@ -47,6 +47,11 @@ export default function CoverageReport({
     );
 }
 
+const monthName = (() => {
+    const format = new Intl.DateTimeFormat("en-US", { month: "short" });
+    return format.format.bind(format);
+})();
+
 function formatDateTime(theDate: Date) {
     const weekday = [
         "Sunday",
@@ -63,7 +68,7 @@ function formatDateTime(theDate: Date) {
     }
 
     const time = `${pad(theDate.getHours())}:${pad(theDate.getMinutes())}`;
-    const date = `${theDate.getFullYear()}-${pad(theDate.getMonth() + 1)}-${pad(theDate.getDate())}`;
+    const date = `${pad(theDate.getDate())} ${monthName(theDate)} ${theDate.getFullYear()}`;
 
     return `on ${weekday}, ${date}, at ${time}`;
 }
