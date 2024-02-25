@@ -1,10 +1,10 @@
-import styles from "./Gauge.module.css";
-import * as Scale from "@visx/scale";
+import { animated, to, useTransition } from "@react-spring/web";
 import { Group } from "@visx/group";
+import * as Scale from "@visx/scale";
 import * as Shape from "@visx/shape";
-import { Text } from "@visx/text";
-import { animated, useTransition, to } from "@react-spring/web";
 import { PieArcDatum, ProvidedProps } from "@visx/shape/lib/shapes/Pie";
+import { Text } from "@visx/text";
+import styles from "./Gauge.module.css";
 
 const getColor = Scale.scaleQuantile({
     domain: [0, 1],
