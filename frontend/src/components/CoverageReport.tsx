@@ -47,22 +47,17 @@ export default function CoverageReport({
     );
 }
 
+const weekdayName = (() => {
+    const format = new Intl.DateTimeFormat("en-US", { weekday: "long" });
+    return format.format.bind(format);
+})();
+
 const monthName = (() => {
     const format = new Intl.DateTimeFormat("en-US", { month: "short" });
     return format.format.bind(format);
 })();
 
 function formatDateTime(theDate: Date) {
-    const weekday = [
-        "Sunday",
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-    ][theDate.getDay()];
-
     function pad(n: number) {
         return n < 10 ? "0" + n : n;
     }
@@ -70,7 +65,7 @@ function formatDateTime(theDate: Date) {
     const time = `${pad(theDate.getHours())}:${pad(theDate.getMinutes())}`;
     const date = `${pad(theDate.getDate())} ${monthName(theDate)} ${theDate.getFullYear()}`;
 
-    return `on ${weekday}, ${date}, at ${time}`;
+    return `on ${weekdayName(theDate)}, ${date}, at ${time}`;
 }
 
 function getRootScope(report: RootT, leafRegistry: FileReportT[]): Scope {
