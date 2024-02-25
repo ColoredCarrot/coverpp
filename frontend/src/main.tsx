@@ -1,7 +1,6 @@
-import { NotFoundRoute, Router, RouterProvider } from "@tanstack/react-router";
+import { RouterProvider, createRouter } from "@tanstack/react-router";
 import React from "react";
 import { createRoot as createReactRoot } from "react-dom/client";
-import NotFoundPage from "#/pages/NotFoundPage";
 import { routes } from "#/routes";
 
 const routeTree = routes.root.addChildren([
@@ -9,15 +8,9 @@ const routeTree = routes.root.addChildren([
     routes.coverageReport,
 ]);
 
-const notFoundRoute = new NotFoundRoute({
-    getParentRoute: () => routes.root,
-    component: NotFoundPage,
-});
-
-const router = new Router({
+const router = createRouter({
     routeTree,
     defaultPreload: "intent",
-    notFoundRoute,
 });
 
 declare module "@tanstack/react-router" {

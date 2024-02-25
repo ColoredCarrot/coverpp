@@ -1,12 +1,18 @@
-import { RootRoute, Route, lazyRouteComponent } from "@tanstack/react-router";
+import {
+    createRootRoute,
+    createRoute,
+    lazyRouteComponent,
+} from "@tanstack/react-router";
 import { CoverageReportT } from "#/_generated/coverpp/report/coverage-report";
 import { parseCoverage } from "#/coverage/CoverageParser";
 import { isDev } from "#/environment";
 import IndexPage from "#/pages/IndexPage";
+import NotFoundPage from "#/pages/NotFoundPage";
 import { Root } from "#/Root";
 
-const root = new RootRoute({
+const root = createRootRoute({
     component: Root,
+    notFoundComponent: NotFoundPage, // Note: Must not be lazy import (TanStack Router limitation)
 });
 
 type IndexRouteLoaderData =
@@ -16,7 +22,7 @@ type IndexRouteLoaderData =
           report: CoverageReportT;
       };
 
-const index = new Route({
+const index = createRoute({
     getParentRoute: () => root,
     path: "/",
     component: IndexPage,
@@ -41,7 +47,7 @@ const index = new Route({
     },
 });
 
-const coverageReport = new Route({
+const coverageReport = createRoute({
     getParentRoute: () => root,
     path: "/report/$",
     component: lazyRouteComponent(() => import("#/pages/CoverageReportPage")),
