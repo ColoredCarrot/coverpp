@@ -3,6 +3,12 @@ import * as Scale from "@visx/scale";
 import { Group } from "@visx/group";
 import * as Shape from "@visx/shape";
 import { Text } from "@visx/text";
+import {
+    animated,
+    useTransition,
+    to,
+} from "@react-spring/web";
+import { PieArcDatum, ProvidedProps } from "@visx/shape/lib/shapes/Pie";
 
 const getColor = Scale.scaleQuantile({
     domain: [0, 1],
@@ -77,6 +83,49 @@ function calculateGauge(props: GaugeProps): GaugeMath {
     };
 }
 
+type AnimatedStyles = { startAngle: number; endAngle: number };
+
+function AnimatedArc<Datum>(
+    props: ProvidedProps<Datum> & {
+        getKey: (d: PieArcDatum<Datum>) => string;
+        getColor: (d: PieArcDatum<Datum>) => string;
+    },
+) {
+    const transitions = useTransition<PieArcDatum<Datum>, AnimatedStyles>(
+        props.arcs,
+        {
+            from: (datum): AnimatedStyles => ({
+                startAngle: datum.startAngle,
+                endAngle: datum.startAngle,
+            }),
+            enter: datum => ({ endAngle: datum.endAngle }),
+            keys: props.getKey,
+        },
+    );
+
+    const { path, getColor } = props;
+
+    return transitions((props, arc, { key }) => {
+        return (
+            <g key={key}>
+                <animated.path
+                    // compute interpolated path d attribute from intermediate angle values
+                    d={to(
+                        [props.startAngle, props.endAngle],
+                        (startAngle, endAngle) =>
+                            path({
+                                ...arc,
+                                startAngle,
+                                endAngle,
+                            }),
+                    )}
+                    fill={getColor(arc)}
+                />
+            </g>
+        );
+    });
+}
+
 export default function Gauge({
     width,
     outerArcWidth = 5,
@@ -134,17 +183,26 @@ export default function Gauge({
                     endAngle={angles.end}
                     pieSort={null}
                 >
-                    {({ arcs, path }) => (
-                        <>
-                            <path d={path(arcs[0]) ?? ""} fill={valueColor} />
-                            <path
-                                className={styles.arcFillBackground}
-                                d={path(arcs[1]) ?? ""}
-                            />
-                        </>
+                    {({ arcs, path, pie }) => (
+                        <AnimatedArc
+                            path={path}
+                            arcs={arcs}
+                            pie={pie}
+                            getColor={s => getColor(s.data)}
+                            getKey={s => s.index + ""}
+                        />
+                        // <>
+                        //     <path d={path(arcs[0]) ?? ""} fill={valueColor} />
+                        //     <path
+                        //         className={styles.arcFillBackground}
+                        //         d={path(arcs[1]) ?? ""}
+                        //     />
+                        // </>
                     )}
                 </Shape.Pie>
             </Group>
+
+            {/* Center text */}
             <Group
                 top={
                     margins.top +
