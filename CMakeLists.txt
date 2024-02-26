@@ -71,7 +71,7 @@ add_executable(coverpp
         src/util/console_color.hpp
         src/polyfill/generator.hpp
 )
-# TODO Once CMake 3.28 is supported:
+# TODO Once CMake 3.28 is supported (CLion 2024.1):
 #[[add_executable(coverpp)
 
 target_sources(coverpp
@@ -161,10 +161,18 @@ add_custom_command(TARGET coverpp POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${DIASDK_DLL}" $<TARGET_FILE_DIR:coverpp>
 )
 
+# Depend on frontend
+add_subdirectory(frontend)
+add_dependencies(coverpp frontend)
+
 copy_asan_dlls(coverpp)
 
+# To be able to run cover++.exe without installing it (most likely during development),
+# copy the webapp directory from the frontend target's BINARY_DIR to the main executable's BINARY_DIR
+# (so right next to the .exe).
+get_target_property(frontend_binary_dir frontend BINARY_DIR)
 add_custom_command(TARGET coverpp POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/frontend/dist" "$<TARGET_FILE_DIR:coverpp>/webapp"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${frontend_binary_dir}/webapp" "$<TARGET_FILE_DIR:coverpp>/webapp"
 )
 
 
