@@ -14,7 +14,20 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up PNPM
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
+      - name: Set up NodeJS
+        uses: actions/setup-node@v3
+        with:
+          node-version: latest
+          cache: 'pnpm'
+          cache-dependency-path: 'frontend/pnpm-lock.yaml'
 
       - name: Configure
         run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
