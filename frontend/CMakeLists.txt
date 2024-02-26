@@ -48,4 +48,6 @@ if (BUILD_TESTING)
             COMMAND pnpm test
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     )
+    set_tests_properties(frontend-tests PROPERTIES TIMEOUT 60)
+    message(STATUS "Will run frontend tests in directory: ${CMAKE_CURRENT_SOURCE_DIR}")
 endif ()
