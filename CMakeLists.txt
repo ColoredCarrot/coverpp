@@ -74,6 +74,8 @@ add_executable(coverpp
         src/util/console_color.cpp
         src/util/console_color.hpp
         src/polyfill/generator.hpp
+        src/run.cpp
+        src/run.hpp
 )
 # TODO Once CMake 3.28 is supported (CLion 2024.1):
 #[[add_executable(coverpp)
