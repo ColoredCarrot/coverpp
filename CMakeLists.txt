@@ -141,23 +141,7 @@ build_flatbuffers(
         #[[copy_text_schemas_dir]]   ""
 )
 
-set(FLATBUFFERS_FLATC_SCHEMA_EXTRA_ARGS "--ts" "--gen-object-api")
-build_flatbuffers(
-        #[[flatbuffers_schemas]]     "${CMAKE_CURRENT_SOURCE_DIR}/schemas/coverage_report.fbs"
-        #[[schema_include_dirs]]     ""
-        #[[custom_target_name]]      coverpp-schemas-frontend
-        #[[additional_dependencies]] ""
-        #[[generated_includes_dir]]  "${CMAKE_CURRENT_SOURCE_DIR}/_generated/frontend"
-        #[[binary_schemas_dir]]      ""
-        #[[copy_text_schemas_dir]]   ""
-)
-
-add_custom_command(
-        TARGET coverpp-schemas-frontend POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/_generated/frontend" "${CMAKE_CURRENT_SOURCE_DIR}/frontend/src/_generated"
-)
-
-add_dependencies(coverpp coverpp-schemas coverpp-schemas-frontend)
+add_dependencies(coverpp coverpp-schemas)
 
 target_link_libraries(coverpp PRIVATE WIL flatbuffers)
 
