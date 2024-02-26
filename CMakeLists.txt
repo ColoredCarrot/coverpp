@@ -11,6 +11,10 @@ include(FetchContent)
 include(cmake/CMakeRC.cmake)
 include(cmake/CopyAsanDLLs.cmake)
 
+if (PROJECT_IS_TOP_LEVEL)
+    include(CTest)
+endif ()
+
 set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
 include(InstallRequiredSystemLibraries)
 
@@ -114,6 +118,8 @@ FetchContent_Declare(
         GIT_TAG v1.0.231216.1
 )
 
+# FlatBuffers
+set(FLATBUFFERS_BUILD_TESTS OFF)
 FetchContent_Declare(
         flatbuffers
         GIT_REPOSITORY https://github.com/google/flatbuffers.git
@@ -183,3 +189,8 @@ install(TARGETS coverpp)
 
 
 add_subdirectory(example-sut)
+
+
+if (BUILD_TESTING)
+    add_subdirectory(test)
+endif ()
