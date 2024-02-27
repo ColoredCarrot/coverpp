@@ -24,5 +24,3 @@ target_sources(${PROJECT_NAME} PRIVATE
 target_link_libraries(${PROJECT_NAME} PRIVATE Catch2::Catch2WithMain)
 
 add_test(NAME unit-tests COMMAND ${PROJECT_NAME})
-
-add_test(NAME asd-unit-tests COMMAND ${PROJECT_NAME} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})

@@ -42,7 +42,7 @@ add_custom_target(frontend ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/webapp/index
 #install(DIRECTORY) TODO
 
 if (BUILD_TESTING)
-    find_program(pnpm NAMES pnpm pnpm.exe pnpm.bat pnpm.cmd REQUIRED)
+    find_program(pnpm NAMES pnpm.exe pnpm.bat pnpm.cmd pnpm REQUIRED)
     message(STATUS "Found pnpm at ${pnpm}")
 
     # Register frontend tests with CTest
