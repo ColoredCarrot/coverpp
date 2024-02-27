@@ -53,19 +53,4 @@ if (BUILD_TESTING)
     )
     set_tests_properties(frontend-tests PROPERTIES TIMEOUT 60)
     message(STATUS "Will run frontend tests in directory: ${CMAKE_CURRENT_SOURCE_DIR}")
-
-    set_tests_properties(frontend-tests PROPERTIES LAUNCHER cmd)
-
-    add_test(
-            NAME test-tests
-            COMMAND "${pnpm}" -v
-            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-    )
-    add_test(
-            NAME test-tests-2
-            COMMAND "${pnpm}" -v
-            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-    )
-    set_tests_properties(test-tests-2 PROPERTIES LAUNCHER cmd)
-
 endif ()
