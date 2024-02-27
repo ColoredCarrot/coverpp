@@ -42,10 +42,13 @@ add_custom_target(frontend ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/webapp/index
 #install(DIRECTORY) TODO
 
 if (BUILD_TESTING)
+    find_program(pnpm NAMES pnpm pnpm.exe pnpm.bat pnpm.cmd REQUIRED)
+    message(STATUS "Found pnpm at ${pnpm}")
+
     # Register frontend tests with CTest
     add_test(
             NAME frontend-tests
-            COMMAND pnpm test
+            COMMAND "${pnpm}" test
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     )
     set_tests_properties(frontend-tests PROPERTIES TIMEOUT 60)
@@ -55,12 +58,12 @@ if (BUILD_TESTING)
 
     add_test(
             NAME test-tests
-            COMMAND pnpm -v
+            COMMAND "${pnpm}" -v
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     )
     add_test(
             NAME test-tests-2
-            COMMAND pnpm.exe -v
+            COMMAND "${pnpm}" -v
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     )
     set_tests_properties(test-tests-2 PROPERTIES LAUNCHER cmd)
