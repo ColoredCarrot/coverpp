@@ -45,7 +45,7 @@ if (BUILD_TESTING)
     # Register frontend tests with CTest
     add_test(
             NAME frontend-tests
-            COMMAND pnpm test
+            COMMAND pnpm.exe test
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     )
     set_tests_properties(frontend-tests PROPERTIES TIMEOUT 60)
@@ -55,12 +55,12 @@ if (BUILD_TESTING)
 
     add_test(
             NAME test-tests
-            COMMAND pnpm -v
+            COMMAND pnpm.exe -v
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     )
     add_test(
             NAME test-tests-2
-            COMMAND pnpm -v
+            COMMAND pnpm.exe -v
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     )
     set_tests_properties(test-tests-2 PROPERTIES LAUNCHER cmd)
