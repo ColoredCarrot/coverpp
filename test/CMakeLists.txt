@@ -21,6 +21,13 @@ target_sources(${PROJECT_NAME} PRIVATE
         "src/foo.test.cpp"
 )
 
+target_compile_options(${PROJECT_NAME} PRIVATE
+        $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
+)
+target_link_options(${PROJECT_NAME} PRIVATE
+        $<$<CXX_COMPILER_ID:MSVC>:/WX>
+)
+
 target_link_libraries(${PROJECT_NAME} PRIVATE Catch2::Catch2WithMain)
 
 add_test(NAME unit-tests COMMAND ${PROJECT_NAME})
