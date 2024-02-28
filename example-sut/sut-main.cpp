@@ -1,22 +1,34 @@
-#define __STDC_WANT_SECURE_LIB__ 1
-
 #include "sut-foo.hpp"
 #include "ony/one/child.hpp"
 #include "deep/deep.hpp"
 #include "deep/nested/a.hpp"
 #include "deep/nested/b.hpp"
 
+#include <format>
 #include <ranges>
 #include <string_view>
-#include <format>
 
 #define NOMINMAX
-#include <windows.h>
+#define WIN32_LEAN_AND_MEAN
 
-int min(int a, int b) {
-    if (a <= b) {
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 5039) // winbase.h(7810,48): warning C5039: 'TpSetCallbackCleanupGroup': pointer or reference to potentially throwing function passed to 'extern "C"' function under -EHc. Undefined behavior may occur if this function throws an exception.
+#endif
+
+#include <Windows.h>
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+
+int min(int a, int b)
+{
+    if (a <= b)
+    {
 //        __debugbreak();
-        if (a == b) {
+        if (a == b)
+        {
             return 99;
         }
         return a;
@@ -24,18 +36,22 @@ int min(int a, int b) {
     return b;
 }
 
-void seh() {
-    __try {
+void seh()
+{
+    __try
+    {
         int p = 1 + 2;
         RaiseException(1, 0, 0, nullptr);
         ++p;
     }
-    __except(EXCEPTION_EXECUTE_HANDLER) {
-        int q = 1 + 2;
+    __except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        [[maybe_unused]] int q = 1 + 2;
     }
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
     const std::span<char*> args{argv, static_cast<std::size_t>(argc)};
 
     auto args_str = args
@@ -60,8 +76,10 @@ int main(int argc, char** argv) {
     return min(1, 2);
 }
 
-namespace foo {
-    int main() {
-        return 42;
-    }
+namespace foo
+{
+int main()
+{
+    return 42;
+}
 }
