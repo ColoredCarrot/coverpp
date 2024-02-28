@@ -19,10 +19,10 @@ set(CMAKE_INSTALL_UCRT_LIBRARIES ON)
 include(InstallRequiredSystemLibraries)
 
 cmrc_add_resource_library(coverpp-resources ALIAS coverpp::rc NAMESPACE coverpp_rc
-    "src/resources/html-exporter/index.html"
-    "src/resources/html-exporter/index.css"
-    "src/resources/html-exporter/third_party/prism.js"
-    "src/resources/html-exporter/third_party/prism.css"
+        "src/resources/html-exporter/index.html"
+        "src/resources/html-exporter/index.css"
+        "src/resources/html-exporter/third_party/prism.js"
+        "src/resources/html-exporter/third_party/prism.css"
 )
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")
@@ -30,9 +30,9 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")
 set(CMAKE_CXX_STANDARD 23)
 
 add_executable(coverpp
-    "main.cpp"
-    "src/BreakpointDriver.hpp"
-    "src/BreakpointDriver.cpp"
+        "main.cpp"
+        "src/BreakpointDriver.hpp"
+        "src/BreakpointDriver.cpp"
         src/CoverageSink.cpp
         src/CoverageSink.hpp
         src/types.hpp
@@ -98,8 +98,27 @@ target_sources(coverpp
 #set_property(TARGET coverpp PROPERTY
 #        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
-target_compile_options(coverpp PUBLIC "$<$<C_COMPILER_ID:MSVC>:/utf-8>" "$<$<C_COMPILER_ID:MSVC>:/Zc:char8_t->")
-target_compile_definitions(coverpp PRIVATE "_WIN32_WINNT=0x0A00") # Windows 10 and above
+# Enable warnings
+target_compile_options(${PROJECT_NAME} PRIVATE
+        $<$<CXX_COMPILER_ID:MSVC>:/W2 /WX>
+)
+target_link_options(${PROJECT_NAME} PRIVATE
+        $<$<CXX_COMPILER_ID:MSVC>:/WX>
+)
+
+# Disable char8_t
+target_compile_options(${PROJECT_NAME} PUBLIC
+        $<$<CXX_COMPILER_ID:MSVC>:/Zc:char8_t->
+        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-fno-char8_t>
+)
+
+# Enable UTF-8
+target_compile_options(${PROJECT_NAME} PRIVATE
+        $<$<C_COMPILER_ID:MSVC>:/utf-8>
+)
+
+# Windows 10 and above
+target_compile_definitions(${PROJECT_NAME} PRIVATE "_WIN32_WINNT=0x0A00")
 
 # DIA SDK
 find_package(DiaSDK REQUIRED)
@@ -150,7 +169,7 @@ target_link_libraries(coverpp PRIVATE WIL flatbuffers)
 # Copy DIA SDK DLL to same directory as .exe
 # See https://stackoverflow.com/questions/10671916/how-to-copy-dll-files-into-the-same-folder-as-the-executable-using-cmake
 add_custom_command(TARGET coverpp POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${DIASDK_DLL}" $<TARGET_FILE_DIR:coverpp>
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${DIASDK_DLL}" $<TARGET_FILE_DIR:coverpp>
 )
 
 # Depend on frontend
@@ -164,7 +183,7 @@ copy_asan_dlls(coverpp)
 # (so right next to the .exe).
 get_target_property(frontend_binary_dir frontend BINARY_DIR)
 add_custom_command(TARGET coverpp POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${frontend_binary_dir}/webapp" "$<TARGET_FILE_DIR:coverpp>/webapp"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${frontend_binary_dir}/webapp" "$<TARGET_FILE_DIR:coverpp>/webapp"
 )
 
 
