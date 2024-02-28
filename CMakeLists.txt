@@ -15,7 +15,7 @@ if (PROJECT_IS_TOP_LEVEL)
     include(CTest)
 endif ()
 
-set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
+set(CMAKE_INSTALL_UCRT_LIBRARIES ON)
 include(InstallRequiredSystemLibraries)
 
 cmrc_add_resource_library(coverpp-resources ALIAS coverpp::rc NAMESPACE coverpp_rc
