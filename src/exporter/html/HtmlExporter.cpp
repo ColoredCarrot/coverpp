@@ -4,6 +4,7 @@
 #include <fstream>
 #include <print>
 #include <ranges>
+#include <iostream>
 
 CMRC_DECLARE(coverpp_rc);
 

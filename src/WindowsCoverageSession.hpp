@@ -3,7 +3,12 @@
 #include "CoverageEngine.hpp"
 #include "DiaAccessor.hpp"
 #include "types.hpp"
+
+#if defined(__cpp_lib_generator)
+#include <generator>
+#else
 #include "polyfill/generator.hpp"
+#endif
 
 namespace coverpp::windows
 {
