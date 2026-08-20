@@ -11,6 +11,8 @@ const std::set<unsigned>& BasicFileReport::covered_lines() const
     return m_covered_lines;
 }
 
+const BasicFileReport BasicFileReport::empty{};
+
 std::unordered_map<std::filesystem::path, BasicFileReport>& BasicReport::file_reports()
 {
     return m_file_reports;

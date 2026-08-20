@@ -21,7 +21,10 @@ void CLionExporter::run(BasicReport const& covered, BasicReport const& reachable
 	auto width = static_cast<int>(std::log10(reachable.file_reports().size())) + 1;
 	for (auto const& [path, file_report] : reachable.file_reports())
 	{
-		auto const& covered_file_report = covered.file_reports().at(path);
+		auto const  covered_file_report_it = covered.file_reports().find(path);
+		auto const& covered_file_report    = covered_file_report_it != covered.file_reports().end()
+		                                         ? covered_file_report_it->second
+		                                         : BasicFileReport::empty;
 
 		auto out_file = m_out_dir / std::format("{:0{}}.gcov", index++, width);
 
@@ -40,7 +43,13 @@ void CLionExporter::run(BasicReport const& covered, BasicReport const& reachable
 			bool is_reachable = file_report.covered_lines().contains(line_number);
 			bool is_covered   = is_reachable && covered_file_report.covered_lines().contains(line_number);
 
-			std::println(out, "{}:{: 5}:{}", is_covered ? "    1" : is_reachable ? "#####" : "    -", line_number, line);
+			std::println(out,
+			             "{}:{: 5}:{}",
+			             is_covered     ? "    1"
+			             : is_reachable ? "#####"
+			                            : "    -",
+			             line_number,
+			             line);
 		}
 
 		out.flush();

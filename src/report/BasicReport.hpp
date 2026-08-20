@@ -12,6 +12,8 @@ public:
     std::set<unsigned>& covered_lines();
     const std::set<unsigned>& covered_lines() const;
 
+	static const BasicFileReport empty;
+
 private:
     std::set<unsigned> m_covered_lines;
 };
