@@ -6,6 +6,7 @@
 #include "WindowsCoverageSession.hpp"
 #include "exporter/SourceFileExporter.hpp"
 #include "report/CoverageProcessor.hpp"
+#include "exporter/clion/CLionExporter.hpp"
 #include "exporter/html/HtmlExporter.hpp"
 #include "seh_descriptions.hpp"
 #include "util/encodings_util.hpp"
@@ -390,6 +391,9 @@ int run_with_coverage(const CoverageParams& params)
 
     coverpp::RawExporter raw_exporter{params.out_dir / "report.coverpp", params.source_dir};
     raw_exporter.run(report, reachable_report);
+
+	CLionExporter clion_exporter{params.out_dir / "clion", params.source_dir};
+	clion_exporter.run(report, reachable_report);
 
     return *exit_code;
 }

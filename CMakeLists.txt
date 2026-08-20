@@ -53,6 +53,8 @@ add_executable(coverpp
         src/report/CoverageProcessor.hpp
         src/report/BasicReport.cpp
         src/report/BasicReport.hpp
+        src/exporter/clion/CLionExporter.cpp
+        src/exporter/clion/CLionExporter.hpp
         src/exporter/html/HtmlExporter.cpp
         src/exporter/html/HtmlExporter.hpp
         src/seh_descriptions.hpp
