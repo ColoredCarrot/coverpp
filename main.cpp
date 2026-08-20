@@ -55,7 +55,7 @@ try
         CLI::ExistingDirectory)->required();
     run_app->add_option("-p,--program", params.program, "Executable")->check(CLI::ExistingFile)->required();
     run_app->add_option("-a,--program-args", params.program_args, "Arguments to pass to the executable");
-    run_app->add_option("-d,--debug-info", params.debug_info, "PDB file")->check(CLI::ExistingFile)->required();
+    run_app->add_option("-d,--debug-info", params.debug_info, "PDB file")->check(CLI::ExistingFile);
     run_app->add_option("-o,--out-dir", params.out_dir, "Output directory")->default_val("./coverpp-report");
     run_app->add_flag("-v,--verbose", params.verbosity, "Print more messages to the console");
     run_app->add_flag("--print-first-chance-seh", params.print_first_chance_seh_exceptions,
@@ -86,6 +86,13 @@ try
     {
         return coverpp::serve(serve_options);
     }
+
+	if (params.debug_info.empty())
+	{
+		params.debug_info = params.program.parent_path() / (params.program.stem().string() + ".pdb");
+	}
+	params.program    = canonical(params.program);
+	params.debug_info = canonical(params.debug_info);
 
     if (params.verbosity > 0)
     {
