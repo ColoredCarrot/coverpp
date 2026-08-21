@@ -112,7 +112,9 @@ void merge_reports(MergeOptions const& options)
 	auto progress = ProgressBar{options.input_files.size()};
 	for (auto const& [i, input_file] : options.input_files | std::views::enumerate)
 	{
-		merge_reports(accumulated, read_report(input_file));
+		auto const& report    = read_report(input_file);
+		accumulated.timestamp = report.timestamp;
+		merge_reports(accumulated, report);
 		progress.update(i + 1);
 	}
 
