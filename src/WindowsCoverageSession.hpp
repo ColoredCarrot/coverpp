@@ -33,5 +33,7 @@ private:
     CoverageParams m_params;
 
     DiaAccessor m_dia;
+
+	[[nodiscard]] bool should_trace(std::filesystem::path const& source_file) const;
 };
 }

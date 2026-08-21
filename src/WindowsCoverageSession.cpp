@@ -59,7 +59,7 @@ std::generator<std::pair<const std::filesystem::path&, IDiaLineNumber&>> Windows
     COVERPP_FOR_EACH_COM_ITEM(IDiaSourceFile, dia_source_file, *dia_source_files)
     {
         std::filesystem::path file = get_string(dia_source_file, &IDiaSourceFile::get_fileName);
-        if (!detail::path_is_subpath_of(file, m_params.source_dir))
+        if (!should_trace(file))
         {
             continue;
         }
@@ -143,7 +143,7 @@ std::optional<std::filesystem::path> WindowsCoverageSession::trace(CoverageSink&
 
     const auto file = get_file_by_line_numbers(*line_numbers);
 
-    if (file && coverpp::detail::path_is_subpath_of(*file, m_params.source_dir))
+    if (file && should_trace(*file))
     {
         auto line_number = get_single_item<IDiaLineNumber>(*line_numbers);
         sink.track_coverage(
@@ -186,4 +186,19 @@ DiaAccessor& WindowsCoverageSession::dia()
 {
     return m_dia;
 }
+
+bool WindowsCoverageSession::should_trace(std::filesystem::path const& source_file) const
+{
+	if (!detail::path_is_subpath_of(source_file, m_params.source_dir))
+	{
+		return false;
+	}
+
+	if (std::regex_search(source_file.generic_string(), m_params.exclude_source_files_regex))
+	{
+		return false;
+	}
+
+	return true;
 }
+} // namespace coverpp::windows

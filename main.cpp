@@ -62,6 +62,7 @@ try
     run_app->add_option("-a,--program-args", params.program_args, "Arguments to pass to the executable");
     run_app->add_option("-d,--debug-info", params.debug_info, "PDB file")->check(CLI::ExistingFile);
     run_app->add_option("-o,--out", params.out_file, "Output file")->default_val("./report.coverpp");
+	run_app->add_option("--exclude-source-files-regex", params.exclude_source_files_regex, "Regex for source files to exclude (matches on generic paths with /)");
     run_app->add_flag("-v,--verbose", params.verbosity, "Print more messages to the console");
     run_app->add_flag("--print-first-chance-seh", params.print_first_chance_seh_exceptions,
                       "Print first-chance SEH exceptions to the console");
