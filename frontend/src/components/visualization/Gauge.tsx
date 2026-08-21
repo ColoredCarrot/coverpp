@@ -6,9 +6,13 @@ import { PieArcDatum, ProvidedProps } from "@visx/shape/lib/shapes/Pie";
 import { Text } from "@visx/text";
 import styles from "./Gauge.module.css";
 
-const getColor = Scale.scaleQuantile({
+export const redYellowGreen = Scale.scaleQuantile({
     domain: [0, 1],
     range: ["#EA4228", "#F5CD19", "#5BE12C"],
+});
+export const neutralBlue = Scale.scaleLinear({
+  domain: [0, 1],
+  range: ["#DCEEFF", "#1976D2"],
 });
 
 const angles = {
@@ -118,6 +122,13 @@ function AnimatedMainArc(props: {
     });
 }
 
+const OUTER_ARC_SEGMENTS = 256;
+
+const outerArcData = Array.from(
+    { length: OUTER_ARC_SEGMENTS },
+    (_, i) => (i + 0.5) / OUTER_ARC_SEGMENTS,
+);
+
 export default function Gauge({
     width,
     outerArcWidth = 5,
@@ -132,9 +143,11 @@ export default function Gauge({
     textMarginInline = 16,
     formatValue = v => `${v}`,
     value: normalizedValue, // value in [0, 1]
+    colors,
 }: {
     width: number;
     value: number;
+    colors: typeof redYellowGreen | typeof neutralBlue;
 } & Partial<GaugeProps>) {
     const math = calculateGauge({
         width,
@@ -148,21 +161,21 @@ export default function Gauge({
 
     const innerArcOuterRadius = math.innerRadius + innerArcWidth;
 
-    const valueColor = getColor(normalizedValue);
+    const valueColor = colors(normalizedValue);
 
     return (
         <svg width={width} height={math.boundingHeight}>
             <Group top={math.outermostRadius + margins.top} left={width / 2}>
                 {/* Outer arc (labels) */}
                 <Shape.Pie
-                    data={getColor.range()}
+                    data={outerArcData}
                     outerRadius={math.outermostRadius}
                     innerRadius={innerArcOuterRadius + outerArcToInnerMargin}
                     cornerRadius={0}
                     padAngle={0}
                     startAngle={angles.start}
                     endAngle={angles.end}
-                    fill={datum => datum.data}
+                    fill={datum => colors(datum.data)}
                     pieValue={() => 1}
                 />
 

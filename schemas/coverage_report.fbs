@@ -2,14 +2,15 @@ namespace Coverpp.Report;
 
 table FileReport {
   path:string;
+  total_lines:uint32;
   reachable_lines:[uint32];
   covered_lines:[uint32];
 }
 
 table Stats {
+  total_lines:uint64;
   total_reachable:uint64;
   total_covered:uint64;
-  //total_files:uint32;
 }
 
 union PathReport { FileReport, DirectoryReport }

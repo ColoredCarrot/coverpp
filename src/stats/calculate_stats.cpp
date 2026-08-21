@@ -4,6 +4,7 @@ namespace coverpp
 {
 static Coverpp::Report::StatsT& operator+=(Coverpp::Report::StatsT& stats, Coverpp::Report::StatsT const& more)
 {
+	stats.total_lines += more.total_lines;
 	stats.total_reachable += more.total_reachable;
 	stats.total_covered += more.total_covered;
 	return stats;
@@ -22,6 +23,7 @@ static std::unique_ptr<Coverpp::Report::StatsT> calculate_stats(std::vector<Cove
 		}
 		else if (auto* child_file_report = report.AsFileReport())
 		{
+			stats->total_lines += child_file_report->total_lines;
 			stats->total_reachable += child_file_report->reachable_lines.size();
 			stats->total_covered += child_file_report->covered_lines.size();
 		}

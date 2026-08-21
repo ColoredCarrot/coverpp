@@ -28,6 +28,14 @@ build_flatbuffers(
         #[[copy_text_schemas_dir]]   ""
 )
 
+# Discover frontend source files
+file(GLOB_RECURSE frontend_sources
+        RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
+        CONFIGURE_DEPENDS
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/*.ts"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/*.tsx"
+)
+
 # Frontend build step
 add_custom_command(
         OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/webapp/index.html"
@@ -35,7 +43,7 @@ add_custom_command(
         # even though it's not a subdirectory of the frontend source directory.
         COMMAND pnpm build --outDir "${CMAKE_CURRENT_BINARY_DIR}/webapp" --emptyOutDir
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-        DEPENDS coverpp-schemas-frontend
+        DEPENDS coverpp-schemas-frontend ${frontend_sources}
 )
 add_custom_target(frontend ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/webapp/index.html")
 

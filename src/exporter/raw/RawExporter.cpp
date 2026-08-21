@@ -13,6 +13,25 @@ RawExporter::RawExporter(std::filesystem::path out_file, std::filesystem::path s
     : m_out_file(std::move(out_file)), m_source_root(std::move(source_root))
 {}
 
+static std::uint32_t lines_in_file(std::filesystem::path const& file)
+{
+	std::ifstream in{file};
+	in.exceptions(std::ios_base::badbit);
+
+	std::array<char, 10 * 1024> buffer; // NOLINT(*-pro-type-member-init)
+
+	std::uint32_t lines = 0;
+	while (in)
+	{
+		in.read(buffer.data(), buffer.size());
+		auto const n = in.gcount();
+
+		lines += std::ranges::count(buffer.data(), buffer.data() + n, '\n');
+	}
+
+	return lines;
+}
+
 void RawExporter::run(const BasicReport& covered, const BasicReport& reachable)
 {
     static const std::set<unsigned> empty_set{};
@@ -70,6 +89,7 @@ void RawExporter::run(const BasicReport& covered, const BasicReport& reachable)
         Coverpp::Report::PathReportUnion& file_report = it != children->end() ? *it : [&]() -> decltype(auto) {
             Coverpp::Report::FileReportT new_file_report;
             new_file_report.path = path_components.back();
+        	new_file_report.total_lines = lines_in_file(source_file);
             auto& u = children->emplace_back();
             u.Set(std::move(new_file_report));
             return u;

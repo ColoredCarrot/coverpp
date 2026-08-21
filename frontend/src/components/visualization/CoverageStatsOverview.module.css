@@ -4,11 +4,11 @@
     align-items: center;
 }
 
-.Percent {
+.col1 {
     grid-column: 1;
 }
 
-.CoveredLoC {
+.col2 {
     grid-column: 2;
 }
 

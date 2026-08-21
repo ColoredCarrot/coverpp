@@ -9,25 +9,27 @@ import * as Scale from "@visx/scale";
 import { Group } from "@visx/group";
 import { ParentSize } from "@visx/responsive";
 import { Text } from "@visx/text";
-import Gauge from "#/components/visualization/Gauge";
+import Gauge, {neutralBlue, redYellowGreen} from "#/components/visualization/Gauge";
 
 export default function CoverageStatsOverview(props: { stats: StatsT }) {
     return (
         <div className={styles.CoverageStatsOverview}>
-            <CoveragePercentGauge
-                stats={props.stats}
-                className={cls(styles.Percent, styles.Display)}
+            <CoverppGauge
+                value={Number(props.stats.totalCovered) / Number(props.stats.totalReachable)}
+                colors="redYellowGreen"
+                className={cls(styles.col1, styles.Display)}
             />
-            <div className={cls(styles.Percent, styles.Label)}>
+            <div className={cls(styles.col1, styles.Label)}>
                 Total coverage
             </div>
 
-            <OLD_CoveragePercentGauge
-                stats={props.stats}
-                className={cls(styles.CoveredLOC, styles.Display)}
+            <CoverppGauge
+                value={Number(props.stats.totalReachable) / Number(props.stats.totalLines)}
+                colors="neutral"
+                className={cls(styles.col2, styles.Display)}
             />
-            <div className={cls(styles.CoveredLOC, styles.Label)}>
-                Total coverage
+            <div className={cls(styles.col2, styles.Label)}>
+                Code ratio
             </div>
 
             {/*<StatDisplay
@@ -56,19 +58,21 @@ const percentCoveredNumberFormat = new Intl.NumberFormat("en-US", {
     maximumFractionDigits: 1,
 });
 
-function CoveragePercentGauge(props: { stats: StatsT; className?: string }) {
-    const value =
-        Number(props.stats.totalCovered) / Number(props.stats.totalReachable);
-
+function CoverppGauge(props: {
+    value: number;
+    colors: "redYellowGreen" | "neutral";
+    className?: string;
+}) {
     return (
         <ParentSize className={props.className}>
             {({ width }) => (
                 <Gauge
                     width={width}
-                    value={value}
+                    value={props.value}
                     formatValue={percentCoveredNumberFormat.format.bind(
                         percentCoveredNumberFormat,
                     )}
+                    colors={props.colors === "redYellowGreen" ? redYellowGreen : neutralBlue}
                 />
             )}
         </ParentSize>
