@@ -43,11 +43,7 @@ add_executable(coverpp
         src/WindowsCoverageSession.hpp
         src/com_utils.cpp
         src/com_utils.hpp
-        src/exporter/AbstractFileExporter.cpp
-        src/exporter/AbstractFileExporter.hpp
         src/exporter/Exporter.hpp
-        src/exporter/SourceFileExporter.cpp
-        src/exporter/SourceFileExporter.hpp
         src/exporter/clion/CLionExporter.cpp
         src/exporter/clion/CLionExporter.hpp
         src/exporter/html/HtmlExporter.cpp
