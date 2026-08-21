@@ -61,7 +61,7 @@ try
     run_app->add_option("-p,--program", params.program, "Executable")->check(CLI::ExistingFile)->required();
     run_app->add_option("-a,--program-args", params.program_args, "Arguments to pass to the executable");
     run_app->add_option("-d,--debug-info", params.debug_info, "PDB file")->check(CLI::ExistingFile);
-    run_app->add_option("-o,--out-dir", params.out_dir, "Output directory")->default_val("./coverpp-report");
+    run_app->add_option("-o,--out", params.out_file, "Output file")->default_val("./report.coverpp");
     run_app->add_flag("-v,--verbose", params.verbosity, "Print more messages to the console");
     run_app->add_flag("--print-first-chance-seh", params.print_first_chance_seh_exceptions,
                       "Print first-chance SEH exceptions to the console");
@@ -136,7 +136,7 @@ try
                      params.source_dir.u8string(),
                      params.program.u8string(),
                      params.debug_info.u8string(),
-                     absolute(params.out_dir).u8string());
+                     absolute(params.out_file).u8string());
         std::println("");
     }
 

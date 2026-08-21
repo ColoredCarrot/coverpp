@@ -11,7 +11,7 @@ struct CoverageParams
     std::filesystem::path debug_info;
     std::string_view program_args;
 
-    std::filesystem::path out_dir;
+    std::filesystem::path out_file;
 
     int verbosity;
     bool print_first_chance_seh_exceptions;

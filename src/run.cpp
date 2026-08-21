@@ -390,7 +390,7 @@ int run_with_coverage(const CoverageParams& params)
     coverpp::BasicReport report = coverpp::process_coverage_sink(sink);
     coverpp::BasicReport reachable_report = coverpp::process_coverage_sink(reachable);
 
-    coverpp::RawExporter raw_exporter{params.out_dir / "report.coverpp", params.source_dir};
+    coverpp::RawExporter raw_exporter{params.out_file, params.source_dir};
     raw_exporter.run(report, reachable_report);
 
     return *exit_code;
