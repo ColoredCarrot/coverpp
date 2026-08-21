@@ -195,6 +195,9 @@ int run_with_coverage(const CoverageParams& params)
         &si, &pi
     ));
 
+	// Don't need the thread
+	CloseHandle(pi.hThread);
+
     const HANDLE hProcess = pi.hProcess;
 
     // Step #4: Set breakpoint in main function
@@ -225,7 +228,7 @@ int run_with_coverage(const CoverageParams& params)
             // Set breakpoints at all reachable locations
             for (const auto& [source_file, dia_line_number] : coverage_session.enum_source_lines())
             {
-                coverpp::VirtualAddress va;
+                VirtualAddress va; // NOLINT(*-pro-type-member-init)
                 THROW_IF_FAILED(dia_line_number.get_virtualAddress(&va.value));
                 const auto ip = breakpoint_driver.va_to_ip(va);
 
@@ -236,6 +239,11 @@ int run_with_coverage(const CoverageParams& params)
                     std::println("Set breakpoint at {}", ip);
                 }
             }
+
+        	CloseHandle(evt.u.CreateProcessInfo.hFile); // We need to do this here as documented by Microsoft
+
+        	// Report that the SUT is ready
+			std::println("SUT ready (PID: {})", evt.dwProcessId);
 
             break;
         }
@@ -373,6 +381,8 @@ int run_with_coverage(const CoverageParams& params)
 
         THROW_LAST_ERROR_IF_NOT(ContinueDebugEvent(evt.dwProcessId, evt.dwThreadId, continue_status));
     } while (!exit_code);
+
+	CloseHandle(pi.hProcess);
 
     if (params.verbosity >= 1)
     {
