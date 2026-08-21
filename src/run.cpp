@@ -155,6 +155,16 @@ static std::wstring make_command_line_string(std::wstring_view module_name, std:
     return s;
 }
 
+template<typename F>
+struct Guard
+{
+	F f;
+	~Guard()
+	{
+		f();
+	}
+};
+
 
 namespace coverpp
 {
@@ -181,6 +191,14 @@ int run_with_coverage(const CoverageParams& params)
 
     // See this amazingly helpful resource: https://www.codeproject.com/Articles/43682/Writing-a-basic-Windows-debugger
 
+	// Using a job object to make sure that the child process is killed when we exit
+	auto job      = wil::unique_handle{THROW_LAST_ERROR_IF_NULL(CreateJobObjectW(nullptr, nullptr))};
+	auto job_info = JOBOBJECT_EXTENDED_LIMIT_INFORMATION{
+	    .BasicLimitInformation = {.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE},
+	};
+	THROW_IF_WIN32_BOOL_FALSE(
+	    SetInformationJobObject(job.get(), JobObjectExtendedLimitInformation, &job_info, sizeof(job_info)));
+
     STARTUPINFOW si{};
     si.cb = sizeof(si);
     PROCESS_INFORMATION pi{};
@@ -188,11 +206,19 @@ int run_with_coverage(const CoverageParams& params)
     auto command_line = make_command_line_string(params.program.c_str(), params.program_args);
     THROW_LAST_ERROR_IF_NOT(CreateProcessW(
         params.program.c_str(), command_line.data(),
-        nullptr, nullptr, false, DEBUG_ONLY_THIS_PROCESS, nullptr, nullptr,
+        nullptr, nullptr, false, DEBUG_ONLY_THIS_PROCESS|CREATE_SUSPENDED, nullptr, nullptr,
         &si, &pi
     ));
 
-	// Don't need the thread
+	auto _ = Guard{[hProcess = pi.hProcess] { CloseHandle(hProcess); }};
+
+	if (!AssignProcessToJobObject(job.get(), pi.hProcess))
+	{
+		TerminateProcess( pi.hProcess,1 );
+		throw std::runtime_error("AssignProcessToJobObject failed");
+	}
+
+	ResumeThread(pi.hThread);
 	CloseHandle(pi.hThread);
 
     const HANDLE hProcess = pi.hProcess;
@@ -378,8 +404,6 @@ int run_with_coverage(const CoverageParams& params)
 
         THROW_LAST_ERROR_IF_NOT(ContinueDebugEvent(evt.dwProcessId, evt.dwThreadId, continue_status));
     } while (!exit_code);
-
-	CloseHandle(pi.hProcess);
 
     if (params.verbosity >= 1)
     {
