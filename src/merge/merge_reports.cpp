@@ -1,12 +1,15 @@
 #include "merge_reports.hpp"
 
 #include "../stats/calculate_stats.hpp"
+#include "../util/progress_bar.hpp"
 
 #include <flatbuffers/flatbuffers.h>
 
 #include <coverage_report_generated.h>
 
 #include <fstream>
+#include <print>
+#include <ranges>
 
 namespace coverpp
 {
@@ -134,13 +137,18 @@ void merge_reports(MergeOptions const& options)
 {
 	Coverpp::Report::CoverageReportT accumulated{};
 
-	for (auto const& input_file : options.input_files)
+	auto progress = ProgressBar{options.input_files.size()};
+	for (auto const& [i, input_file] : options.input_files | std::views::enumerate)
 	{
 		merge_reports(accumulated, read(input_file));
+		progress.update(i + 1);
 	}
 
 	calculate_stats(accumulated);
 
 	write(options.output_file, accumulated);
+
+	progress.finish();
+	std::println("Done");
 }
 } // namespace coverpp

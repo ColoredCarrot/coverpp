@@ -80,6 +80,8 @@ add_executable(coverpp
         src/util/math_util.hpp
         src/util/open_browser.cpp
         src/util/open_browser.hpp
+        src/util/progress_bar.hpp
+        src/util/progress_bar.cpp
         src/polyfill/generator.hpp
         src/run.cpp
         src/run.hpp
