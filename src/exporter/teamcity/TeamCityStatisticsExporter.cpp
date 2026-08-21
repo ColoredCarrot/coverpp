@@ -1,10 +1,11 @@
 #include "TeamCityStatisticsExporter.hpp"
 
+#include <filesystem>
 #include <iostream>
 
 namespace coverpp
 {
-void TeamCityStatisticsExporter::run(const BasicReport& covered, const BasicReport& reachable)
+void TeamCityStatisticsExporter::run(Coverpp::Report::CoverageReportT const& report)
 {
     //TODO
     std::filesystem::path file_path;

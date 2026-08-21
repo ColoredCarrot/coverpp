@@ -12,6 +12,10 @@
 
 #define NOMINMAX
 
+#include "src/exporter/clion/CLionExporter.hpp"
+#include "src/exporter/html/HtmlExporter.hpp"
+
+
 #include <wil/com.h>
 #include <dia2.h>
 #include <psapi.h>
@@ -78,6 +82,14 @@ try
 	merge_app->add_option("-o,--output", merge_options.output_file);
 	merge_app->add_option("input-files", merge_options.input_files)->expected(-1);
 
+	auto const export_app      = app.add_subcommand("export", "Export coverage results");
+	auto const export_html_app = export_app->add_subcommand("html");
+	export_html_app->add_option("input", coverpp::HtmlExporter::options.report_file)->check(CLI::ExistingFile);
+	export_html_app->add_option("-o,--out-dir", coverpp::HtmlExporter::options.out_dir);
+	auto const export_clion_app = export_app->add_subcommand("clion");
+	export_clion_app->add_option("input", coverpp::CLionExporter::options.report_file)->check(CLI::ExistingFile);
+	export_clion_app->add_option("-o,--out-dir", coverpp::CLionExporter::options.out_dir);
+
     try
     {
         app.parse(argc, argv);
@@ -97,6 +109,16 @@ try
 	{
 		coverpp::merge_reports(merge_options);
 		return 0;
+	}
+
+	if (*export_html_app)
+	{
+		return coverpp::run_exporter<coverpp::HtmlExporter>();
+	}
+
+	if (*export_clion_app)
+	{
+		return coverpp::run_exporter<coverpp::CLionExporter>();
 	}
 
 	if (params.debug_info.empty())

@@ -46,8 +46,11 @@ add_executable(coverpp
         src/exporter/Exporter.hpp
         src/exporter/clion/CLionExporter.cpp
         src/exporter/clion/CLionExporter.hpp
+        src/exporter/clion/clion_export_options.hpp
+        src/exporter/export_options.hpp
         src/exporter/html/HtmlExporter.cpp
         src/exporter/html/HtmlExporter.hpp
+        src/exporter/html/html_export_options.hpp
         src/exporter/raw/RawExporter.cpp
         src/exporter/raw/RawExporter.hpp
         src/exporter/teamcity/TeamCityStatisticsExporter.cpp
@@ -61,6 +64,10 @@ add_executable(coverpp
         src/report/BasicReport.hpp
         src/report/CoverageProcessor.cpp
         src/report/CoverageProcessor.hpp
+        src/report/flat_report.cpp
+        src/report/flat_report.hpp
+        src/report/report_file_utils.cpp
+        src/report/report_file_utils.hpp
         src/seh_descriptions.cpp
         src/seh_descriptions.hpp
         src/serve/ServeOptions.hpp

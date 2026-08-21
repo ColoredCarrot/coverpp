@@ -4,10 +4,7 @@
 #include "com_utils.hpp"
 #include "CoverageSink.hpp"
 #include "WindowsCoverageSession.hpp"
-#include "exporter/SourceFileExporter.hpp"
 #include "report/CoverageProcessor.hpp"
-#include "exporter/clion/CLionExporter.hpp"
-#include "exporter/html/HtmlExporter.hpp"
 #include "seh_descriptions.hpp"
 #include "util/encodings_util.hpp"
 #include "exporter/raw/RawExporter.hpp"
@@ -393,17 +390,8 @@ int run_with_coverage(const CoverageParams& params)
     coverpp::BasicReport report = coverpp::process_coverage_sink(sink);
     coverpp::BasicReport reachable_report = coverpp::process_coverage_sink(reachable);
 
-    /*coverpp::SourceFileExporter report_generator{params.out_dir};
-    report_generator.run(report, reachable_report);
-
-    coverpp::HtmlExporter exporter{params.out_dir};
-    exporter.run(report, reachable_report);*/
-
     coverpp::RawExporter raw_exporter{params.out_dir / "report.coverpp", params.source_dir};
     raw_exporter.run(report, reachable_report);
-
-	CLionExporter clion_exporter{params.out_dir / "clion", params.source_dir};
-	clion_exporter.run(report, reachable_report);
 
     return *exit_code;
 }

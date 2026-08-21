@@ -1,5 +1,7 @@
 #include "HtmlExporter.hpp"
 
+#include "../../report/flat_report.hpp"
+
 #include <cmrc/cmrc.hpp>
 #include <fstream>
 #include <print>
@@ -58,22 +60,16 @@ std::istream& operator>>(std::istream& is, Line& line)
 
 namespace coverpp
 {
-HtmlExporter::HtmlExporter(std::filesystem::path output_directory) : m_dir{std::move(output_directory)}
-{}
-
-void HtmlExporter::run(const BasicReport& covered, const BasicReport& reachable)
+void HtmlExporter::run(Coverpp::Report::CoverageReportT const& report)
 {
-    std::filesystem::create_directories(m_dir);
+    std::filesystem::create_directories(options.out_dir);
 
-    for (const auto& [source_file_path, reachable_tracepoints] : reachable.file_reports())
+    for (const auto& entry : flatten_report(report))
     {
-        const auto it = covered.file_reports().find(source_file_path);
-        const auto& covered_lines = it != covered.file_reports().end() ? it->second.covered_lines() : std::set<unsigned>{};
-
         //TODO relativize source_file against project dir -> include remaining dir path
-        const std::filesystem::path output_file_path = m_dir / (source_file_path.filename().concat(".html"));
+        const std::filesystem::path output_file_path = options.out_dir / (entry.source_file.filename().concat(".html"));
 
-        std::ifstream source_file{source_file_path};
+        std::ifstream source_file{entry.source_file};
         std::ofstream output_file{output_file_path, std::ios_base::out | std::ios_base::trunc};
         if (!source_file || !output_file)
         {
@@ -86,7 +82,7 @@ void HtmlExporter::run(const BasicReport& covered, const BasicReport& reachable)
 
         Line line;
         unsigned next_line = 1;
-        for (const unsigned reachable_line : reachable_tracepoints.covered_lines())
+        for (const unsigned reachable_line : entry.reachable_lines)
         {
             // TODO: Unfortunately, MSVC doesn't emit column information in the PDB :( See https://developercommunity.visualstudio.com/t/Produce-PDB-with-column-informaiton/1409758?space=21&q=column+width
 
@@ -100,7 +96,7 @@ void HtmlExporter::run(const BasicReport& covered, const BasicReport& reachable)
             }
 
             // Now, emit a <mark> tag for the line
-            const std::string_view mark_class = covered_lines.contains(reachable_line) ? "cov-y" : "cov-n";
+            const std::string_view mark_class = entry.covered_lines.contains(reachable_line) ? "cov-y" : "cov-n";
             std::print(output_file, "<mark class=\"{}\">", mark_class);
             source_file >> line;
             output_file << line;

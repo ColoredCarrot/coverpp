@@ -7,6 +7,6 @@ namespace coverpp
 class TeamCityStatisticsExporter:public Exporter
 {
 public:
-    void run(const BasicReport& covered, const BasicReport& reachable) override;
+    void run(Coverpp::Report::CoverageReportT const& report) override;
 };
 }

@@ -1,17 +1,15 @@
 #pragma once
 
 #include "../Exporter.hpp"
+#include "html_export_options.hpp"
 
 namespace coverpp
 {
 class HtmlExporter : public Exporter
 {
 public:
-    explicit HtmlExporter(std::filesystem::path output_directory);
+    void run(Coverpp::Report::CoverageReportT const& report) override;
 
-    void run(const BasicReport& covered, const BasicReport& reachable) override;
-
-private:
-    std::filesystem::path m_dir;
+    static inline HtmlExportOptions options;
 };
 }
