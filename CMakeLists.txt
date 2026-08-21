@@ -33,48 +33,53 @@ add_executable(coverpp
         "main.cpp"
         "src/BreakpointDriver.hpp"
         "src/BreakpointDriver.cpp"
+        src/CoverageEngine.hpp
+        src/CoverageParams.hpp
         src/CoverageSink.cpp
         src/CoverageSink.hpp
-        src/types.hpp
-        src/com_utils.cpp
-        src/com_utils.hpp
-        src/CoverageEngine.hpp
-        src/WindowsCoverageSession.cpp
-        src/WindowsCoverageSession.hpp
-        src/CoverageParams.hpp
         src/DiaAccessor.cpp
         src/DiaAccessor.hpp
-        src/file_util.cpp
-        src/file_util.hpp
+        src/WindowsCoverageSession.cpp
+        src/WindowsCoverageSession.hpp
+        src/com_utils.cpp
+        src/com_utils.hpp
+        src/exporter/AbstractFileExporter.cpp
+        src/exporter/AbstractFileExporter.hpp
+        src/exporter/Exporter.hpp
         src/exporter/SourceFileExporter.cpp
         src/exporter/SourceFileExporter.hpp
-        src/exporter/Exporter.hpp
-        src/report/CoverageProcessor.cpp
-        src/report/CoverageProcessor.hpp
-        src/report/BasicReport.cpp
-        src/report/BasicReport.hpp
         src/exporter/clion/CLionExporter.cpp
         src/exporter/clion/CLionExporter.hpp
         src/exporter/html/HtmlExporter.cpp
         src/exporter/html/HtmlExporter.hpp
-        src/seh_descriptions.hpp
-        src/seh_descriptions.cpp
-        src/util/encodings_util.cpp
-        src/util/encodings_util.hpp
-        src/util/math_util.hpp
         src/exporter/raw/RawExporter.cpp
         src/exporter/raw/RawExporter.hpp
-        src/exporter/AbstractFileExporter.cpp
-        src/exporter/AbstractFileExporter.hpp
         src/exporter/teamcity/TeamCityStatisticsExporter.cpp
         src/exporter/teamcity/TeamCityStatisticsExporter.hpp
+        src/file_util.cpp
+        src/file_util.hpp
+        src/merge/merge_reports.cpp
+        src/merge/merge_reports.hpp
+        src/merge/MergeOptions.hpp
+        src/report/BasicReport.cpp
+        src/report/BasicReport.hpp
+        src/report/CoverageProcessor.cpp
+        src/report/CoverageProcessor.hpp
+        src/seh_descriptions.cpp
+        src/seh_descriptions.hpp
         src/serve/ServeOptions.hpp
         src/serve/serve.cpp
         src/serve/serve.hpp
-        src/util/open_browser.cpp
-        src/util/open_browser.hpp
+        src/stats/calculate_stats.cpp
+        src/stats/calculate_stats.hpp
+        src/types.hpp
         src/util/console_color.cpp
         src/util/console_color.hpp
+        src/util/encodings_util.cpp
+        src/util/encodings_util.hpp
+        src/util/math_util.hpp
+        src/util/open_browser.cpp
+        src/util/open_browser.hpp
         src/polyfill/generator.hpp
         src/run.cpp
         src/run.hpp

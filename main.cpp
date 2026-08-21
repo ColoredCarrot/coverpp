@@ -1,6 +1,7 @@
+#include "src/merge/merge_reports.hpp"
 #include "src/run.hpp"
-#include "src/util/console_color.hpp"
 #include "src/serve/serve.hpp"
+#include "src/util/console_color.hpp"
 
 #include <CLI11.hpp>
 #include <print>
@@ -72,6 +73,11 @@ try
         ->default_val(
             argc == 0 ? std::string{""} : std::filesystem::weakly_canonical(argv[0]).parent_path().u8string());
 
+	auto       merge_options = coverpp::MergeOptions{};
+	auto const merge_app     = app.add_subcommand("merge", "Merge multiple reports into one");
+	merge_app->add_option("-o,--output", merge_options.output_file);
+	merge_app->add_option("input-files", merge_options.input_files)->expected(-1);
+
     try
     {
         app.parse(argc, argv);
@@ -86,6 +92,12 @@ try
     {
         return coverpp::serve(serve_options);
     }
+
+	if (*merge_app)
+	{
+		coverpp::merge_reports(merge_options);
+		return 0;
+	}
 
 	if (params.debug_info.empty())
 	{

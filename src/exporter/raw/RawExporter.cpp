@@ -1,5 +1,5 @@
 #include "RawExporter.hpp"
-#include "../../util/math_util.hpp"
+#include "../../stats/calculate_stats.hpp"
 #include "../../util/encodings_util.hpp"
 
 #include <coverage_report_generated.h>
@@ -12,38 +12,6 @@ namespace coverpp
 RawExporter::RawExporter(std::filesystem::path out_file, std::filesystem::path source_root)
     : m_out_file(std::move(out_file)), m_source_root(std::move(source_root))
 {}
-
-static Coverpp::Report::StatsT& operator+=(Coverpp::Report::StatsT& stats, const Coverpp::Report::StatsT& more)
-{
-    stats.total_reachable += more.total_reachable;
-    stats.total_covered += more.total_covered;
-    return stats;
-}
-
-static std::unique_ptr<Coverpp::Report::StatsT> calculate_stats(std::vector<Coverpp::Report::PathReportUnion>& reports)
-{
-    auto stats = std::make_unique<Coverpp::Report::StatsT>();
-    for (auto& report : reports)
-    {
-        if (auto* directory_report = report.AsDirectoryReport())
-        {
-            auto child_stats = calculate_stats(directory_report->children);
-            *stats += *child_stats;
-            directory_report->stats = std::move(child_stats);
-        }
-        else if (auto* child_file_report = report.AsFileReport())
-        {
-            stats->total_reachable += child_file_report->reachable_lines.size();
-            stats->total_covered += child_file_report->covered_lines.size();
-        }
-    }
-    return stats;
-}
-
-static void calculate_stats(Coverpp::Report::RootT& root)
-{
-    root.stats = calculate_stats(root.children);
-}
 
 void RawExporter::run(const BasicReport& covered, const BasicReport& reachable)
 {
@@ -120,13 +88,12 @@ void RawExporter::run(const BasicReport& covered, const BasicReport& reachable)
         file_report.covered_lines = covered_lines | std::ranges::to<std::vector>();
     }
 
-    calculate_stats(root);
-
     Coverpp::Report::CoverageReportT result;
     result.timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::system_clock::now().time_since_epoch()).count();
     result.roots.push_back(std::move(root));
-    result.stats = std::make_unique<Coverpp::Report::StatsT>(*result.roots[0].stats);
+
+	calculate_stats(result);
 
     flatbuffers::FlatBufferBuilder builder{1024};
     builder.Finish(Coverpp::Report::CoverageReport::Pack(builder, &result));
