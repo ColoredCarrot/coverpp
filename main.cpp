@@ -56,8 +56,7 @@ try
     const auto run_app = app.add_subcommand("run");
 
     coverpp::CoverageParams params{};
-    run_app->add_option("-s,--source", params.source_dir, "Source directory")->check(
-        CLI::ExistingDirectory)->required();
+    run_app->add_option("-s,--source", params.source_dir, "Source directory")->required();
     run_app->add_option("-p,--program", params.program, "Executable")->check(CLI::ExistingFile)->required();
     run_app->add_option("-a,--program-args", params.program_args, "Arguments to pass to the executable");
     run_app->add_option("-d,--debug-info", params.debug_info, "PDB file")->check(CLI::ExistingFile);
