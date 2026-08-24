@@ -1,4 +1,6 @@
 #include "RawExporter.hpp"
+
+#include "../../file_util.hpp"
 #include "../../stats/calculate_stats.hpp"
 #include "../../util/encodings_util.hpp"
 
@@ -10,26 +12,6 @@
 
 namespace coverpp
 {
-/** Returns 0 if the file is not readable */
-static std::uint32_t lines_in_file(std::filesystem::path const& file)
-{
-	std::ifstream in{file};
-	in.exceptions(std::ios_base::badbit);
-
-	std::array<char, 10 * 1024> buffer; // NOLINT(*-pro-type-member-init)
-
-	std::uint32_t lines = 0;
-	while (in)
-	{
-		in.read(buffer.data(), buffer.size());
-		auto const n = in.gcount();
-
-		lines += std::ranges::count(buffer.data(), buffer.data() + n, '\n');
-	}
-
-	return lines;
-}
-
 static std::filesystem::path discover_source_root(BasicReport const& reachable)
 {
 	auto it = reachable.file_reports().begin();
@@ -122,7 +104,7 @@ void RawExporter::run(const BasicReport& covered, const BasicReport& reachable, 
         Coverpp::Report::PathReportUnion& file_report = it != children->end() ? *it : [&]() -> decltype(auto) {
             Coverpp::Report::FileReportT new_file_report;
             new_file_report.path = path_components.back();
-        	new_file_report.total_lines = lines_in_file(source_file);
+        	new_file_report.total_lines = detail::lines_in_file(source_file);
             auto& u = children->emplace_back();
             u.Set(std::move(new_file_report));
             return u;
