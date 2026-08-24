@@ -5,14 +5,11 @@
 #include <coverage_report_generated.h>
 
 #include <fstream>
+#include <print>
 #include <ranges>
 
 namespace coverpp
 {
-RawExporter::RawExporter(std::filesystem::path out_file, std::filesystem::path source_root)
-    : m_out_file(std::move(out_file)), m_source_root(std::move(source_root))
-{}
-
 static std::uint32_t lines_in_file(std::filesystem::path const& file)
 {
 	std::ifstream in{file};
@@ -32,12 +29,47 @@ static std::uint32_t lines_in_file(std::filesystem::path const& file)
 	return lines;
 }
 
-void RawExporter::run(const BasicReport& covered, const BasicReport& reachable)
+static std::filesystem::path discover_source_root(BasicReport const& reachable)
+{
+	auto it = reachable.file_reports().begin();
+	if (it == reachable.file_reports().end())
+	{
+		return {};
+	}
+
+	auto common = it->first.parent_path() | std::ranges::to<std::vector>();
+	++it;
+
+	for (; it != reachable.file_reports().end(); ++it)
+	{
+		auto const path_components = it->first.parent_path() | std::ranges::to<std::vector>();
+
+		auto const [common_end, path_end] = std::ranges::mismatch(common, path_components);
+		common.erase(common_end, common.end());
+	}
+
+	std::filesystem::path result;
+	for (auto const& component : common)
+	{
+		result /= component;
+	}
+
+	return result;
+}
+
+void RawExporter::run(const BasicReport& covered, const BasicReport& reachable, CoverageParams const& params)
 {
     static const std::set<unsigned> empty_set{};
 
+	const auto source_root = discover_source_root(reachable);
+
+	if (params.verbosity >= 1)
+	{
+		std::println("Auto-discovered source root: {}", source_root.u8string());
+	}
+
     Coverpp::Report::RootT root;
-    root.path = m_source_root.u8string();
+    root.path = source_root.u8string();
     root.directory_separator = windows::utf16le_to_utf8(std::filesystem::path::preferred_separator);
 
     const auto filter_directory_reports =
@@ -47,7 +79,7 @@ void RawExporter::run(const BasicReport& covered, const BasicReport& reachable)
             [](const Coverpp::Report::DirectoryReportT* p) -> const Coverpp::Report::DirectoryReportT& { return *p; });
 
     const auto get_file_report = [&](const std::filesystem::path& source_file) -> Coverpp::Report::FileReportT& {
-        auto relative = std::filesystem::relative(source_file, m_source_root);
+        auto relative = std::filesystem::relative(source_file, source_root);
         if (relative.empty())
         {
             throw std::runtime_error{std::format("Source file not in source directory: {}", source_file.u8string())};
@@ -118,8 +150,8 @@ void RawExporter::run(const BasicReport& covered, const BasicReport& reachable)
     flatbuffers::FlatBufferBuilder builder{1024};
     builder.Finish(Coverpp::Report::CoverageReport::Pack(builder, &result));
 
-    std::filesystem::create_directories(m_out_file.parent_path());
-    std::ofstream file{m_out_file, std::ios_base::out | std::ios_base::trunc | std::ios_base::binary};
+    std::filesystem::create_directories(params.out_file.parent_path());
+    std::ofstream file{params.out_file, std::ios_base::out | std::ios_base::trunc | std::ios_base::binary};
     file.exceptions(std::ios_base::badbit | std::ios_base::failbit);
     file.write(reinterpret_cast<const char*>(builder.GetBufferPointer()), builder.GetSize());
 }
