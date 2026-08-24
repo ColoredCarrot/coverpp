@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.27)
+cmake_minimum_required(VERSION 3.28)
 project(coverpp)
 
 cmake_policy(SET CMP0091 NEW)
@@ -15,7 +15,11 @@ if (PROJECT_IS_TOP_LEVEL)
     include(CTest)
 endif ()
 
-set(CMAKE_INSTALL_UCRT_LIBRARIES ON)
+include(GNUInstallDirs)
+
+set(CMAKE_INSTALL_UCRT_LIBRARIES OFF) # Not needed on Windows 10+
+set(CMAKE_INSTALL_SYSTEM_RUNTIME_DESTINATION "${CMAKE_INSTALL_BINDIR}")
+set(CMAKE_INSTALL_SYSTEM_RUNTIME_COMPONENT Runtime)
 include(InstallRequiredSystemLibraries)
 
 cmrc_add_resource_library(coverpp-resources ALIAS coverpp::rc NAMESPACE coverpp_rc
@@ -156,10 +160,12 @@ FetchContent_Declare(
         wil
         GIT_REPOSITORY https://github.com/microsoft/wil.git
         GIT_TAG v1.0.231216.1
+        EXCLUDE_FROM_ALL
 )
 
 # FlatBuffers
 set(FLATBUFFERS_BUILD_TESTS OFF)
+set(FLATBUFFERS_INSTALL OFF)
 FetchContent_Declare(
         flatbuffers
         GIT_REPOSITORY https://github.com/google/flatbuffers.git
@@ -208,8 +214,22 @@ add_custom_command(TARGET coverpp POST_BUILD
 
 set_target_properties(coverpp PROPERTIES OUTPUT_NAME "cover++")
 
-install(TARGETS coverpp)
-#install(DIRECTORIES ) TODO webapp
+
+install(
+        TARGETS coverpp
+        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+        COMPONENT Runtime
+)
+install(
+        FILES "${DIASDK_DLL}"
+        DESTINATION "${CMAKE_INSTALL_BINDIR}"
+        COMPONENT Runtime
+)
+install(
+        DIRECTORY "${frontend_binary_dir}/webapp/"
+        DESTINATION "${CMAKE_INSTALL_BINDIR}/webapp"
+        COMPONENT Runtime
+)
 
 
 add_subdirectory(example-sut)

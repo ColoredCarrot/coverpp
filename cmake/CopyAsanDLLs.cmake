@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.27)
+cmake_minimum_required(VERSION 3.28)
 
 function(find_asan_dlls out)
     # The DLLs we need are siblings of ${CMAKE_CXX_COMPILER}

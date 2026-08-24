@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.27)
+cmake_minimum_required(VERSION 3.28)
 project(frontend DESCRIPTION "Custom target to build frontend into BINARY_DIR/webapp" LANGUAGES NONE)
 
 include(FetchContent)
@@ -36,23 +36,21 @@ file(GLOB_RECURSE frontend_sources
         "${CMAKE_CURRENT_SOURCE_DIR}/src/*.tsx"
 )
 
+find_program(pnpm NAMES pnpm.exe pnpm.bat pnpm.cmd pnpm REQUIRED)
+message(STATUS "Found pnpm at ${pnpm}")
+
 # Frontend build step
 add_custom_command(
         OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/webapp/index.html"
         # Build with --emptyOutDir to assure Vite that it's safe to clear the webapp directory
         # even though it's not a subdirectory of the frontend source directory.
-        COMMAND pnpm build --outDir "${CMAKE_CURRENT_BINARY_DIR}/webapp" --emptyOutDir
+        COMMAND "${pnpm}" build --outDir "${CMAKE_CURRENT_BINARY_DIR}/webapp" --emptyOutDir
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         DEPENDS coverpp-schemas-frontend ${frontend_sources}
 )
 add_custom_target(frontend ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/webapp/index.html")
 
-#install(DIRECTORY) TODO
-
 if (BUILD_TESTING)
-    find_program(pnpm NAMES pnpm.exe pnpm.bat pnpm.cmd pnpm REQUIRED)
-    message(STATUS "Found pnpm at ${pnpm}")
-
     # Register frontend tests with CTest
     add_test(
             NAME frontend-tests
