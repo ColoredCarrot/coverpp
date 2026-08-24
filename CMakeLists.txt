@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.28)
-project(coverpp)
+project(coverpp VERSION 0.1.0)
 
 cmake_policy(SET CMP0091 NEW)
 
@@ -238,3 +238,31 @@ add_subdirectory(example-sut)
 if (BUILD_TESTING)
     add_subdirectory(test)
 endif ()
+
+
+##########################################################################
+#  Packaging
+
+set(CPACK_PACKAGE_NAME "Cover++")
+set(CPACK_PACKAGE_VENDOR "Julian K.")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "C++ code coverage tool for Windows")
+
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "Cover++")
+
+set(CPACK_GENERATOR "ZIP" "INNOSETUP")
+
+# Inno Setup settings
+set(CPACK_INNOSETUP_ARCHITECTURE "x64")
+set(CPACK_INNOSETUP_USE_MODERN_WIZARD ON)
+
+# Don't show CPack's dummy license page (we don't have a license ourselves)
+set(CPACK_INNOSETUP_IGNORE_LICENSE_PAGE ON)
+
+# By default, Inno Setup doesn't let you choose a different directory if the app is already installed
+set(CPACK_INNOSETUP_SETUP_DisableDirPage OFF)
+
+include(CPackComponent)
+
+cpack_add_component(Runtime REQUIRED)
+
+include(CPack)
