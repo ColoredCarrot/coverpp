@@ -69,8 +69,8 @@ try
     coverpp::ServeOptions serve_options{.report_path{"./coverpp-report/report.coverpp"}};
     const auto serve_app = app.add_subcommand("view", "View coverage results in your browser");
     serve_app->alias("serve");
+    serve_app->add_option("report", serve_options.report_path)->check(CLI::ExistingFile);
     serve_app->add_option("-p,--port", serve_options.port)->default_val(8080)->check(CLI::NonNegativeNumber);
-    serve_app->add_option("-d,--data", serve_options.report_path)->check(CLI::ExistingFile);
     serve_app->add_option("--coverpp-install-dir", serve_options.coverpp_install_dir)
         ->check(CLI::ExistingDirectory)
         ->required(argc == 0)
