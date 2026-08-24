@@ -14,6 +14,7 @@
 
 #include "src/exporter/clion/CLionExporter.hpp"
 #include "src/exporter/html/HtmlExporter.hpp"
+#include "src/remap/remap.hpp"
 
 
 #include <wil/com.h>
@@ -82,6 +83,12 @@ try
 	merge_app->add_option("-o,--output", merge_options.output_file);
 	merge_app->add_option("input-files", merge_options.input_files)->expected(-1);
 
+	auto       remap_options = coverpp::RemapOptions{};
+	auto const remap_app     = app.add_subcommand("remap", "Remap source roots");
+	remap_app->add_option("report", remap_options.report)->check(CLI::ExistingFile);
+	remap_app->add_option("--from", remap_options.from);
+	remap_app->add_option("--to", remap_options.to)->required();
+
 	auto const export_app      = app.add_subcommand("export", "Export coverage results");
 	auto const export_html_app = export_app->add_subcommand("html");
 	export_html_app->add_option("input", coverpp::HtmlExporter::options.report_file)->check(CLI::ExistingFile);
@@ -109,6 +116,11 @@ try
 	{
 		coverpp::merge_reports(merge_options);
 		return 0;
+	}
+
+	if (*remap_app)
+	{
+		return coverpp::remap(remap_options);
 	}
 
 	if (*export_html_app)

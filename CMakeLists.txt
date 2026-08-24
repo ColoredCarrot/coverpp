@@ -60,6 +60,8 @@ add_executable(coverpp
         src/merge/merge_reports.cpp
         src/merge/merge_reports.hpp
         src/merge/MergeOptions.hpp
+        src/remap/remap.cpp
+        src/remap/remap.hpp
         src/report/BasicReport.cpp
         src/report/BasicReport.hpp
         src/report/CoverageProcessor.cpp

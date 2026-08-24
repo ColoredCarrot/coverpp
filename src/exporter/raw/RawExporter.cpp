@@ -10,6 +10,7 @@
 
 namespace coverpp
 {
+/** Returns 0 if the file is not readable */
 static std::uint32_t lines_in_file(std::filesystem::path const& file)
 {
 	std::ifstream in{file};
