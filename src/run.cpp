@@ -9,6 +9,7 @@
 #include "util/encodings_util.hpp"
 #include "exporter/raw/RawExporter.hpp"
 #include "util/console_color.hpp"
+#include "util/guard.hpp"
 
 #include <print>
 #include <iostream>
@@ -154,16 +155,6 @@ static std::wstring make_command_line_string(std::wstring_view module_name, std:
     s.append(coverpp::windows::utf8_to_utf16le(args));
     return s;
 }
-
-template<typename F>
-struct Guard
-{
-	F f;
-	~Guard()
-	{
-		f();
-	}
-};
 
 
 namespace coverpp

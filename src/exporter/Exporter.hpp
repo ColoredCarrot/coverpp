@@ -5,8 +5,6 @@
 
 #include <coverage_report_generated.h>
 
-#include <print>
-
 namespace coverpp
 {
 class Exporter
@@ -21,7 +19,6 @@ template<std::derived_from<Exporter> TExporter>
 int run_exporter(ExportOptions const& options = TExporter::options)
 {
 	TExporter{}.run(read_report(options.report_file));
-	std::println("Export finished.");
 	return 0;
 }
 } // namespace coverpp

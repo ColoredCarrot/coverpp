@@ -51,6 +51,9 @@ add_executable(coverpp
         src/exporter/html/HtmlExporter.cpp
         src/exporter/html/HtmlExporter.hpp
         src/exporter/html/html_export_options.hpp
+        src/exporter/json/JsonExporter.cpp
+        src/exporter/json/JsonExporter.hpp
+        src/exporter/json/json_export_options.hpp
         src/exporter/raw/RawExporter.cpp
         src/exporter/raw/RawExporter.hpp
         src/exporter/teamcity/TeamCityStatisticsExporter.cpp
@@ -82,6 +85,7 @@ add_executable(coverpp
         src/util/console_color.hpp
         src/util/encodings_util.cpp
         src/util/encodings_util.hpp
+        src/util/guard.hpp
         src/util/math_util.hpp
         src/util/open_browser.cpp
         src/util/open_browser.hpp
@@ -141,6 +145,7 @@ target_include_directories(coverpp PUBLIC
         "${CMAKE_SOURCE_DIR}/third_party/CLI11/include"
         "${CMAKE_SOURCE_DIR}/third_party/asio/include"
         "${CMAKE_SOURCE_DIR}/third_party/Crow/include"
+        "${CMAKE_SOURCE_DIR}/third_party/rapidjson/include"
 )
 target_link_libraries(coverpp PRIVATE ${DIASDK_LIBRARIES} coverpp::rc)
 

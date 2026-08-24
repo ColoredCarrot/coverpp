@@ -14,6 +14,7 @@
 
 #include "src/exporter/clion/CLionExporter.hpp"
 #include "src/exporter/html/HtmlExporter.hpp"
+#include "src/exporter/json/JsonExporter.hpp"
 #include "src/remap/remap.hpp"
 
 
@@ -96,6 +97,9 @@ try
 	auto const export_clion_app = export_app->add_subcommand("clion");
 	export_clion_app->add_option("input", coverpp::CLionExporter::options.report_file)->check(CLI::ExistingFile);
 	export_clion_app->add_option("-o,--out-dir", coverpp::CLionExporter::options.out_dir);
+	auto const export_json_app = export_app->add_subcommand("json");
+	export_json_app->add_option("input", coverpp::JsonExporter::options.report_file)->check(CLI::ExistingFile);
+	export_json_app->add_option("-o,--out", coverpp::JsonExporter::options.out_file)->default_val("-");
 
     try
     {
@@ -131,6 +135,11 @@ try
 	if (*export_clion_app)
 	{
 		return coverpp::run_exporter<coverpp::CLionExporter>();
+	}
+
+	if (*export_json_app)
+	{
+		return coverpp::run_exporter<coverpp::JsonExporter>();
 	}
 
 	if (params.debug_info.empty())
