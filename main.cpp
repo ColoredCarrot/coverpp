@@ -68,7 +68,7 @@ try
     const auto run_app = app.add_subcommand("run");
 
     coverpp::CoverageParams params{};
-    run_app->add_option("-s,--source", params.source_dir, "Source directory")->required();
+    run_app->add_option("-s,--source", params.source_dir, "Source directory");
     run_app->add_option("-d,--debug-info", params.debug_info, "PDB file")->check(CLI::ExistingFile);
     run_app->add_option("-o,--out", params.out_file, "Output file")->default_val("./report.coverpp");
 	run_app->add_option("--exclude-source-files-regex", params.exclude_source_files_regex, "Regex for source files to exclude (matches on generic paths with /)");

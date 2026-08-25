@@ -189,7 +189,7 @@ DiaAccessor& WindowsCoverageSession::dia()
 
 bool WindowsCoverageSession::should_trace(std::filesystem::path const& source_file) const
 {
-	if (!detail::path_is_subpath_of(source_file, m_params.source_dir))
+	if (!m_params.source_dir.empty() && !detail::path_is_subpath_of(source_file, m_params.source_dir))
 	{
 		return false;
 	}
