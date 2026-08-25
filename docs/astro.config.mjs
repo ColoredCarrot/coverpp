@@ -19,6 +19,10 @@ export default defineConfig({
                 },
             ],
             favicon: "/favicon.png",
+            editLink: {
+                baseUrl:
+                    "https://github.com/ColoredCarrot/coverpp/edit/master/docs/",
+            },
         }),
     ],
 });
