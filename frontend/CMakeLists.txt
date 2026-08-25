@@ -8,6 +8,7 @@ if (PROJECT_IS_TOP_LEVEL)
 endif ()
 
 set(FLATBUFFERS_BUILD_TESTS OFF)
+set(FLATBUFFERS_INSTALL OFF)
 FetchContent_Declare(
         flatbuffers
         GIT_REPOSITORY https://github.com/google/flatbuffers.git

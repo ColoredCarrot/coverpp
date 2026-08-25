@@ -19,7 +19,7 @@ include(GNUInstallDirs)
 
 set(CMAKE_INSTALL_UCRT_LIBRARIES OFF) # Not needed on Windows 10+
 set(CMAKE_INSTALL_SYSTEM_RUNTIME_DESTINATION "${CMAKE_INSTALL_BINDIR}")
-set(CMAKE_INSTALL_SYSTEM_RUNTIME_COMPONENT Runtime)
+set(CMAKE_INSTALL_SYSTEM_RUNTIME_COMPONENT c1_Runtime)
 include(InstallRequiredSystemLibraries)
 
 cmrc_add_resource_library(coverpp-resources ALIAS coverpp::rc NAMESPACE coverpp_rc
@@ -201,6 +201,10 @@ add_custom_command(TARGET coverpp POST_BUILD
 add_subdirectory(frontend)
 add_dependencies(coverpp frontend)
 
+# Depend on docs
+add_subdirectory(docs)
+add_dependencies(coverpp docs)
+
 copy_asan_dlls(coverpp)
 
 # To be able to run cover++.exe without installing it (most likely during development),
@@ -211,6 +215,8 @@ add_custom_command(TARGET coverpp POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory "${frontend_binary_dir}/webapp" "$<TARGET_FILE_DIR:coverpp>/webapp"
 )
 
+get_target_property(docs_binary_dir docs BINARY_DIR)
+
 
 set_target_properties(coverpp PROPERTIES OUTPUT_NAME "cover++")
 
@@ -218,17 +224,22 @@ set_target_properties(coverpp PROPERTIES OUTPUT_NAME "cover++")
 install(
         TARGETS coverpp
         RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
-        COMPONENT Runtime
+        COMPONENT c1_Runtime
 )
 install(
         FILES "${DIASDK_DLL}"
         DESTINATION "${CMAKE_INSTALL_BINDIR}"
-        COMPONENT Runtime
+        COMPONENT c1_Runtime
 )
 install(
         DIRECTORY "${frontend_binary_dir}/webapp/"
         DESTINATION "${CMAKE_INSTALL_BINDIR}/webapp"
-        COMPONENT Runtime
+        COMPONENT c1_Runtime
+)
+install(
+        DIRECTORY "${docs_binary_dir}/docs/"
+        DESTINATION "docs"
+        COMPONENT c2_Documentation
 )
 
 
@@ -263,6 +274,11 @@ set(CPACK_INNOSETUP_SETUP_DisableDirPage OFF)
 
 include(CPackComponent)
 
-cpack_add_component(Runtime REQUIRED)
+cpack_add_install_type(full DISPLAY_NAME "Full")
+
+# Note: We use these internal names with the c1_ prefix so that we can control their order
+# (the order of cpack_add_component invocations does not matter)
+cpack_add_component(c1_Runtime REQUIRED DISPLAY_NAME "Runtime")
+cpack_add_component(c2_Documentation DISPLAY_NAME "Documentation" INSTALL_TYPES full)
 
 include(CPack)
