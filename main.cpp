@@ -12,6 +12,7 @@
 
 #define NOMINMAX
 
+#include "src/docs/docs.hpp"
 #include "src/util/encodings_util.hpp"
 #include "src/exporter/clion/CLionExporter.hpp"
 #include "src/exporter/html/HtmlExporter.hpp"
@@ -90,6 +91,17 @@ try
             argc == 0 ? std::string{""} : std::filesystem::weakly_canonical(argv[0]).parent_path().u8string());
 	serve_app->add_flag("--open,!--no-open", serve_options.open)->default_val(true);
 
+    coverpp::DocsOptions docs_options{.open = true};
+    const auto docs_app = app.add_subcommand("docs", "Open the documentation in your browser");
+	docs_app->alias("help");
+    docs_app->add_option("-p,--port", docs_options.port)->default_val(8080)->check(CLI::NonNegativeNumber);
+    docs_app->add_option("--coverpp-install-dir", docs_options.coverpp_install_dir)
+        ->check(CLI::ExistingDirectory)
+        ->required(argc == 0)
+        ->default_val(
+            argc == 0 ? std::string{""} : std::filesystem::weakly_canonical(argv[0]).parent_path().u8string());
+	docs_app->add_flag("--open,!--no-open", docs_options.open)->default_val(true);
+
 	auto       merge_options = coverpp::MergeOptions{};
 	auto const merge_app     = app.add_subcommand("merge", "Merge multiple reports into one");
 	merge_app->add_option("-o,--output", merge_options.output_file);
@@ -125,6 +137,11 @@ try
     if (*serve_app)
     {
         return coverpp::serve(serve_options);
+    }
+
+    if (*docs_app)
+    {
+        return coverpp::serve_docs(docs_options);
     }
 
 	if (*merge_app)

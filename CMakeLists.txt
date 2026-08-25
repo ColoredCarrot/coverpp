@@ -47,6 +47,8 @@ add_executable(coverpp
         src/WindowsCoverageSession.hpp
         src/com_utils.cpp
         src/com_utils.hpp
+        src/docs/docs.cpp
+        src/docs/docs.hpp
         src/exporter/Exporter.hpp
         src/exporter/clion/CLionExporter.cpp
         src/exporter/clion/CLionExporter.hpp
@@ -87,6 +89,8 @@ add_executable(coverpp
         src/types.hpp
         src/util/console_color.cpp
         src/util/console_color.hpp
+        src/util/crow_util.cpp
+        src/util/crow_util.hpp
         src/util/encodings_util.cpp
         src/util/encodings_util.hpp
         src/util/guard.hpp

@@ -1,34 +1,15 @@
 #include "serve.hpp"
 
 #include "../file_util.hpp"
-#include "../util/open_browser.hpp"
 #include "../util/console_color.hpp"
+#include "../util/crow_util.hpp"
 
 #include <crow.h>
 #include <print>
 
 namespace coverpp
 {
-static crow::response
-make_file_response(const std::filesystem::path& file, std::string_view content_type = "text/plain")
-{
-    if (!std::filesystem::is_regular_file(file))
-    {
-        return crow::response{404, "text/plain", "404 Not Found"};
-    }
-
-    auto content = detail::read_file_binary(file);
-    if (!content)
-    {
-        return crow::response{404, "text/plain", "404 Not Found"};
-    }
-
-    crow::response response;
-    response.body = *std::move(content);
-    response.set_header("Content-Length", std::format("{}", response.body.size()));
-    response.set_header("Content-Type", std::string{content_type});
-    return response;
-}
+using detail::make_file_response;
 
 int serve(const ServeOptions& options)
 {
@@ -64,7 +45,7 @@ int serve(const ServeOptions& options)
         if (std::filesystem::is_regular_file(path))
         {
             std::string extension = path.extension().string();
-            if (extension.starts_with("."))
+            if (extension.starts_with('.'))
             {
                 extension.erase(extension.begin());
             }
@@ -81,40 +62,9 @@ int serve(const ServeOptions& options)
         return make_file_response(webapp_path / "index.html", "text/html; charset=utf-8");
     });
 
-    auto future = app
-        .port(options.port)
-        .concurrency(2)
-        .loglevel(crow::LogLevel::Warning)
-        .run_async();
+	std::println("Serving {}", canonical(options.report_path).u8string());
 
-    app.wait_for_server_start();
-
-	if (options.open)
-	{
-		detail::open_browser_at_url(std::format("http://localhost:{}", options.port));
-	}
-
-    std::println("Serving {}\n@ http://localhost:{}", absolute(options.report_path).u8string(), options.port);
-    std::println("{}", styled<ColorBold::green>("Commands:"));
-    std::println(" ➜ {} to quit the server", styled<Style::bold>("q + enter"));
-    std::println(" ➜ {} to open the default browser", styled<Style::bold>("o + enter"));
-
-    int c;
-    while ((c = std::getchar()) != EOF)
-    {
-        if (c == 'q')
-        {
-            break;
-        }
-        if (c == 'o')
-        {
-            detail::open_browser_at_url(std::format("http://localhost:{}", options.port));
-        }
-    }
-
-    app.stop();
-
-    future.wait_for(std::chrono::seconds{30});
+	detail::run_server(app, options.port, options.open);
 
     return 0;
 }
