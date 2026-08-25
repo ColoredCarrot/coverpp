@@ -78,7 +78,7 @@ try
 	run_app->prefix_command(CLI::PrefixCommandMode::PositionalOnly);
 	run_app->usage([&] { return std::format("{} run [OPTIONS] <program> [args...]", app.get_name()); });
 
-    coverpp::ServeOptions serve_options{.report_path{"./coverpp-report/report.coverpp"}};
+    coverpp::ServeOptions serve_options{.report_path{"./coverpp-report/report.coverpp"}, .open = true};
     const auto serve_app = app.add_subcommand("view", "View coverage results in your browser");
     serve_app->alias("serve");
     serve_app->add_option("report", serve_options.report_path)->check(CLI::ExistingFile);
@@ -88,6 +88,7 @@ try
         ->required(argc == 0)
         ->default_val(
             argc == 0 ? std::string{""} : std::filesystem::weakly_canonical(argv[0]).parent_path().u8string());
+	serve_app->add_flag("--open,!--no-open", serve_options.open)->default_val(true);
 
 	auto       merge_options = coverpp::MergeOptions{};
 	auto const merge_app     = app.add_subcommand("merge", "Merge multiple reports into one");

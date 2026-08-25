@@ -104,6 +104,11 @@ int serve(const ServeOptions& options)
 
     app.wait_for_server_start();
 
+	if (options.open)
+	{
+		detail::open_browser_at_url(std::format("http://localhost:{}", options.port));
+	}
+
     std::println("Serving {}\n@ http://localhost:{}", absolute(options.report_path).u8string(), options.port);
     std::println("{}", styled<ColorBold::green>("Commands:"));
     std::println(" ➜ {} to quit the server", styled<Style::bold>("q + enter"));
