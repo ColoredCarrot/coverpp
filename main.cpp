@@ -8,10 +8,11 @@
 #include <iostream>
 #include <filesystem>
 #include <cassert>
-#include <unordered_map>
+#include <ranges>
 
 #define NOMINMAX
 
+#include "src/util/encodings_util.hpp"
 #include "src/exporter/clion/CLionExporter.hpp"
 #include "src/exporter/html/HtmlExporter.hpp"
 #include "src/exporter/json/JsonExporter.hpp"
@@ -39,7 +40,7 @@ struct CoInitializeGuard
     }
 };
 
-int main(int argc, char** argv)
+int wmain(int argc, wchar_t** argv_unicode)
 try
 {
 #ifdef _WIN32
@@ -52,6 +53,15 @@ try
 
     std::atexit([] { std::cout << coverpp::Style::reset; });
 
+	// Even though we compile with /utf-8, `char** argv` would still be ANSI.
+	// So, we use `wmain` and convert it to UTF-8.
+	auto args = std::span{argv_unicode, static_cast<std::size_t>(argc)}
+	            | std::views::transform([](wchar_t const* w) { return coverpp::windows::utf16le_to_utf8(w); })
+	            | std::ranges::to<std::vector>();
+	auto argv_data
+	    = args | std::views::transform([](std::string const& s) { return s.c_str(); }) | std::ranges::to<std::vector>();
+	auto argv = argv_data.data();
+
     CLI::App app{"Cover++"};
     app.failure_message(CLI::FailureMessage::help);
 
@@ -59,14 +69,14 @@ try
 
     coverpp::CoverageParams params{};
     run_app->add_option("-s,--source", params.source_dir, "Source directory")->required();
-    run_app->add_option("-p,--program", params.program, "Executable")->check(CLI::ExistingFile)->required();
-    run_app->add_option("-a,--program-args", params.program_args, "Arguments to pass to the executable");
     run_app->add_option("-d,--debug-info", params.debug_info, "PDB file")->check(CLI::ExistingFile);
     run_app->add_option("-o,--out", params.out_file, "Output file")->default_val("./report.coverpp");
 	run_app->add_option("--exclude-source-files-regex", params.exclude_source_files_regex, "Regex for source files to exclude (matches on generic paths with /)");
     run_app->add_flag("-v,--verbose", params.verbosity, "Print more messages to the console");
     run_app->add_flag("--print-first-chance-seh", params.print_first_chance_seh_exceptions,
                       "Print first-chance SEH exceptions to the console");
+	run_app->prefix_command(CLI::PrefixCommandMode::PositionalOnly);
+	run_app->usage([&] { return std::format("{} run [OPTIONS] <program> [args...]", app.get_name()); });
 
     coverpp::ServeOptions serve_options{.report_path{"./coverpp-report/report.coverpp"}};
     const auto serve_app = app.add_subcommand("view", "View coverage results in your browser");
@@ -142,11 +152,25 @@ try
 		return coverpp::run_exporter<coverpp::JsonExporter>();
 	}
 
+	if (!*run_app)
+	{
+		throw std::logic_error{"No command specified"};
+	}
+
+	auto program_invocation = run_app->remaining();
+	if (program_invocation.empty())
+	{
+		std::cout << coverpp::Color::red << "No program specified" << std::endl;
+		return 1;
+	}
+
+	params.program      = std::filesystem::canonical(program_invocation[0]);
+	params.program_args = std::vector(program_invocation.begin() + 1, program_invocation.end());
+
 	if (params.debug_info.empty())
 	{
 		params.debug_info = params.program.parent_path() / (params.program.stem().string() + ".pdb");
 	}
-	params.program    = canonical(params.program);
 	params.debug_info = canonical(params.debug_info);
 
     if (params.verbosity > 0)

@@ -146,14 +146,93 @@ static std::string get_loaded_dll_name(HANDLE process, const LOAD_DLL_DEBUG_INFO
     return info.fUnicode ? coverpp::windows::utf16le_to_utf8((const wchar_t*) buf) : std::string{(const char*) buf};
 }
 
-static std::wstring make_command_line_string(std::wstring_view module_name, std::string_view args)
+static bool contains_space_or_tab(std::wstring_view s)
 {
-    std::wstring s;
-    s.reserve(module_name.length() + 1 + args.length());
-    s.append(module_name);
-    s.push_back(' ');
-    s.append(coverpp::windows::utf8_to_utf16le(args));
-    return s;
+	return s.find_first_of(L" \t") != std::wstring_view::npos;
+}
+
+static void append_argument(std::wstring& out, std::wstring_view arg)
+{
+	bool const quoted = arg.empty() || contains_space_or_tab(arg);
+
+	if (quoted)
+	{
+		out.push_back(L'"');
+	}
+
+	std::size_t backslashes = 0;
+
+	for (wchar_t const ch : arg)
+	{
+		if (ch == L'\\')
+		{
+			++backslashes;
+			continue;
+		}
+
+		if (ch == L'"')
+		{
+			// A literal quote requires:
+			//   N backslashes -> 2*N + 1 backslashes, then the quote.
+			out.append(backslashes * 2 + 1, L'\\');
+			out.push_back(L'"');
+			backslashes = 0;
+			continue;
+		}
+
+		// Backslashes not immediately preceding a quote are literal.
+		out.append(backslashes, L'\\');
+		backslashes = 0;
+		out.push_back(ch);
+	}
+
+	if (quoted)
+	{
+		// Trailing backslashes now precede our closing quote, so double
+		// them to keep that quote from being escaped.
+		out.append(backslashes * 2, L'\\');
+		out.push_back(L'"');
+	}
+	else
+	{
+		out.append(backslashes, L'\\');
+	}
+}
+
+static std::wstring make_command_line_string(std::filesystem::path const& program, std::vector<std::string> const& args)
+{
+	// Basically the reverse of the rules described here:
+	//  https://learn.microsoft.com/en-us/cpp/c-language/parsing-c-command-line-arguments?view=msvc-170
+
+	std::wstring_view const program_string = program.native();
+
+	// argv[0] has special CRT parsing rules. A valid Windows path cannot
+	// contain '"', so quoting is required only when it contains space/tab.
+	if (program_string.find(L'"') != std::wstring_view::npos)
+	{
+		throw std::invalid_argument{"program path contains a double quote"};
+	}
+
+	std::wstring result;
+
+	if (contains_space_or_tab(program_string))
+	{
+		result.push_back(L'"');
+		result.append(program_string);
+		result.push_back(L'"');
+	}
+	else
+	{
+		result.append(program_string);
+	}
+
+	for (std::string const& arg : args)
+	{
+		result.push_back(L' ');
+		append_argument(result, coverpp::windows::utf8_to_utf16le(arg));
+	}
+
+	return result;
 }
 
 
@@ -194,7 +273,7 @@ int run_with_coverage(const CoverageParams& params)
     si.cb = sizeof(si);
     PROCESS_INFORMATION pi{};
     // Inherit env and workdir from the coverage process
-    auto command_line = make_command_line_string(params.program.c_str(), params.program_args);
+    auto command_line = make_command_line_string(params.program, params.program_args);
     THROW_LAST_ERROR_IF_NOT(CreateProcessW(
         params.program.c_str(), command_line.data(),
         nullptr, nullptr, false, DEBUG_ONLY_THIS_PROCESS|CREATE_SUSPENDED, nullptr, nullptr,
