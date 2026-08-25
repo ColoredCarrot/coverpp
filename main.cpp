@@ -63,6 +63,13 @@ try
 	    = args | std::views::transform([](std::string const& s) { return s.c_str(); }) | std::ranges::to<std::vector>();
 	auto argv = argv_data.data();
 
+	// Treat a simple, no-other-args call with `--help` the same as calling the `help` command.
+	// In all other cases, use the default handling for `--help`.
+	if (argc == 2 && args[1] == "--help")
+	{
+		args[1] = "help";
+	}
+
     CLI::App app{"Cover++"};
     app.failure_message(CLI::FailureMessage::help);
 
