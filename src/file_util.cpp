@@ -29,4 +29,21 @@ std::uint32_t lines_in_file(std::filesystem::path const& file)
 
 	return lines;
 }
+
+std::optional<std::string> read_file_binary(std::filesystem::path const& file)
+{
+	std::ifstream ifs(file, std::ios_base::in | std::ios_base::binary | std::ios_base::ate);
+	if (!ifs)
+	{
+		return std::nullopt;
+	}
+
+	auto const size = ifs.tellg();
+	ifs.seekg(0, std::ios::beg);
+
+	std::vector<char> bytes(size);
+	ifs.read(bytes.data(), size);
+
+	return std::string{bytes.data(), static_cast<std::size_t>(size)};
+}
 } // namespace coverpp::detail

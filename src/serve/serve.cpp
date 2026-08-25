@@ -1,4 +1,6 @@
 #include "serve.hpp"
+
+#include "../file_util.hpp"
 #include "../util/open_browser.hpp"
 #include "../util/console_color.hpp"
 
@@ -7,23 +9,6 @@
 
 namespace coverpp
 {
-static std::optional<std::string> read_file(const std::filesystem::path& file)
-{
-    std::ifstream ifs(file, std::ios_base::in | std::ios_base::binary | std::ios_base::ate);
-    if (!ifs)
-    {
-        return std::nullopt;
-    }
-
-    const auto size = ifs.tellg();
-    ifs.seekg(0, std::ios::beg);
-
-    std::vector<char> bytes(size);
-    ifs.read(bytes.data(), size);
-
-    return std::string{bytes.data(), static_cast<std::size_t>(size)};
-}
-
 static crow::response
 make_file_response(const std::filesystem::path& file, std::string_view content_type = "text/plain")
 {
@@ -32,7 +17,7 @@ make_file_response(const std::filesystem::path& file, std::string_view content_t
         return crow::response{404, "text/plain", "404 Not Found"};
     }
 
-    auto content = read_file(file);
+    auto content = detail::read_file_binary(file);
     if (!content)
     {
         return crow::response{404, "text/plain", "404 Not Found"};
