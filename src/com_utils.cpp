@@ -2,6 +2,15 @@
 
 namespace coverpp::detail::windows
 {
+std::wstring_view bstr_to_wstring_view(BSTR bs)
+{
+	if (!bs)
+	{
+		return {};
+	}
+	return std::wstring_view{bs, SysStringLen(bs)};
+}
+
 std::string bstr_to_utf8_string(BSTR bs)
 {
     // See https://stackoverflow.com/questions/6284524/bstr-to-stdstring-stdwstring-and-vice-versa
