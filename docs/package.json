@@ -8,7 +8,8 @@
         "build": "astro build",
         "preview": "astro preview",
         "astro": "astro",
-        "fmt": "prettier --write ."
+        "fmt": "prettier --write .",
+        "check": "astro check && tsc --noEmit"
     },
     "dependencies": {
         "@astrojs/starlight": "^0.41.7",
@@ -16,6 +17,8 @@
         "sharp": "^0.35.3"
     },
     "devDependencies": {
-        "prettier": "3.9.6"
+        "@astrojs/check": "^0.9.10",
+        "prettier": "3.9.6",
+        "typescript": "^6.0.3"
     }
 }
