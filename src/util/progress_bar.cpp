@@ -2,6 +2,8 @@
 
 #include "console_color.hpp"
 
+#include <print>
+
 namespace coverpp
 {
 static std::string repeat(std::string_view text, std::size_t count)
@@ -17,9 +19,10 @@ static std::string repeat(std::string_view text, std::size_t count)
 	return result;
 }
 
-ProgressBar::ProgressBar(std::size_t total, std::ostream& out, std::size_t width)
-    : out_{&out}, total_{total}, width_{width}
-{}
+ProgressBar::ProgressBar(std::size_t total, FILE* out, std::size_t width) : out_{out}, total_{total}, width_{width}
+{
+	update(0);
+}
 
 void ProgressBar::update(std::size_t current)
 {
@@ -29,13 +32,21 @@ void ProgressBar::update(std::size_t current)
 	auto const   filled  = static_cast<std::size_t>(ratio * static_cast<double>(width_));
 	auto const   percent = static_cast<int>(ratio * 100.0);
 
-	*out_ << "\r[" << ColorBold::green << repeat(u8"█", filled) << Style::reset << repeat(u8"░", width_ - filled)
-	      << std::format("] {:3}% ({}/{})", percent, current, total_) << std::flush;
+	std::print(out_,
+	           "\r[{}{}{}{}] {:3}% ({}/{})",
+	           ColorBold::green,
+	           repeat(u8"█", filled),
+	           Style::reset,
+	           repeat(u8"░", width_ - filled),
+	           percent,
+	           current,
+	           total_);
+	std::fflush(out_);
 }
 
 void ProgressBar::finish()
 {
 	update(total_);
-	std::println(*out_);
+	std::println(out_);
 }
 } // namespace coverpp
