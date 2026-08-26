@@ -45,6 +45,11 @@ void BreakpointDriver::set_breakpoint(InstructionPointer ip)
     m_breakpoints.emplace(ip, Breakpoint{original_instruction});
 }
 
+bool BreakpointDriver::has_breakpoint(InstructionPointer ip) const
+{
+	return m_breakpoints.contains(ip);
+}
+
 void BreakpointDriver::remove_breakpoint(InstructionPointer ip)
 {
     const auto it = m_breakpoints.find(ip);

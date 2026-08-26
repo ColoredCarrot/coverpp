@@ -335,9 +335,6 @@ int run_with_coverage(const CoverageParams& params)
 
         	CloseHandle(evt.u.CreateProcessInfo.hFile); // We need to do this here as documented by Microsoft
 
-        	// Report that the SUT is ready
-			std::println("SUT ready (PID: {})", evt.dwProcessId);
-
             break;
         }
         case CREATE_THREAD_DEBUG_EVENT:
@@ -376,38 +373,45 @@ int run_with_coverage(const CoverageParams& params)
 
             if (evt.u.Exception.ExceptionRecord.ExceptionCode == STATUS_BREAKPOINT)
             {
-                if (first_breakpoint)
-                {
-                    first_breakpoint = false;
-                    continue_status = DBG_EXCEPTION_HANDLED;
-                    break;
-                }
+				if (first_breakpoint)
+				{
+					first_breakpoint = false;
+					continue_status  = DBG_EXCEPTION_HANDLED;
+					std::println("SUT ready (PID: {})", evt.dwProcessId);
+					break;
+				}
+				else if (breakpoint_driver.has_breakpoint(ip))
+				{
+					if (params.verbosity >= 5)
+					{
+						std::println("Breakpoint hit at {}",
+						             tracepoint ? std::format("{}:{} (address {})",
+						                                      tracepoint->first.u8string(),
+						                                      tracepoint->second.lineBegin,
+						                                      ip)
+						                        : std::format("address {}", ip));
+					}
 
-                if (params.verbosity >= 5)
-                {
-                    std::println(
-                        "Breakpoint hit at {}",
-                        tracepoint
-                        ? std::format("{}:{} (address {})", tracepoint->first.u8string(), tracepoint->second.lineBegin,
-                                      ip)
-                        : std::format("address {}", ip)
-                    );
-                }
+					coverage_session.trace(sink, va);
 
-                coverage_session.trace(sink, va);
+					// Set the TF (Trap Flag, bit 8) in the EFLAGS register.
+					// When this flag is set, the processor traps after every instruction with STATUS_SINGLE_STEP.
+					CONTEXT context{};
+					context.ContextFlags = CONTEXT_CONTROL;
+					THROW_LAST_ERROR_IF_NOT(GetThreadContext(hThread, &context));
+					//                context.EFlags |= (1 << 8) | (1 << 16);
+					--context.Rip; // Decrement because we get here *after* the INT3 instruction executed
+					THROW_LAST_ERROR_IF_NOT(SetThreadContext(hThread, &context));
 
-                // Set the TF (Trap Flag, bit 8) in the EFLAGS register.
-                // When this flag is set, the processor traps after every instruction with STATUS_SINGLE_STEP.
-                CONTEXT context{};
-                context.ContextFlags = CONTEXT_CONTROL;
-                THROW_LAST_ERROR_IF_NOT(GetThreadContext(hThread, &context));
-//                context.EFlags |= (1 << 8) | (1 << 16);
-                --context.Rip; // Decrement because we get here *after* the INT3 instruction executed
-                THROW_LAST_ERROR_IF_NOT(SetThreadContext(hThread, &context));
+					breakpoint_driver.remove_breakpoint(ip);
 
-                breakpoint_driver.remove_breakpoint(ip);
-
-                continue_status = DBG_EXCEPTION_HANDLED;
+					continue_status = DBG_EXCEPTION_HANDLED;
+				}
+				else
+				{
+					// Not one of our breakpoints
+					continue_status = DBG_EXCEPTION_NOT_HANDLED;
+				}
             }
             else if (evt.u.Exception.ExceptionRecord.ExceptionCode == STATUS_SINGLE_STEP)
             {

@@ -17,6 +17,8 @@ public:
 
     void set_breakpoint(InstructionPointer ip);
 
+	[[nodiscard]] bool has_breakpoint(InstructionPointer ip) const;
+
     void remove_breakpoint(InstructionPointer ip);
 
 private:
