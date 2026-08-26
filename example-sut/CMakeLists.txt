@@ -11,7 +11,7 @@ add_executable(example-sut sut-main.cpp sut-foo.hpp
         deep/nested/b.hpp)
 
 target_compile_options(example-sut PRIVATE
-        $<$<CXX_COMPILER_ID:MSVC>:/Wall /WX>
+        $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
 )
 target_link_options(example-sut PRIVATE
         $<$<CXX_COMPILER_ID:MSVC>:/WX>
