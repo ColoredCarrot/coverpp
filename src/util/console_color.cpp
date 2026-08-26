@@ -20,7 +20,7 @@ enum class ColorSupportStatus
     off,
 };
 
-static void enable_color_support()
+static bool enable_color_support()
 {
     using
     enum ColorSupportStatus;
@@ -30,14 +30,14 @@ static void enable_color_support()
 
     if (color_support_enabled != uninitialized)
     {
-        return;
+        return color_support_enabled == on;
     }
 
     std::lock_guard guard{mutex};
 
     if (color_support_enabled != uninitialized)
     {
-        return;
+        return color_support_enabled == on;
     }
     color_support_enabled = on;
 
@@ -58,13 +58,18 @@ static void enable_color_support()
 
     enable_color(GetStdHandle(STD_OUTPUT_HANDLE));
     enable_color(GetStdHandle(STD_ERROR_HANDLE));
+
+	return color_support_enabled == on;
 }
 
 template<ColorControl T>
 std::ostream& operator<<(std::ostream& os, T control)
 {
-    enable_color_support();
-    return os << "\033[" << std::to_underlying(control) << "m";
+    if (enable_color_support())
+    {
+    	os << "\033[" << std::to_underlying(control) << "m";
+    }
+    return os;
 }
 
 #define INSTANTIATE(T) template std::ostream& operator<< <T>(std::ostream& os, T control);
@@ -75,8 +80,14 @@ INSTANTIATIONS()
 template<coverpp::ColorControl T>
 std::format_context::iterator std::formatter<T>::format(T control, std::format_context& ctx) const
 {
-    coverpp::enable_color_support();
-    return std::format_to(ctx.out(), "\033[{}m", std::to_underlying(control));
+	if (coverpp::enable_color_support())
+    {
+		return std::format_to(ctx.out(), "\033[{}m", std::to_underlying(control));
+    }
+	else
+    {
+	    return ctx.out();
+    }
 }
 
 
