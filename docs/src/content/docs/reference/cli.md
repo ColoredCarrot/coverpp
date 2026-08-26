@@ -24,6 +24,10 @@ cover++ run [options] <program> [args...]
 | `-v`<br/>`--verbose`                   | Repeatable flag to increase verbosity.                                                                                               |
 | `--print-first-chance-seh`             | Print first-chance SEH exceptions to the console                                                                                     |
 
+### Description
+
+All arguments passed after `<program>` are forwarded verbatim to the program.
+
 ## view
 
 View a coverage report in the browser.
@@ -41,3 +45,75 @@ cover++ view [options] <report>
 | `-p`<br/>`--port <port>` | Port to serve the report on.<br/>**Default:** `8080`                 |
 | `--coverpp-install-dir`  | Installation directory of Cover++.<br/>**Default:** Auto-discovered. |
 | `--no-open`              | Don't open the browser; only start the server.                       |
+
+## remap
+
+Remap source locations in a coverage report file.
+
+### Usage
+
+```sh
+cover++ remap [options] --to <path> <report>
+```
+
+| Option          | Description                                                                           |
+| --------------- | ------------------------------------------------------------------------------------- |
+| `--to <path>`   | New source root.<br/>**Required.**                                                    |
+| `--from <path>` | Old source root.<br/>**Default:** Inferred from the single source root in the report. |
+
+Note that `--from` is required if there is more than one source root.
+
+### Description
+
+You can remap subdirectories of a source root.
+In that case, the original root will be split in two.
+
+It is not required that either the old or the new source root exist.
+If the new source root does exist,
+missing statistics which require source files will be computed.
+This is useful in case the report was generated on a machine without the source files.
+
+## merge
+
+Merge multiple coverage reports into a single file.
+
+### Usage
+
+```sh
+cover++ merge -o <output> <inputs...>
+```
+
+| Option                     | Description                       |
+| -------------------------- | --------------------------------- |
+| `-o`<br/>`--output <path>` | Where to place the merged report. |
+| `<inputs...>`              | One or more report files.         |
+
+## export json
+
+Export a coverage report to a JSON file.
+
+### Usage
+
+```sh
+cover++ export json -o <output> <report>
+```
+
+| Option                  | Description                                                                                       |
+| ----------------------- | ------------------------------------------------------------------------------------------------- |
+| `-o`<br/>`--out <path>` | Where to place the generated JSON file.<br/>Use `-` to print to the console.<br/>**Default:** `-` |
+| `<inputs...>`           | One or more report files.                                                                         |
+
+### Examples
+
+Export `foo.coverpp` to `foo.json`:
+
+```sh
+cover++ export json -o foo.json foo.coverpp
+```
+
+Get the covered lines of a specific file in the first root:
+
+```powershell
+$report = cover++ export json foo.coverpp | ConvertFrom-Json
+$report.roots[0].children | where file -eq "main.cpp" | select covered
+```
