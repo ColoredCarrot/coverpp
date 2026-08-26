@@ -8,6 +8,11 @@ Coverpp::Report::CoverageReportT read_report(std::filesystem::path const& file)
 {
 	std::ifstream stream{file, std::ios::binary | std::ios::in};
 
+	if (!stream)
+	{
+		throw std::runtime_error("Failed to open file: " + file.string());
+	}
+
 	stream.seekg(0, std::ios::end);
 	auto const length = stream.tellg();
 	stream.seekg(0, std::ios::beg);
