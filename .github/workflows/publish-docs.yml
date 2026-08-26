@@ -3,6 +3,7 @@ name: Publish documentation
 on:
   push:
     branches: ["master"]
+  workflow_dispatch: # Allow triggering manually
 
 permissions:
   contents: read
