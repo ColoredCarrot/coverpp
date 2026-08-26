@@ -45,6 +45,7 @@ public:
 
 		process(*root.stats);
 
+		m_out.Key("children");
 		process(root.children);
 
 		m_out.EndObject();
