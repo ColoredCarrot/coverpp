@@ -111,7 +111,7 @@ try
 
 	auto       merge_options = coverpp::MergeOptions{};
 	auto const merge_app     = app.add_subcommand("merge", "Merge multiple reports into one");
-	merge_app->add_option("-o,--output", merge_options.output_file);
+	merge_app->add_option("-o,--output", merge_options.output_file)->required();
 	merge_app->add_option("input-files", merge_options.input_files)->expected(-1);
 
 	auto       remap_options = coverpp::RemapOptions{};
