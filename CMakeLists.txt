@@ -276,6 +276,11 @@ set(CPACK_INNOSETUP_IGNORE_LICENSE_PAGE ON)
 # By default, Inno Setup doesn't let you choose a different directory if the app is already installed
 set(CPACK_INNOSETUP_SETUP_DisableDirPage OFF)
 
+# Add a task to add cover++ to PATH
+set(CPACK_INNOSETUP_SETUP_ChangesEnvironment ON)
+set(CPACK_INNOSETUP_EXTRA_SCRIPTS "${CMAKE_CURRENT_SOURCE_DIR}/inno-setup/modpath-task.iss")
+set(CPACK_INNOSETUP_CODE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/inno-setup/modpath-code.iss")
+
 include(CPackComponent)
 
 cpack_add_install_type(full DISPLAY_NAME "Full")
