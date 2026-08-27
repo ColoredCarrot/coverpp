@@ -4,22 +4,33 @@ Code coverage engine for C/C++ on Windows.
 
 A modern alternative to the abandoned [OpenCppCoverage](https://github.com/OpenCppCoverage/OpenCppCoverage) project.
 
+**Go to:** [**Documentation**](https://coloredcarrot.github.io/coverpp/)
+
 ## Usage
 
 ### Report generation
 
+You don't need to compile or link your program with any specific options.
+Having an `.exe` and a `.pdb` is enough.
+
 ```bat
-cover++ run                   ^
-  -s "path\to\src\dir"        ^
-  -p "path\to\program.exe"    ^
-  -d "path\to\debug\info.pdb"
+cover++ run -s path\to\sources my-program.exe
 ```
 
 ### Report visualization
 
 ```bat
-cover++ view
+cover++ view report.coverpp
 ```
+
+### Export
+
+```bat
+cover++ export json report.coverpp -o report.json
+```
+
+For a complete list of commands and options,
+see the [documentation](https://coloredcarrot.github.io/coverpp/reference/cli).
 
 ## Development
 
@@ -34,4 +45,32 @@ cd build
 cmake ..         # Configure with default options (includes testing)
 cmake --build .  # Build
 ctest -C Debug   # Run all test suites
+```
+
+### Packaging
+
+Cover++ uses CPack to generate installers.
+
+```bat
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake --build . --config Release
+cpack
+```
+
+### Frontend
+
+To develop the frontend or the documentation,
+you need Node and pnpm:
+
+```bat
+winget install OpenJS.NodeJS.LTS
+winget install pnpm.pnpm
+```
+
+You can then run development servers in the `frontend` and `docs` directories:
+
+```bat
+pnpm dev
 ```
