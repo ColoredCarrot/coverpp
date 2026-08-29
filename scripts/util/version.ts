@@ -63,4 +63,12 @@ export class Version {
                 this.minor - that.minor,
         ) as -1 | 0 | 1;
     }
+
+    equals(that: Version): boolean {
+        return (
+            this.shortYear === that.shortYear &&
+            this.major === that.major &&
+            this.minor === that.minor
+        );
+    }
 }

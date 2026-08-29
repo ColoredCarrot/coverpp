@@ -1,7 +1,8 @@
 {
     "private": true,
     "scripts": {
-        "release": "zx scripts/release.ts"
+        "release": "zx scripts/release.ts",
+        "get-release-notes": "zx scripts/getReleaseNotes.ts"
     },
     "devEngines": {
         "packageManager": {
