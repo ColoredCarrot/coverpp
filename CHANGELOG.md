@@ -4,6 +4,4 @@ This changelog follows the [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ## [Unreleased]
 
-### Added
-
-- Initial release
+Initial release.
