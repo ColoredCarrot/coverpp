@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.28)
-project(coverpp VERSION 0.1.0)
+project(coverpp VERSION 26.1)
 
 cmake_policy(SET CMP0091 NEW)
 
@@ -21,6 +21,9 @@ set(CMAKE_INSTALL_UCRT_LIBRARIES OFF) # Not needed on Windows 10+
 set(CMAKE_INSTALL_SYSTEM_RUNTIME_DESTINATION "${CMAKE_INSTALL_BINDIR}")
 set(CMAKE_INSTALL_SYSTEM_RUNTIME_COMPONENT c1_Runtime)
 include(InstallRequiredSystemLibraries)
+
+# Write a file containing the version, so that
+file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/version.txt" CONTENT "${PROJECT_VERSION}")
 
 cmrc_add_resource_library(coverpp-resources ALIAS coverpp::rc NAMESPACE coverpp_rc
         "src/resources/html-exporter/index.html"
