@@ -49,6 +49,9 @@ export default defineConfig({
     base: base,
 
     trailingSlash: "never",
+    build: {
+        format: "file",
+    },
 
     markdown: {
         processor: unified({
