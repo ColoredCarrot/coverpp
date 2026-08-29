@@ -88,11 +88,11 @@ jobs:
           New-Item -ItemType Directory -Force -Path artifacts | Out-Null
 
           # CPack ZIP package
-          Get-ChildItem build/package -Filter *.zip -File -Recurse |
+          Get-ChildItem build/package -Filter *.zip -File |
             Copy-Item -Destination artifacts
 
           # Inno Setup installer
-          Get-ChildItem build/package -Filter *.exe -File -Recurse |
+          Get-ChildItem build/package -Filter *.exe -File |
             Copy-Item -Destination artifacts
 
           if (-not (Get-ChildItem artifacts -File)) {
