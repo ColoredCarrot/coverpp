@@ -1,0 +1,110 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Git tag to build and release'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Determine tag
+        id: tag
+        shell: pwsh
+        run: |
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            $tag = "${{ inputs.tag }}"
+          } else {
+            $tag = "${{ github.ref_name }}"
+          }
+
+          if ($tag -notmatch '^v\d+(?:\.\d+){0,2}$') {
+            throw "Invalid tag '$tag'. Expected v26, v26.3, v26.1.42, etc."
+          }
+
+          "tag=$tag" >> $env:GITHUB_OUTPUT
+          "version=$($tag.Substring(1))" >> $env:GITHUB_OUTPUT
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ steps.tag.outputs.tag }}
+          fetch-depth: 0
+
+      - name: Set up pnpm
+        uses: pnpm/setup@703c52620218391530e48b9e8870d5c0082e1b9b # v2.1.0
+        with:
+          runtime: node@24
+          cache: true
+          install: true
+
+      - uses: TheMrMilchmann/setup-msvc-dev@368ef7d1ee4d1171b31d4a7f67f4d954f903f5a9 # v4.1.0
+        with:
+          arch: x64
+
+      - name: Configure
+        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -G Ninja
+
+      - name: Verify version in CMakeLists.txt
+        shell: pwsh
+        run: |
+          $expected = "${{ steps.tag.outputs.version }}"
+          $actual = (Get-Content -Raw -Path build/version.txt).Trim()
+
+          if ($actual -cne $expected) {
+            throw @"
+          Version mismatch!
+
+            Tag:      ${{ steps.tag.outputs.tag }}
+            Expected: $expected
+            Actual:   $actual
+
+          The version in CMakeLists.txt must be exactly the version parsed from the tag.
+          "@
+          }
+
+          Write-Host "Version verified: $actual"
+
+      - name: Build
+        run: cmake --build ${{github.workspace}}/build --config Release
+
+      - name: Package
+        run: cpack --config build/CPackConfig.cmake -C Release -B build/package
+
+      - name: Collect installers
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+
+          # CPack ZIP package
+          Get-ChildItem build/package -Filter *.zip -File -Recurse |
+            Copy-Item -Destination artifacts
+
+          # Inno Setup installer
+          Get-ChildItem build/package -Filter *.exe -File -Recurse |
+            Copy-Item -Destination artifacts
+
+          if (-not (Get-ChildItem artifacts -File)) {
+            throw "No installers were produced by CPack."
+          }
+
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          gh release create "${{ steps.tag.outputs.tag }}" `
+            artifacts/* `
+            --draft `
+            --title "Cover++ ${{ steps.tag.outputs.tag }}"
