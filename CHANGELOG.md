@@ -1,0 +1,9 @@
+# Changelog
+
+This changelog follows the [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format.
+
+## [Unreleased]
+
+### Added
+
+- Initial release
