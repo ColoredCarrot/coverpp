@@ -86,7 +86,7 @@ try
 	run_app->prefix_command(CLI::PrefixCommandMode::PositionalOnly);
 	run_app->usage([&] { return std::format("{} run [OPTIONS] <program> [args...]", app.get_name()); });
 
-    coverpp::ServeOptions serve_options{.report_path{"./coverpp-report/report.coverpp"}, .open = true};
+    coverpp::ServeOptions serve_options{.report_path{"./report.coverpp"}, .open = true};
     const auto serve_app = app.add_subcommand("view", "View coverage results in your browser");
     serve_app->alias("serve");
     serve_app->add_option("report", serve_options.report_path)->check(CLI::ExistingFile);
