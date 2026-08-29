@@ -6,6 +6,18 @@ A modern alternative to the abandoned [OpenCppCoverage](https://github.com/OpenC
 
 **Go to:** [**Documentation**](https://coloredcarrot.github.io/coverpp/)
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/src/assets/view-main-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="docs/src/assets/view-main-light.png">
+  <img alt="Screenshot of main view" src="docs/src/assets/view-main-dark.png">
+</picture>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/src/assets/view-file-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="docs/src/assets/view-file-light.png">
+  <img alt="Screenshot of file view" src="docs/src/assets/view-file-dark.png">
+</picture>
+
 ## Usage
 
 ### Report generation
