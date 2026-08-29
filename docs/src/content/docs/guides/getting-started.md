@@ -24,7 +24,7 @@ This command:
 
 :::tip
 The command has lots of further options.
-Refer to the [CLI reference](/reference/cli#run) for more details.
+Refer to the [CLI reference](/reference/cli/#run) for more details.
 :::
 
 Cover++ stores coverage results in a compact binary format.
@@ -41,4 +41,4 @@ This will start a local web server and open your browser.
 
 To stop the server, type `q` and _Enter_ or use _Ctrl+C_.
 
-You can find more details [here](/reference/cli#view).
+You can find more details [here](/reference/cli/#view).

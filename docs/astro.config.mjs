@@ -48,9 +48,10 @@ export default defineConfig({
     site: process.env.ASTRO_SITE,
     base: base,
 
-    trailingSlash: "never",
+    // This is better for deployment on GitHub Pages
+    trailingSlash: "always",
     build: {
-        format: "file",
+        format: "directory",
     },
 
     markdown: {
