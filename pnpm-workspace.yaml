@@ -1,1 +1,10 @@
 minimumReleaseAge: 10080
+
+packages:
+  - frontend
+  - docs
+
+allowBuilds:
+  esbuild: true
+  sharp: true
+  unrs-resolver: false
