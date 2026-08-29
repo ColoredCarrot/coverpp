@@ -148,6 +148,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE "_WIN32_WINNT=0x0A00")
 
 # DIA SDK
 find_package(DiaSDK REQUIRED)
+message(STATUS "Found DIA SDK: ${DIASDK_DLL}")
 target_include_directories(coverpp PUBLIC
         ${DIASDK_INCLUDE_DIRS}
         "${CMAKE_SOURCE_DIR}/third_party/CLI11/include"
