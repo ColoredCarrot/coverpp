@@ -78,6 +78,13 @@ export default defineConfig({
                 baseUrl:
                     "https://github.com/ColoredCarrot/coverpp/edit/master/docs/",
             },
+            social: [
+                {
+                    label: "GitHub",
+                    icon: "github",
+                    href: "https://github.com/ColoredCarrot/coverpp",
+                },
+            ],
         }),
     ],
 });
