@@ -1,0 +1,25 @@
+{
+    "private": true,
+    "scripts": {
+        "release": "zx scripts/release.ts"
+    },
+    "devEngines": {
+        "packageManager": {
+            "name": "pnpm",
+            "version": "11.23.0",
+            "onFail": "download"
+        }
+    },
+    "packageManager": "pnpm@11.23.0",
+    "type": "module",
+    "devDependencies": {
+        "@types/node": "^26.2.0",
+        "prettier": "3.9.6",
+        "typescript": "^6.0.3"
+    },
+    "dependencies": {
+        "@inquirer/prompts": "^8.6.0",
+        "temporal-polyfill": "^1.0.4",
+        "zx": "^8.8.5"
+    }
+}

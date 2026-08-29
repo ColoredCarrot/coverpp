@@ -1,0 +1,15 @@
+/build/
+/cmake/
+/dist/
+/example-sut/
+/inno-setup/
+/node_modules/
+/schemas/
+/src/
+/test/
+/third_party/
+CMakeLists.txt
+/main.cpp
+/pnpm-lock.yaml
+
+/.idea/
