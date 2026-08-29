@@ -1,0 +1,57 @@
+---
+import { Card, CardGrid } from "@astrojs/starlight/components";
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import AnchorHeading from "@astrojs/starlight/components/AnchorHeading.astro";
+import logo from "../assets/logo.png";
+
+let base = import.meta.env.BASE_URL ?? "";
+if (base === "/") {
+    base = "";
+} else if (base) {
+    if (!base.startsWith("/")) {
+        base = "/" + base;
+    }
+    if (base.endsWith("/")) {
+        base = base.slice(0, -1);
+    }
+}
+---
+
+<StarlightPage frontmatter={{
+    title: "Cover++",
+    description: "A C/C++ coverage engine for Windows.",
+    template: "splash",
+    hero: {
+        tagline: "A modern, open-source C/C++ coverage engine for Windows",
+        image: {
+            file: logo,
+            alt: "Logo",
+        },
+        actions: [
+            {
+                text: "Get started",
+                link: `${base}/guides/getting-started`,
+                icon: "right-arrow",
+            },
+            {
+                text: "Open reference",
+                link: `${base}/reference/cli`,
+                icon: "open-book",
+                variant: "minimal",
+            },
+        ],
+    },
+}}>
+    <AnchorHeading level={2} id="features">Features</AnchorHeading>
+    <CardGrid stagger>
+        <Card title="Versatile export" icon="download">
+            Export to JSON, HTML, and gcov (suitable for import in CLion).
+        </Card>
+        <Card title="Beautiful viewer" icon="chrome">
+            Browse cumulative statistics as well as source files with visualized coverage.
+        </Card>
+        <Card title="Simple but powerful CLI" icon="seti:powershell">
+            See the <a href={`${base}/reference/cli`}>CLI reference</a> for all options.
+        </Card>
+    </CardGrid>
+</StarlightPage>
