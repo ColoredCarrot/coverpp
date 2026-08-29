@@ -127,8 +127,9 @@ await $`git commit -m ${`Release version ${newVersion}`}`;
 
 // Tag the release commit
 const gitTag = `v${newVersion}`;
-
 await $`git tag -a ${gitTag} -m ${`Release ${newVersion}`}`;
-await $`git push origin ${gitTag}`;
+
+// Push
+await $`git push origin ${branch} ${gitTag}`;
 
 console.log(`Tagged ${gitTag}. A release will be created shortly.`);
