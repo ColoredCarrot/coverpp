@@ -76,6 +76,19 @@ jobs:
 
           Write-Host "Version verified: $actual"
 
+      - name: Extract release notes
+        shell: pwsh
+        run: |
+          pnpm run get-release-notes -- "${{ steps.tag.outputs.version }}" |
+            Out-File -FilePath TEMP-release-notes.md -Encoding utf8
+
+          if (-not (Get-Item TEMP-release-notes.md).Length) {
+            throw "The changelog parser produced no release notes."
+          }
+
+          Write-Host "Release notes:"
+          Get-Content TEMP-release-notes.md
+
       - name: Build
         run: cmake --build ${{github.workspace}}/build --config Release
 
@@ -107,4 +120,5 @@ jobs:
           gh release create "${{ steps.tag.outputs.tag }}" `
             artifacts/* `
             --draft `
-            --title "Cover++ ${{ steps.tag.outputs.tag }}"
+            --title "Cover++ ${{ steps.tag.outputs.tag }}" `
+            --notes-file TEMP-release-notes.md
