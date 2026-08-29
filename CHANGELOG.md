@@ -4,4 +4,6 @@ This changelog follows the [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ## [Unreleased]
 
+## [26] - 2026-08-29
+
 Initial release.
