@@ -8,7 +8,12 @@ import {
     type ReleaseContent,
 } from "./util/changelog.ts";
 import "temporal-polyfill/global";
-import { $ } from "zx";
+import { $, usePowerShell } from "zx";
+
+// We have to use PowerShell on Windows, otherwise `git status` reports a bunch of modifications
+if (process.platform === "win32") {
+    usePowerShell();
+}
 
 async function confirmOrExit(message: string) {
     const confirmed = await confirm({ message, default: false });
