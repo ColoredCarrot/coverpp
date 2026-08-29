@@ -8,6 +8,7 @@ import {
     type ReleaseContent,
 } from "./util/changelog.ts";
 import "temporal-polyfill/global";
+import { $ } from "zx";
 
 async function confirmOrExit(message: string) {
     const confirmed = await confirm({ message, default: false });
@@ -15,6 +16,25 @@ async function confirmOrExit(message: string) {
         process.exit(1);
     }
 }
+
+async function ensureGitIsClean() {
+    const status = await $`git status --porcelain`;
+    const isClean = status.stdout.trim() === "";
+    if (!isClean) {
+        console.error(
+            "Git working directory is not clean. Please commit or stash changes before proceeding.",
+        );
+        process.exit(1);
+    }
+}
+
+await ensureGitIsClean();
+
+////////////////////////////////////////////////////////////////////////////////
+// Changelog
+//
+
+const changelogFile = "CHANGELOG.md";
 
 async function getUnreleased(changelog: Changelog): Promise<ReleaseContent> {
     const unreleased = changelog.unreleased;
@@ -38,7 +58,9 @@ async function getNewVersion(changelog: Changelog): Promise<Version> {
     const previousRelease = changelog.releases[0];
     if (!previousRelease || previousRelease.version.shortYear !== shortYear) {
         console.log(`This is the first release of the year ${year}!`);
-        return new Version(shortYear, 0, 0);
+        const newVersion = new Version(shortYear, 0, 0);
+        await confirmOrExit(`Continue releasing version ${newVersion}?`);
+        return newVersion;
     }
     const previousVersion = previousRelease.version;
     console.log(`Previous release: ${previousVersion}`);
@@ -59,7 +81,7 @@ async function getNewVersion(changelog: Changelog): Promise<Version> {
 }
 
 function readChangelog() {
-    const markdown = fs.readFileSync("CHANGELOG.md", "utf-8");
+    const markdown = fs.readFileSync(changelogFile, "utf-8");
     const changelog = parseChangelog(markdown);
     return {
         changelog,
@@ -83,7 +105,30 @@ changelog.releases.unshift({
 changelog.unreleased = { markdown: "" };
 
 fs.writeFileSync(
-    "CHANGELOG.md",
+    changelogFile,
     printChangelog(changelog, { newline }),
     "utf-8",
 );
+
+////////////////////////////////////////////////////////////////////////////////
+// Git tag
+//
+
+const branch = (await $`git branch --show-current`).stdout.trim();
+const isMainBranch = branch === "master" || branch === "main";
+if (!isMainBranch) {
+    console.error("Not on main branch. Aborting.");
+    process.exit(1);
+}
+
+// Commit the CHANGELOG.md update
+await $`git add ${changelogFile}`;
+await $`git commit -m ${`Release version ${newVersion}`}`;
+
+// Tag the release commit
+const gitTag = `v${newVersion}`;
+
+await $`git tag -a ${gitTag} -m ${`Release ${newVersion}`}`;
+await $`git push origin ${gitTag}`;
+
+console.log(`Tagged ${gitTag}. A release will be created shortly.`);
