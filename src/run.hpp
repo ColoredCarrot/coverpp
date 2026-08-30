@@ -4,5 +4,5 @@
 
 namespace coverpp
 {
-int run_with_coverage(const coverpp::CoverageParams& params);
+int run_with_coverage(const CoverageParams& params);
 }

@@ -205,13 +205,13 @@ namespace coverpp
 {
 int run_with_coverage(const CoverageParams& params)
 {
-    coverpp::windows::WindowsCoverageSession coverage_session{params};
+    windows::WindowsCoverageSession coverage_session{params};
 
     auto reachable = coverage_session.collect_source_lines();
     if (params.verbosity >= 1)
     {
         std::println("Found {} reachable tracepoints",
-                     coverpp::styled<coverpp::ColorBold::cyan>(reachable.count_tracepoints()));
+                     coverpp::styled<ColorBold::cyan>(reachable.count_tracepoints()));
     }
 
 
@@ -219,7 +219,7 @@ int run_with_coverage(const CoverageParams& params)
     const auto main_entry_va = coverage_session.find_entrypoint();
 
 
-    coverpp::CoverageSink sink;
+    CoverageSink sink;
 
 
     // Step #3: Run the exe in a new process with coverage tracking
@@ -259,7 +259,7 @@ int run_with_coverage(const CoverageParams& params)
     const HANDLE hProcess = pi.hProcess;
 
     // Step #4: Set breakpoint in main function
-    coverpp::BreakpointDriver breakpoint_driver{hProcess};
+    BreakpointDriver breakpoint_driver{hProcess};
 
     std::unordered_map<DWORD, HANDLE> thread_handles;
 
@@ -374,7 +374,7 @@ int run_with_coverage(const CoverageParams& params)
                     std::println(
                         "{} {} encountered at {}",
                         first_chance ? "First-chance" : "Unhandled",
-                        coverpp::describe_seh_exception(record.ExceptionCode, record.ExceptionInformation),
+                        describe_seh_exception(record.ExceptionCode, record.ExceptionInformation),
                         tracepoint ? std::format("{}:{}", tracepoint->source_file.u8string(), tracepoint->tracepoint.lineBegin)
                                    : std::format("{}", record.ExceptionAddress)
                     );
@@ -419,13 +419,13 @@ int run_with_coverage(const CoverageParams& params)
     if (params.verbosity >= 1)
     {
         std::println("Reached {} tracepoints",
-                     coverpp::styled<coverpp::ColorBold::cyan>(sink.count_tracepoints()));
+                     coverpp::styled<ColorBold::cyan>(sink.count_tracepoints()));
     }
 
-    coverpp::BasicReport report = coverpp::process_coverage_sink(sink);
-    coverpp::BasicReport reachable_report = coverpp::process_coverage_sink(reachable);
+    BasicReport report = process_coverage_sink(sink);
+    BasicReport reachable_report = process_coverage_sink(reachable);
 
-    coverpp::RawExporter raw_exporter;
+    RawExporter raw_exporter;
     raw_exporter.run(report, reachable_report, params);
 
     return *exit_code;

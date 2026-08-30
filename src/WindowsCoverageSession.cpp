@@ -51,7 +51,7 @@ std::generator<std::pair<const std::filesystem::path&, IDiaLineNumber&>> Windows
 
 CoverageSink WindowsCoverageSession::collect_source_lines()
 {
-    coverpp::CoverageSink sink;
+    CoverageSink sink;
     for (const auto& [file, dia_line_number] : enum_source_lines())
     {
         sink.track_coverage(
