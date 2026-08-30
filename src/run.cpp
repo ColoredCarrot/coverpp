@@ -103,7 +103,6 @@ std::intptr_t get_base_address(HANDLE process)
 
 
 using coverpp::VirtualAddress;
-using coverpp::InstructionPointer;
 
 static bool is_exit_path(const std::filesystem::path& file)
 {
@@ -314,21 +313,20 @@ int run_with_coverage(const CoverageParams& params)
         case CREATE_PROCESS_DEBUG_EVENT:
         {
             thread_handles.emplace(evt.dwThreadId, evt.u.CreateProcessInfo.hThread);
-            breakpoint_driver.set_base_address(
-                InstructionPointer{(std::uintptr_t) evt.u.CreateProcessInfo.lpBaseOfImage});
+        	coverage_session.dia().set_base_address(
+                VirtualAddress{(std::uintptr_t) evt.u.CreateProcessInfo.lpBaseOfImage});
 
             // Set breakpoints at all reachable locations
             for (const auto& [source_file, dia_line_number] : coverage_session.enum_source_lines())
             {
                 VirtualAddress va; // NOLINT(*-pro-type-member-init)
                 THROW_IF_FAILED(dia_line_number.get_virtualAddress(&va.value));
-                const auto ip = breakpoint_driver.va_to_ip(va);
 
-                breakpoint_driver.set_breakpoint(ip);
+                breakpoint_driver.set_breakpoint(va);
 
                 if (params.verbosity >= 5)
                 {
-                    std::println("Set breakpoint at {}", ip);
+                    std::println("Set breakpoint at {}", va);
                 }
             }
 
@@ -363,8 +361,7 @@ int run_with_coverage(const CoverageParams& params)
         {
             const auto hThread = thread_handles.at(evt.dwThreadId);
 
-            const InstructionPointer ip{(std::uintptr_t) evt.u.Exception.ExceptionRecord.ExceptionAddress};
-            const auto va = breakpoint_driver.ip_to_va(ip);
+            const VirtualAddress va{(std::uintptr_t) evt.u.Exception.ExceptionRecord.ExceptionAddress};
 
             const auto tracepoint = coverage_session.resolve_tracepoint(va);
 
@@ -380,7 +377,7 @@ int run_with_coverage(const CoverageParams& params)
 					std::fflush(stdout);
 					break;
 				}
-				else if (breakpoint_driver.has_breakpoint(ip))
+				else if (breakpoint_driver.has_breakpoint(va))
 				{
 					if (params.verbosity >= 5)
 					{
@@ -388,8 +385,8 @@ int run_with_coverage(const CoverageParams& params)
 						             tracepoint ? std::format("{}:{} (address {})",
 						                                      tracepoint->first.u8string(),
 						                                      tracepoint->second.lineBegin,
-						                                      ip)
-						                        : std::format("address {}", ip));
+						                                      va)
+						                        : std::format("address {}", va));
 					}
 
 					coverage_session.trace(sink, va);
@@ -403,7 +400,7 @@ int run_with_coverage(const CoverageParams& params)
 					--context.Rip; // Decrement because we get here *after* the INT3 instruction executed
 					THROW_LAST_ERROR_IF_NOT(SetThreadContext(hThread, &context));
 
-					breakpoint_driver.remove_breakpoint(ip);
+					breakpoint_driver.remove_breakpoint(va);
 
 					continue_status = DBG_EXCEPTION_HANDLED;
 				}

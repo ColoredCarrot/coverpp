@@ -1,5 +1,7 @@
 #pragma once
 
+#include "types.hpp"
+
 #include <filesystem>
 
 #define NOMINMAX
@@ -26,6 +28,8 @@ public:
     explicit DiaAccessor(const std::filesystem::path& pdb);
 
     IDiaSession& session();
+
+    void set_base_address(VirtualAddress base_address);
 
     wil::com_ptr<IDiaEnumSourceFiles> enum_source_files();
 

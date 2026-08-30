@@ -17,55 +17,39 @@ namespace coverpp
 BreakpointDriver::BreakpointDriver(void* process) : m_process{process}
 {}
 
-void BreakpointDriver::set_base_address(InstructionPointer base_address)
+void BreakpointDriver::set_breakpoint(VirtualAddress va)
 {
-    m_base_address = base_address;
-}
-
-VirtualAddress BreakpointDriver::ip_to_va(InstructionPointer ip) const
-{
-    // VA = IP - base
-    return VirtualAddress{ip.value - m_base_address.value};
-}
-InstructionPointer BreakpointDriver::va_to_ip(VirtualAddress va) const
-{
-    // IP = VA + base
-    return InstructionPointer{va.value + m_base_address.value};
-}
-
-void BreakpointDriver::set_breakpoint(InstructionPointer ip)
-{
-    remove_breakpoint(ip);
+    remove_breakpoint(va);
 
     std::byte original_instruction;
-    THROW_LAST_ERROR_IF_NOT(ReadProcessMemory(m_process, ip.vp(), &original_instruction, 1, nullptr));
+    THROW_LAST_ERROR_IF_NOT(ReadProcessMemory(m_process, va.vp(), &original_instruction, 1, nullptr));
 
-    write_byte(ip, std::byte{0xCC});
+    write_byte(va, std::byte{0xCC});
 
-    m_breakpoints.emplace(ip, Breakpoint{original_instruction});
+    m_breakpoints.emplace(va, Breakpoint{original_instruction});
 }
 
-bool BreakpointDriver::has_breakpoint(InstructionPointer ip) const
+bool BreakpointDriver::has_breakpoint(VirtualAddress va) const
 {
-	return m_breakpoints.contains(ip);
+	return m_breakpoints.contains(va);
 }
 
-void BreakpointDriver::remove_breakpoint(InstructionPointer ip)
+void BreakpointDriver::remove_breakpoint(VirtualAddress va)
 {
-    const auto it = m_breakpoints.find(ip);
+    const auto it = m_breakpoints.find(va);
     if (it == m_breakpoints.end())
     {
         return;
     }
 
-    write_byte(ip, it->second.original_instruction);
+    write_byte(va, it->second.original_instruction);
 
     m_breakpoints.erase(it);
 }
 
-void BreakpointDriver::write_byte(InstructionPointer ip, std::byte byte)
+void BreakpointDriver::write_byte(VirtualAddress va, std::byte byte)
 {
-    THROW_LAST_ERROR_IF_NOT(WriteProcessMemory(m_process, ip.vp(), &byte, 1, nullptr));
-    THROW_LAST_ERROR_IF_NOT(FlushInstructionCache(m_process, ip.vp(), 1));
+    THROW_LAST_ERROR_IF_NOT(WriteProcessMemory(m_process, va.vp(), &byte, 1, nullptr));
+    THROW_LAST_ERROR_IF_NOT(FlushInstructionCache(m_process, va.vp(), 1));
 }
 }

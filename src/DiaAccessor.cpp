@@ -49,6 +49,11 @@ IDiaSession& DiaAccessor::session()
     return *m_session;
 }
 
+void DiaAccessor::set_base_address(VirtualAddress base_address)
+{
+    THROW_IF_FAILED(session().put_loadAddress(base_address.value));
+}
+
 wil::com_ptr<IDiaEnumSourceFiles> DiaAccessor::enum_source_files()
 {
     // See https://learn.microsoft.com/en-us/visualstudio/debugger/debug-interface-access/idiaenumsourcefiles?view=vs-2022
