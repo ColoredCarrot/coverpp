@@ -27,15 +27,6 @@
 #define THROW_LAST_ERROR_IF_NOT(x) THROW_LAST_ERROR_IF(!(x))
 
 
-template<typename T>
-std::string get_string(const wil::com_ptr<T>& com, HRESULT (T::* f)(BSTR*))
-{
-    BSTR bs;
-    THROW_IF_FAILED(((*com).*f)(&bs));
-    return coverpp::detail::windows::bstr_to_utf8_string(bs);
-}
-
-
 template<>
 struct std::formatter<IDiaEnumLineNumbers>
 {
@@ -57,7 +48,7 @@ struct std::formatter<IDiaEnumLineNumbers>
             wil::com_ptr<IDiaSourceFile> src_file;
             THROW_IF_FAILED(line_number->get_sourceFile(src_file.put()));
 
-            out = std::format_to(out, "{}:{}\n", get_string(src_file, &IDiaSourceFile::get_fileName), n);
+            out = std::format_to(out, "{}:{}\n", coverpp::windows::detail::get_string(src_file, &IDiaSourceFile::get_fileName), n);
 
             any = true;
         }

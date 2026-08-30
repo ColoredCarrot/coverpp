@@ -4,45 +4,10 @@
 
 namespace coverpp::windows
 {
-template<typename T>
-static std::string get_string(const wil::com_ptr<T>& com, HRESULT (T::* f)(BSTR*))
-{
-    BSTR bs;
-    THROW_IF_FAILED(((*com).*f)(&bs));
-    return detail::windows::bstr_to_utf8_string(bs);
-}
-
-template<std::integral V, typename T>
-static V get_dword(const wil::com_ptr<T>& com, HRESULT (T::* f)(V*))
-{
-    V v;
-    THROW_IF_FAILED(((*com).*f)(&v));
-    return v;
-}
-
-template<std::integral V, typename T>
-static V get_dword_r(T& com, HRESULT (T::* f)(V*))
-{
-    V v;
-    THROW_IF_FAILED((com.*f)(&v));
-    return v;
-}
-
-template<typename TItem, typename TEnum>
-static wil::com_ptr<TItem> get_single_item(TEnum& enumeration)
-{
-    LONG count;
-    THROW_IF_FAILED(enumeration.get_Count(&count));
-    if (count != 1)
-    {
-        return {};
-    }
-
-    wil::com_ptr<TItem> item;
-    THROW_IF_FAILED(enumeration.Item(0, item.put()));
-    return item;
-}
-
+using detail::get_dword;
+using detail::get_dword_r;
+using detail::get_single_item;
+using detail::get_string;
 
 WindowsCoverageSession::WindowsCoverageSession(CoverageParams params)
     : m_params{std::move(params)}, m_dia{m_params.debug_info}

@@ -1,6 +1,6 @@
 #include "com_utils.hpp"
 
-namespace coverpp::detail::windows
+namespace coverpp::windows::detail
 {
 std::wstring_view bstr_to_wstring_view(BSTR bs)
 {
