@@ -155,6 +155,9 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
         "COVERPP_VERSION_STRING=\"${PROJECT_VERSION}\""
 )
 
+# We don't use C++20 modules
+set_target_properties(${PROJECT_NAME} PROPERTIES CXX_SCAN_FOR_MODULES OFF)
+
 # DIA SDK
 find_package(DiaSDK REQUIRED)
 message(STATUS "Found DIA SDK: ${DIASDK_DLL}")
