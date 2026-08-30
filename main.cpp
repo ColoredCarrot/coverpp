@@ -41,6 +41,8 @@ struct CoInitializeGuard
     }
 };
 
+static const std::filesystem::path default_report_file = "report.coverpp";
+
 int wmain(int argc, wchar_t** argv_unicode)
 try
 {
@@ -79,7 +81,7 @@ try
     coverpp::CoverageParams params{};
     run_app->add_option("-s,--source", params.source_dir, "Source directory");
     run_app->add_option("-d,--debug-info", params.debug_info, "PDB file")->check(CLI::ExistingFile);
-    run_app->add_option("-o,--out", params.out_file, "Output file")->default_val("./report.coverpp");
+    run_app->add_option("-o,--out", params.out_file, "Output file")->default_val(default_report_file);
 	run_app->add_option("--exclude-source-files-regex", params.exclude_source_files_regex, "Regex for source files to exclude (matches on generic paths with /)");
     run_app->add_flag("-v,--verbose", params.verbosity, "Print more messages to the console");
     run_app->add_flag("--print-first-chance-seh", params.print_first_chance_seh_exceptions,
@@ -87,7 +89,7 @@ try
 	run_app->prefix_command(CLI::PrefixCommandMode::PositionalOnly);
 	run_app->usage([&] { return std::format("{} run [OPTIONS] <program> [args...]", app.get_name()); });
 
-    coverpp::ServeOptions serve_options{.report_path{"./report.coverpp"}, .open = true};
+    coverpp::ServeOptions serve_options{.report_path{default_report_file}, .open = true};
     const auto serve_app = app.add_subcommand("view", "View coverage results in your browser");
     serve_app->alias("serve");
     serve_app->add_option("report", serve_options.report_path)->check(CLI::ExistingFile);
@@ -123,13 +125,13 @@ try
 
 	auto const export_app      = app.add_subcommand("export", "Export coverage results");
 	auto const export_html_app = export_app->add_subcommand("html");
-	export_html_app->add_option("input", coverpp::HtmlExporter::options.report_file)->check(CLI::ExistingFile);
-	export_html_app->add_option("-o,--out-dir", coverpp::HtmlExporter::options.out_dir);
+	export_html_app->add_option("input", coverpp::HtmlExporter::options.report_file)->default_val(default_report_file)->check(CLI::ExistingFile);
+	export_html_app->add_option("-o,--out-dir", coverpp::HtmlExporter::options.out_dir)->default_val("coverage-html-export");
 	auto const export_clion_app = export_app->add_subcommand("clion");
-	export_clion_app->add_option("input", coverpp::CLionExporter::options.report_file)->check(CLI::ExistingFile);
-	export_clion_app->add_option("-o,--out-dir", coverpp::CLionExporter::options.out_dir);
+	export_clion_app->add_option("input", coverpp::CLionExporter::options.report_file)->default_val(default_report_file)->check(CLI::ExistingFile);
+	export_clion_app->add_option("-o,--out-dir", coverpp::CLionExporter::options.out_dir)->default_val("coverage-clion-export");
 	auto const export_json_app = export_app->add_subcommand("json");
-	export_json_app->add_option("input", coverpp::JsonExporter::options.report_file)->check(CLI::ExistingFile);
+	export_json_app->add_option("input", coverpp::JsonExporter::options.report_file)->default_val(default_report_file)->check(CLI::ExistingFile);
 	export_json_app->add_option("-o,--out", coverpp::JsonExporter::options.out_file)->default_val("-");
 
     try
