@@ -120,5 +120,5 @@ jobs:
           gh release create "${{ steps.tag.outputs.tag }}" `
             artifacts/* `
             --draft `
-            --title "Cover++ ${{ steps.tag.outputs.tag }}" `
+            --title "Cover++ ${{ steps.tag.outputs.version }}" `
             --notes-file TEMP-release-notes.md
