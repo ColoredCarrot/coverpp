@@ -72,36 +72,6 @@ struct std::formatter<IDiaEnumLineNumbers>
 };
 
 
-std::intptr_t get_base_address(HANDLE process)
-{
-    assert(process);
-
-    HMODULE lphModule[1024]; // Array that receives the list of module handles
-    DWORD lpcbNeeded(
-        NULL); // Output of EnumProcessModules, giving the number of bytes requires to store all modules handles in the lphModule array
-
-    if (!EnumProcessModules(process, lphModule, sizeof(lphModule), &lpcbNeeded))
-    {
-        // Impossible to read modules
-        return NULL;
-    }
-
-    TCHAR szModName[MAX_PATH];
-    if (!GetModuleFileNameEx(process, lphModule[0], szModName, sizeof(szModName) / sizeof(TCHAR)))
-    {
-        // Impossible to get module info
-        return NULL;
-    }
-
-    const auto hmodule = lphModule[0]; // Module 0 is apparently always the EXE itself, returning its address
-
-    MODULEINFO info;
-    THROW_LAST_ERROR_IF(!GetModuleInformation(process, hmodule, &info, sizeof(info)));
-
-    return (std::intptr_t) info.lpBaseOfDll;
-}
-
-
 using coverpp::VirtualAddress;
 
 static bool is_exit_path(const std::filesystem::path& file)
@@ -136,7 +106,12 @@ static std::string get_loaded_dll_name(HANDLE process, const LOAD_DLL_DEBUG_INFO
     THROW_LAST_ERROR_IF_NOT(
         ReadProcessMemory(process, info.lpImageName, &ptr_in_debuggee, sizeof(ptr_in_debuggee), nullptr));
 
-    SIZE_T len;
+	if (!ptr_in_debuggee)
+	{
+        return "<unknown>";
+	}
+
+    SIZE_T len{};
     char buf[512];
     (ReadProcessMemory(process, ptr_in_debuggee, buf, sizeof(buf) - 2, &len));
     buf[len] = '\0';
