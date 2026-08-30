@@ -8,7 +8,7 @@ import {
     type ReleaseContent,
 } from "./util/changelog.ts";
 import "temporal-polyfill/global";
-import { $, usePowerShell } from "zx";
+import { $, chalk, usePowerShell } from "zx";
 
 // We have to use PowerShell on Windows, otherwise `git status` reports a bunch of modifications
 if (process.platform === "win32") {
@@ -22,18 +22,28 @@ async function confirmOrExit(message: string) {
     }
 }
 
+function errorAndExit(message: string): never {
+    console.error(`${chalk.red("✗")} ${message}`);
+    process.exit(1);
+}
+
 async function ensureGitIsClean() {
     const status = await $`git status --porcelain`;
     const isClean = status.stdout.trim() === "";
     if (!isClean) {
-        console.error(
+        errorAndExit(
             "Git working directory is not clean. Please commit or stash changes before proceeding.",
         );
-        process.exit(1);
     }
 }
 
 await ensureGitIsClean();
+
+const branch = (await $`git branch --show-current`).stdout.trim();
+const isMainBranch = branch === "master" || branch === "main";
+if (!isMainBranch) {
+    errorAndExit(`Not on main branch: ${chalk.red(branch)}`);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Changelog
@@ -45,8 +55,9 @@ async function getUnreleased(changelog: Changelog): Promise<ReleaseContent> {
     const unreleased = changelog.unreleased;
 
     if (!unreleased) {
-        console.error("Missing Unreleased section in CHANGELOG.md");
-        process.exit(1);
+        errorAndExit(
+            `Missing ${chalk.red("Unreleased")} section in ${chalk.cyan(changelogFile)}`,
+        );
     }
 
     if (!unreleased.markdown) {
@@ -62,24 +73,27 @@ async function getNewVersion(changelog: Changelog): Promise<Version> {
 
     const previousRelease = changelog.releases[0];
     if (!previousRelease || previousRelease.version.shortYear !== shortYear) {
-        console.log(`This is the first release of the year ${year}!`);
+        console.log(
+            `${chalk.yellow("⚡")} This is the first release of the year ${year}!\n`,
+        );
         const newVersion = new Version(shortYear, 0, 0);
-        await confirmOrExit(`Continue releasing version ${newVersion}?`);
+        await confirmOrExit(
+            `Continue releasing version ${chalk.cyan.bold(newVersion)}?`,
+        );
         return newVersion;
     }
     const previousVersion = previousRelease.version;
-    console.log(`Previous release: ${previousVersion}`);
 
     return await select({
-        message: "What kind of release is this?",
+        message: `What kind of release is this? ${chalk.dim(`(previous: ${previousVersion})`)}`,
         choices: [
             {
                 value: previousVersion.nextMinor(),
-                name: `Minor (${previousVersion.nextMinor()})`,
+                name: `Minor (${chalk.cyan(previousVersion.nextMinor())})`,
             },
             {
                 value: previousVersion.nextMajor(),
-                name: `Major (${previousVersion.nextMajor()})`,
+                name: `Major (${chalk.cyan(previousVersion.nextMajor())})`,
             },
         ],
     });
@@ -100,7 +114,9 @@ const unreleased = await getUnreleased(changelog);
 
 const newVersion = await getNewVersion(changelog);
 
-console.log(`Updating CHANGELOG.md with new version: ${newVersion}`);
+console.log(
+    `${chalk.blue("→")} Updating ${chalk.cyan(changelogFile)} with new version: ${chalk.cyan.bold(newVersion)}`,
+);
 
 changelog.releases.unshift({
     version: newVersion,
@@ -119,13 +135,6 @@ fs.writeFileSync(
 // Git tag
 //
 
-const branch = (await $`git branch --show-current`).stdout.trim();
-const isMainBranch = branch === "master" || branch === "main";
-if (!isMainBranch) {
-    console.error("Not on main branch. Aborting.");
-    process.exit(1);
-}
-
 // Commit the CHANGELOG.md update
 await $`git add ${changelogFile}`;
 await $`git commit -m ${`Release version ${newVersion}`}`;
@@ -137,4 +146,6 @@ await $`git tag -a ${gitTag} -m ${`Release ${newVersion}`}`;
 // Push
 await $`git push origin ${branch} ${gitTag}`;
 
-console.log(`Tagged ${gitTag}. A release will be created shortly.`);
+console.log(
+    `${chalk.green("✓")} Tagged ${chalk.cyan.bold(gitTag)}. A release will be created shortly.`,
+);
