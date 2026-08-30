@@ -2,6 +2,8 @@
 #include "com_utils.hpp"
 #include "file_util.hpp"
 
+#include <print>
+
 namespace coverpp::windows
 {
 using detail::get_dword;
@@ -53,12 +55,14 @@ CoverageSink WindowsCoverageSession::collect_source_lines()
     for (const auto& [file, dia_line_number] : enum_source_lines())
     {
         sink.track_coverage(
-            file,
-            {
-                .lineBegin = get_dword_r(dia_line_number, &IDiaLineNumber::get_lineNumber),
-                .columnBegin = get_dword_r(dia_line_number, &IDiaLineNumber::get_columnNumber),
-                .lineEnd = get_dword_r(dia_line_number, &IDiaLineNumber::get_lineNumberEnd),
-                .columnEnd = get_dword_r(dia_line_number, &IDiaLineNumber::get_columnNumberEnd),
+            Tracepoint{
+                .source_file = file,
+                .tracepoint = {
+                    .lineBegin = get_dword_r(dia_line_number, &IDiaLineNumber::get_lineNumber),
+                    .columnBegin = get_dword_r(dia_line_number, &IDiaLineNumber::get_columnNumber),
+                    .lineEnd = get_dword_r(dia_line_number, &IDiaLineNumber::get_lineNumberEnd),
+                    .columnEnd = get_dword_r(dia_line_number, &IDiaLineNumber::get_columnNumberEnd),
+                },
             }
         );
     }
@@ -103,31 +107,30 @@ static std::optional<std::filesystem::path> get_file_by_line_numbers(IDiaEnumLin
     return get_string(src_file, &IDiaSourceFile::get_fileName);
 }
 
-std::optional<std::filesystem::path> WindowsCoverageSession::trace(CoverageSink& sink, VirtualAddress va)
+void WindowsCoverageSession::trace(CoverageSink& sink, VirtualAddress va)
 {
-    wil::com_ptr<IDiaEnumLineNumbers> line_numbers;
-    THROW_IF_FAILED(m_dia.session().findLinesByVA(va.value, 1, line_numbers.put()));
+    const auto tracepoint = resolve_tracepoint(va);
 
-    const auto file = get_file_by_line_numbers(*line_numbers);
-
-    if (file && should_trace(*file))
+    if (m_params.verbosity >= 5)
     {
-        auto line_number = get_single_item<IDiaLineNumber>(*line_numbers);
-        sink.track_coverage(
-            *file,
-            {
-                .lineBegin = get_dword(line_number, &IDiaLineNumber::get_lineNumber),
-                .columnBegin = get_dword(line_number, &IDiaLineNumber::get_columnNumber),
-                .lineEnd = get_dword(line_number, &IDiaLineNumber::get_lineNumberEnd),
-                .columnEnd = get_dword(line_number, &IDiaLineNumber::get_columnNumberEnd),
-            }
-        );
+        std::println("Breakpoint hit at {}",
+                     tracepoint
+                         ? std::format("{}:{} (address {})",
+                                       tracepoint->source_file.u8string(),
+                                       tracepoint->tracepoint.lineBegin,
+                                       va)
+                         : std::format("address {}", va));
     }
 
-    return file;
+    if (!tracepoint || !should_trace(tracepoint->source_file))
+    {
+        return;
+    }
+
+    sink.track_coverage(*tracepoint);
 }
 
-std::optional<std::pair<std::filesystem::path, Tracepoint>>
+std::optional<Tracepoint>
 WindowsCoverageSession::resolve_tracepoint(VirtualAddress va)
 {
     wil::com_ptr<IDiaEnumLineNumbers> line_numbers;
@@ -138,7 +141,7 @@ WindowsCoverageSession::resolve_tracepoint(VirtualAddress va)
     if (file)
     {
         auto line_number = get_single_item<IDiaLineNumber>(*line_numbers);
-        return std::pair{*file, Tracepoint{
+        return Tracepoint{*file, {
             .lineBegin = get_dword(line_number, &IDiaLineNumber::get_lineNumber),
             .columnBegin = get_dword(line_number, &IDiaLineNumber::get_columnNumber),
             .lineEnd = get_dword(line_number, &IDiaLineNumber::get_lineNumberEnd),

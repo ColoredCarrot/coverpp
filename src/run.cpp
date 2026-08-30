@@ -345,24 +345,13 @@ int run_with_coverage(const CoverageParams& params)
 				}
 				else if (breakpoint_driver.has_breakpoint(va))
 				{
-					if (params.verbosity >= 5)
-					{
-						std::println("Breakpoint hit at {}",
-						             tracepoint ? std::format("{}:{} (address {})",
-						                                      tracepoint->first.u8string(),
-						                                      tracepoint->second.lineBegin,
-						                                      va)
-						                        : std::format("address {}", va));
-					}
-
 					coverage_session.trace(sink, va);
 
-					// Set the TF (Trap Flag, bit 8) in the EFLAGS register.
-					// When this flag is set, the processor traps after every instruction with STATUS_SINGLE_STEP.
+					// Note: We could also set the Trap Flag here:  context.EFlags |= (1 << 8) | (1 << 16);
+					//       That would make the CPU trap after every instruction with STATUS_SINGLE_STEP
 					CONTEXT context{};
 					context.ContextFlags = CONTEXT_CONTROL;
 					THROW_LAST_ERROR_IF_NOT(GetThreadContext(hThread, &context));
-					//                context.EFlags |= (1 << 8) | (1 << 16);
 					--context.Rip; // Decrement because we get here *after* the INT3 instruction executed
 					THROW_LAST_ERROR_IF_NOT(SetThreadContext(hThread, &context));
 
@@ -376,21 +365,6 @@ int run_with_coverage(const CoverageParams& params)
 					continue_status = DBG_EXCEPTION_NOT_HANDLED;
 				}
             }
-            else if (evt.u.Exception.ExceptionRecord.ExceptionCode == STATUS_SINGLE_STEP)
-            {
-                // Note: Gets into infinite loop in some external Windows file without this check
-                const auto file = coverage_session.trace(sink, va);
-                if (!file || !is_exit_path(*file))
-                {
-                    CONTEXT context{};
-                    context.ContextFlags = CONTEXT_CONTROL;
-                    THROW_LAST_ERROR_IF_NOT(GetThreadContext(hThread, &context));
-                    context.EFlags |= (1 << 8) /*| (1 << 16)*/;
-                    THROW_LAST_ERROR_IF_NOT(SetThreadContext(hThread, &context));
-                }
-
-                continue_status = DBG_EXCEPTION_HANDLED;
-            }
             else
             {
                 const bool first_chance = evt.u.Exception.dwFirstChance;
@@ -401,7 +375,7 @@ int run_with_coverage(const CoverageParams& params)
                         "{} {} encountered at {}",
                         first_chance ? "First-chance" : "Unhandled",
                         coverpp::describe_seh_exception(record.ExceptionCode, record.ExceptionInformation),
-                        tracepoint ? std::format("{}:{}", tracepoint->first.u8string(), tracepoint->second.lineBegin)
+                        tracepoint ? std::format("{}:{}", tracepoint->source_file.u8string(), tracepoint->tracepoint.lineBegin)
                                    : std::format("{}", record.ExceptionAddress)
                     );
                 }

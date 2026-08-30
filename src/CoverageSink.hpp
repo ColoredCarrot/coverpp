@@ -8,7 +8,7 @@
 
 namespace coverpp
 {
-struct Tracepoint
+struct FileTracepoint
 {
     /** 1-based; zero means unknown. */
     unsigned lineBegin;
@@ -16,36 +16,42 @@ struct Tracepoint
     unsigned lineEnd;
     unsigned columnEnd;
 
-    bool operator==(const Tracepoint&) const = default;
-    std::strong_ordering operator<=>(const Tracepoint&) const = default;
+    bool operator==(const FileTracepoint&) const = default;
+    std::strong_ordering operator<=>(const FileTracepoint&) const = default;
+};
+
+struct Tracepoint
+{
+    std::filesystem::path source_file;
+    FileTracepoint tracepoint;
 };
 
 class CoverageSink
 {
 public:
-    void track_coverage(const std::filesystem::path& source_file, const Tracepoint& tracepoint);
+    void track_coverage(const Tracepoint& tracepoint);
 
-    const std::unordered_map<std::filesystem::path, std::set<Tracepoint>>& tracepoints() const;
+    const std::unordered_map<std::filesystem::path, std::set<FileTracepoint>>& tracepoints() const;
 
     std::size_t count_tracepoints() const;
 
 private:
     // Note: No duplicate tracepoints are recorded
-    std::unordered_map<std::filesystem::path, std::set<Tracepoint>> m_tracepoints;
+    std::unordered_map<std::filesystem::path, std::set<FileTracepoint>> m_tracepoints;
 
     friend struct std::formatter<CoverageSink>;
 };
 }
 
 template<>
-struct std::formatter<coverpp::Tracepoint>
+struct std::formatter<coverpp::FileTracepoint>
 {
     constexpr auto parse(std::format_parse_context& ctx)
     {
         return ctx.begin();
     }
 
-    auto format(const coverpp::Tracepoint& tracepoint, std::format_context& ctx) const
+    auto format(const coverpp::FileTracepoint& tracepoint, std::format_context& ctx) const
     {
         return std::format_to(ctx.out(), "{}:{} - {}:{}",
                               tracepoint.lineBegin, tracepoint.columnBegin,

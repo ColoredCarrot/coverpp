@@ -2,12 +2,12 @@
 
 namespace coverpp
 {
-void CoverageSink::track_coverage(const std::filesystem::path& source_file, const Tracepoint& tracepoint)
+void CoverageSink::track_coverage(const Tracepoint& tracepoint)
 {
-    m_tracepoints[source_file].emplace(tracepoint);
+    m_tracepoints[tracepoint.source_file].emplace(tracepoint.tracepoint);
 }
 
-const std::unordered_map<std::filesystem::path, std::set<Tracepoint>>& CoverageSink::tracepoints() const
+const std::unordered_map<std::filesystem::path, std::set<FileTracepoint>>& CoverageSink::tracepoints() const
 {
     return m_tracepoints;
 }
