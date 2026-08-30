@@ -149,6 +149,12 @@ target_compile_options(${PROJECT_NAME} PRIVATE
 # Windows 10 and above
 target_compile_definitions(${PROJECT_NAME} PRIVATE "_WIN32_WINNT=0x0A00")
 
+# Pass app version
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+        "COVERPP_VERSION=${PROJECT_VERSION}"
+        "COVERPP_VERSION_STRING=\"${PROJECT_VERSION}\""
+)
+
 # DIA SDK
 find_package(DiaSDK REQUIRED)
 message(STATUS "Found DIA SDK: ${DIASDK_DLL}")

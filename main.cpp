@@ -72,6 +72,7 @@ try
 
     CLI::App app{"Cover++"};
     app.failure_message(CLI::FailureMessage::help);
+	app.set_version_flag("-v,--version", COVERPP_VERSION_STRING);
 
     const auto run_app = app.add_subcommand("run");
 
