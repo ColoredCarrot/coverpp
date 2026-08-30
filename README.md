@@ -86,3 +86,23 @@ You can then run development servers in the `frontend` and `docs` directories:
 ```bat
 pnpm dev
 ```
+
+### Terminology
+
+A process consists of one or more _modules_
+(most commonly one `.exe` and a few `.dll`s).
+Each module needs its own PDB.
+
+A process owns one _Virtual Address (VA)_ space.
+Each module owns a disjoint, contiguous region of this space.
+
+A module is loaded at a _base address_.
+A module itself, and its PDB, contain _Relative Virtual Addresses (RVA)_.
+These are relative to the base address:
+_VA = base + RVA_.
+
+The DIA SDK provides methods using VAs as well as RVAs.
+Before using any method that deals with VAs,
+you need to inform the SDK of the base address of the module via `IDiaSession::put_loadAddress`.
+We consistently use VAs throughout the codebase;
+RVAs should not be used.
