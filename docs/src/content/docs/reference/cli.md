@@ -17,6 +17,8 @@ cover++ run [options] <program> [args...]
 
 | Option                                 | Description                                                                                                                          |
 | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `<program>`                            | The executable to run under coverage.                                                                                                |
+| `<args...>`                            | Arguments passed verbatim to the program.                                                                                            |
 | `-s`<br/>`--source <path>`             | Filter the files for which coverage is collected to this directory.<br/>**Default:** Empty                                           |
 | `-d`<br/>`--debug-info <path>`         | Path to the PDB file.<br/>**Default:** Same as the program, with `.exe` replaced by `.pdb`                                           |
 | `-o`<br/>`--out <path>`                | Where to generate the coverage report.<br/>**Default:** `./report.coverpp`                                                           |
@@ -37,11 +39,12 @@ View a coverage report in the browser.
 ### Usage
 
 ```sh
-cover++ view [options] <report>
+cover++ view [options] [report]
 ```
 
 | Option                   | Description                                                          |
 | ------------------------ | -------------------------------------------------------------------- |
+| `<report>`               | Report file to view.<br/>**Default:** `./report.coverpp`             |
 | `-p`<br/>`--port <port>` | Port to serve the report on.<br/>**Default:** `8080`                 |
 | `--coverpp-install-dir`  | Installation directory of Cover++.<br/>**Default:** Auto-discovered. |
 | `--no-open`              | Don't open the browser; only start the server.                       |
@@ -53,11 +56,12 @@ Remap source locations in a coverage report file.
 ### Usage
 
 ```sh
-cover++ remap [options] --to <path> <report>
+cover++ remap [options] --to <path> [report]
 ```
 
 | Option          | Description                                                                           |
 | --------------- | ------------------------------------------------------------------------------------- |
+| `<report>`      | Report file to modify.<br/>**Default:** `./report.coverpp`                            |
 | `--to <path>`   | New source root.<br/>**Required.**                                                    |
 | `--from <path>` | Old source root.<br/>**Default:** Inferred from the single source root in the report. |
 
@@ -101,7 +105,7 @@ cover++ export json -o <output> <report>
 | Option                  | Description                                                                                       |
 | ----------------------- | ------------------------------------------------------------------------------------------------- |
 | `-o`<br/>`--out <path>` | Where to place the generated JSON file.<br/>Use `-` to print to the console.<br/>**Default:** `-` |
-| `<inputs...>`           | One or more report files.                                                                         |
+| `<report>`              | The report file to export.<br/>**Default:** `./report.coverpp`                                    |
 
 ### Examples
 

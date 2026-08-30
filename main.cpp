@@ -119,7 +119,7 @@ try
 
 	auto       remap_options = coverpp::RemapOptions{};
 	auto const remap_app     = app.add_subcommand("remap", "Remap source roots");
-	remap_app->add_option("report", remap_options.report)->check(CLI::ExistingFile);
+	remap_app->add_option("report", remap_options.report)->default_val(default_report_file)->check(CLI::ExistingFile);
 	remap_app->add_option("--from", remap_options.from);
 	remap_app->add_option("--to", remap_options.to)->required();
 
