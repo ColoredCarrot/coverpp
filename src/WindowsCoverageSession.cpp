@@ -100,22 +100,24 @@ CoverageSink WindowsCoverageSession::collect_source_lines()
     return sink;
 }
 
-VirtualAddress WindowsCoverageSession::find_entrypoint()
+std::optional<VirtualAddress> WindowsCoverageSession::find_entrypoint()
 {
     wil::com_ptr<IDiaSymbol> dia_global_scope;
     THROW_IF_FAILED(m_dia.session().get_globalScope(dia_global_scope.put()));
 
-    wil::com_ptr<IDiaEnumSymbols> dia_enum_main;
-    THROW_IF_FAILED(dia_global_scope->findChildren(
-        SymTagEnum::SymTagFunction, L"main", nsfCaseSensitive, dia_enum_main.put()
-    ));
-    auto dia_main = get_single_item<IDiaSymbol>(*dia_enum_main);
-    if (!dia_main)
+    for (LPCOLESTR name : {L"main", L"wmain", L"WinMain", L"wWinMain"})
     {
-        throw std::runtime_error("Could not find main function in PDB");
+        wil::com_ptr<IDiaEnumSymbols> dia_enum_main;
+        THROW_IF_FAILED(dia_global_scope->findChildren(
+            SymTagEnum::SymTagFunction, name, nsfCaseSensitive, dia_enum_main.put()
+        ));
+        if (auto dia_main = get_single_item<IDiaSymbol>(*dia_enum_main))
+        {
+            return VirtualAddress{get_dword(dia_main, &IDiaSymbol::get_virtualAddress)};
+        }
     }
 
-    return VirtualAddress{get_dword(dia_main, &IDiaSymbol::get_virtualAddress)};
+    return std::nullopt;
 }
 
 static std::optional<std::filesystem::path> get_file_by_line_numbers(IDiaEnumLineNumbers& line_numbers)

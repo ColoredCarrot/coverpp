@@ -4,6 +4,8 @@
 #include "DiaAccessor.hpp"
 #include "types.hpp"
 
+#include <optional>
+
 #if defined(__cpp_lib_generator)
 #include <generator>
 #else
@@ -21,7 +23,7 @@ public:
 
     CoverageSink collect_source_lines() override;
 
-    VirtualAddress find_entrypoint();
+    std::optional<VirtualAddress> find_entrypoint();
 
     std::optional<std::filesystem::path> trace(CoverageSink& sink, VirtualAddress va);
 

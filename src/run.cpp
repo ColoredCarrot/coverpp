@@ -316,7 +316,6 @@ int run_with_coverage(const CoverageParams& params)
             thread_handles.emplace(evt.dwThreadId, evt.u.CreateProcessInfo.hThread);
             breakpoint_driver.set_base_address(
                 InstructionPointer{(std::uintptr_t) evt.u.CreateProcessInfo.lpBaseOfImage});
-            const auto main_entry_ip = breakpoint_driver.va_to_ip(main_entry_va);
 
             // Set breakpoints at all reachable locations
             for (const auto& [source_file, dia_line_number] : coverage_session.enum_source_lines())
