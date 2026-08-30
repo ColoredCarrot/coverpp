@@ -132,6 +132,50 @@ fs.writeFileSync(
 );
 
 ////////////////////////////////////////////////////////////////////////////////
+// CMakeLists.txt
+//
+
+async function updateCMakeVersion() {
+    const cmakeFile = "CMakeLists.txt";
+
+    const cmakeVersionRegex = /(?<=project\(coverpp VERSION ).+?(?=\))/;
+
+    const cmake = fs.readFileSync(cmakeFile, "utf-8");
+
+    const match = cmakeVersionRegex.exec(cmake);
+    if (!match) {
+        errorAndExit(
+            `Could not find CMake version in ${chalk.cyan(cmakeFile)}`,
+        );
+    }
+    const cmakeVersion = Version.parseOrThrow(match[0]);
+
+    if (cmakeVersion.equals(newVersion)) {
+        return;
+    }
+
+    const shouldUpdateCMake = await confirm({
+        message: `Update ${chalk.cyan(cmakeFile)}? ${chalk.dim(`(current: ${cmakeVersion})`)}`,
+        default: true,
+    });
+    if (!shouldUpdateCMake) {
+        return;
+    }
+
+    console.log(`${chalk.blue("→")} Updating ${chalk.cyan(cmakeFile)}`);
+
+    const updatedCMake = cmake.replace(
+        cmakeVersionRegex,
+        newVersion.toString(),
+    );
+    fs.writeFileSync(cmakeFile, updatedCMake, "utf-8");
+}
+
+await updateCMakeVersion();
+
+process.exit(0);
+
+////////////////////////////////////////////////////////////////////////////////
 // Git tag
 //
 
