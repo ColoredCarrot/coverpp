@@ -4,6 +4,8 @@ This changelog follows the [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ## [Unreleased]
 
+## [26.0.1] - 2026-08-30
+
 ### Added
 
 - Support more entrypoints (and make finding it optional): `wmain`, `WinMain`, `wWinMain`
