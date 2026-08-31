@@ -37,9 +37,8 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")
 set(CMAKE_CXX_STANDARD 23)
 
 add_executable(coverpp
-        "main.cpp"
-        "src/BreakpointDriver.hpp"
-        "src/BreakpointDriver.cpp"
+        src/BreakpointDriver.cpp
+        src/BreakpointDriver.hpp
         src/CoverageEngine.hpp
         src/CoverageParams.hpp
         src/CoverageSink.cpp
@@ -69,9 +68,11 @@ add_executable(coverpp
         src/exporter/teamcity/TeamCityStatisticsExporter.hpp
         src/file_util.cpp
         src/file_util.hpp
+        src/main.cpp
+        src/merge/MergeOptions.hpp
         src/merge/merge_reports.cpp
         src/merge/merge_reports.hpp
-        src/merge/MergeOptions.hpp
+        src/polyfill/generator.hpp
         src/remap/remap.cpp
         src/remap/remap.hpp
         src/report/BasicReport.cpp
@@ -82,6 +83,8 @@ add_executable(coverpp
         src/report/flat_report.hpp
         src/report/report_file_utils.cpp
         src/report/report_file_utils.hpp
+        src/run.cpp
+        src/run.hpp
         src/seh_descriptions.cpp
         src/seh_descriptions.hpp
         src/serve/ServeOptions.hpp
@@ -100,14 +103,11 @@ add_executable(coverpp
         src/util/math_util.hpp
         src/util/open_browser.cpp
         src/util/open_browser.hpp
-        src/util/progress_bar.hpp
         src/util/progress_bar.cpp
+        src/util/progress_bar.hpp
         src/windows/exception_codes.hpp
         src/windows/util.cpp
         src/windows/util.hpp
-        src/polyfill/generator.hpp
-        src/run.cpp
-        src/run.hpp
 )
 # TODO Once CMake 3.28 is supported (CLion 2024.1):
 #[[add_executable(coverpp)

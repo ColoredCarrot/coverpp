@@ -1,7 +1,7 @@
-#include "src/merge/merge_reports.hpp"
-#include "src/run.hpp"
-#include "src/serve/serve.hpp"
-#include "src/util/console_color.hpp"
+#include "merge/merge_reports.hpp"
+#include "run.hpp"
+#include "serve/serve.hpp"
+#include "util/console_color.hpp"
 
 #include <CLI11.hpp>
 #include <print>
@@ -12,12 +12,12 @@
 
 #define NOMINMAX
 
-#include "src/docs/docs.hpp"
-#include "src/util/encodings_util.hpp"
-#include "src/exporter/clion/CLionExporter.hpp"
-#include "src/exporter/html/HtmlExporter.hpp"
-#include "src/exporter/json/JsonExporter.hpp"
-#include "src/remap/remap.hpp"
+#include "docs/docs.hpp"
+#include "util/encodings_util.hpp"
+#include "exporter/clion/CLionExporter.hpp"
+#include "exporter/html/HtmlExporter.hpp"
+#include "exporter/json/JsonExporter.hpp"
+#include "remap/remap.hpp"
 
 
 #include <wil/com.h>
