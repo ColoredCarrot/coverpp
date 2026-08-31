@@ -66,7 +66,11 @@ export default defineConfig({
             sidebar: [
                 {
                     label: "Guides",
-                    items: [{ autogenerate: { directory: "guides" } }],
+                    items: [
+                        "guides/getting-started",
+                        "guides/installation",
+                        "guides/relocation",
+                    ],
                 },
                 {
                     label: "Reference",
