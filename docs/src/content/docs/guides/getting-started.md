@@ -5,6 +5,13 @@ description: A guide on how to get started using Cover++.
 
 Cover++ is a code coverage tool for C/C++ applications on Windows.
 
+## Installation
+
+Grab the latest release from [GitHub](https://github.com/ColoredCarrot/coverpp/releases).
+You can use the installer or the portable archive.
+
+For details, head over to the [installation guide](/guides/installation/).
+
 ## Run an app under coverage
 
 To run `my-app.exe` while collecting coverage, use:
