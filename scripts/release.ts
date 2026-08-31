@@ -135,9 +135,10 @@ fs.writeFileSync(
 // CMakeLists.txt
 //
 
-async function updateCMakeVersion() {
-    const cmakeFile = "CMakeLists.txt";
+const cmakeFile = "CMakeLists.txt";
+let didUpdateCMake = false;
 
+async function updateCMakeVersion() {
     const cmakeVersionRegex = /(?<=project\(coverpp VERSION ).+?(?=\))/;
 
     const cmake = fs.readFileSync(cmakeFile, "utf-8");
@@ -161,6 +162,7 @@ async function updateCMakeVersion() {
     if (!shouldUpdateCMake) {
         return;
     }
+    didUpdateCMake = true;
 
     console.log(`${chalk.blue("→")} Updating ${chalk.cyan(cmakeFile)}`);
 
@@ -179,8 +181,11 @@ await updateCMakeVersion();
 
 await confirmOrExit("Publish the new release?", 0);
 
-// Commit the CHANGELOG.md update
+// Commit changes
 await $`git add ${changelogFile}`;
+if (didUpdateCMake) {
+    await $`git add ${cmakeFile}`;
+}
 await $`git commit -m ${`Release version ${newVersion}`}`;
 
 // Tag the release commit
