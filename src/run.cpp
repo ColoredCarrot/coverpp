@@ -338,7 +338,7 @@ int run_with_coverage(const CoverageParams& params)
 				if (first_breakpoint)
 				{
 					first_breakpoint = false;
-					continue_status  = DBG_EXCEPTION_HANDLED;
+					continue_status  = DBG_CONTINUE;
 					std::println("SUT ready (PID: {})", evt.dwProcessId);
 					std::fflush(stdout);
 					break;
@@ -357,7 +357,7 @@ int run_with_coverage(const CoverageParams& params)
 
 					breakpoint_driver.remove_breakpoint(va);
 
-					continue_status = DBG_EXCEPTION_HANDLED;
+					continue_status = DBG_CONTINUE;
 				}
 				else
 				{
