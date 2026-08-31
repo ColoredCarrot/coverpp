@@ -365,7 +365,8 @@ int run_with_coverage(const CoverageParams& params)
 					continue_status = DBG_EXCEPTION_NOT_HANDLED;
 				}
             }
-            else
+
+            if (continue_status == DBG_EXCEPTION_NOT_HANDLED)
             {
                 const bool first_chance = evt.u.Exception.dwFirstChance;
                 const auto& record = evt.u.Exception.ExceptionRecord;
@@ -379,7 +380,6 @@ int run_with_coverage(const CoverageParams& params)
                                    : std::format("{}", record.ExceptionAddress)
                     );
                 }
-                continue_status = DBG_EXCEPTION_NOT_HANDLED;
             }
 
             break;

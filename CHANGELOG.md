@@ -4,6 +4,13 @@ This changelog follows the [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ## [Unreleased]
 
+### Changed
+
+- Breakpoints not set by Cover++ are now handled the same as other SEH exceptions.
+
+  In practice, this means that Cover++ will correctly report them according to `--print-first-chance-seh`.
+  This might affect you if your app uses `DebugBreak()` and a `__try`/`__except` block for control flow.
+
 ### Fixed
 
 - The application under coverage no longer crashes when multiple threads hit a tracepoint at the same time
