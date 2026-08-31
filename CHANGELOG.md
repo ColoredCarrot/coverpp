@@ -6,6 +6,10 @@ This changelog follows the [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ### Changed
 
+- The default value for `--exclude-source-files-regex` is now `/(vcpkg_installed|_deps)/`.
+
+  This heuristic excludes files in locations commonly containing dependency sources (vcpkg and CMake FetchContent).
+
 - Breakpoints not set by Cover++ are now handled the same as other SEH exceptions.
 
   In practice, this means that Cover++ will correctly report them according to `--print-first-chance-seh`.

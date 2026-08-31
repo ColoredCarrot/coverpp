@@ -15,16 +15,16 @@ Run a program under coverage.
 cover++ run [options] <program> [args...]
 ```
 
-| Option                                 | Description                                                                                                                          |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `<program>`                            | The executable to run under coverage.                                                                                                |
-| `<args...>`                            | Arguments passed verbatim to the program.                                                                                            |
-| `-s`<br/>`--source <path>`             | Filter the files for which coverage is collected to this directory.<br/>**Default:** Empty                                           |
-| `-d`<br/>`--debug-info <path>`         | Path to the PDB file.<br/>**Default:** Same as the program, with `.exe` replaced by `.pdb`                                           |
-| `-o`<br/>`--out <path>`                | Where to generate the coverage report.<br/>**Default:** `./report.coverpp`                                                           |
-| `--exclude-source-files-regex <regex>` | Source files matching this regex are excluded from coverage. The paths are canonical and use forward slashes.<br/>**Default:** Empty |
-| `-v`<br/>`--verbose`                   | Repeatable flag to increase verbosity.                                                                                               |
-| `--print-first-chance-seh`             | Print first-chance SEH exceptions to the console                                                                                     |
+| Option                                 | Description                                                                                                                                                 |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `<program>`                            | The executable to run under coverage.                                                                                                                       |
+| `<args...>`                            | Arguments passed verbatim to the program.                                                                                                                   |
+| `-s`<br/>`--source <path>`             | Filter the files for which coverage is collected to this directory.<br/>**Default:** Empty                                                                  |
+| `-d`<br/>`--debug-info <path>`         | Path to the PDB file.<br/>**Default:** Same as the program, with `.exe` replaced by `.pdb`                                                                  |
+| `-o`<br/>`--out <path>`                | Where to generate the coverage report.<br/>**Default:** `./report.coverpp`                                                                                  |
+| `--exclude-source-files-regex <regex>` | Source files matching this regex are excluded from coverage. The paths are canonical and use forward slashes.<br/>**Default:** `/(vcpkg_installed\|_deps)/` |
+| `-v`<br/>`--verbose`                   | Repeatable flag to increase verbosity.                                                                                                                      |
+| `--print-first-chance-seh`             | Print first-chance SEH exceptions to the console                                                                                                            |
 
 ### Description
 
