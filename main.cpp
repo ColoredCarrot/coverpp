@@ -201,6 +201,15 @@ try
 	}
 	params.debug_info = canonical(params.debug_info);
 
+	if (params.source_dir.empty())
+	{
+		// Default heuristic:  C:/a/b/c.exe => C:/a,  C:/a.exe => C:/
+		auto const root   = params.program.root_path();
+		auto const rel    = params.program.relative_path();
+		auto const first  = rel.begin();
+		params.source_dir = std::ranges::next(first) == rel.end() ? root : root / *first;
+	}
+
     if (params.verbosity > 0)
     {
         std::println("Cover++");

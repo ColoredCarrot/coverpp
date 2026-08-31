@@ -4,6 +4,10 @@ This changelog follows the [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ## [Unreleased]
 
+### Changed
+
+- If `--source` is omitted, it now defaults to the root directory containing the program under coverage. For example, running `cover++ run D:\foo\bar\baz.exe` will use `D:\foo` as the source root.
+
 ## [26.0.3] - 2026-08-31
 
 ### Changed
