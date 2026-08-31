@@ -4,6 +4,10 @@ This changelog follows the [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ## [Unreleased]
 
+### Fixed
+
+- The application under coverage no longer crashes when multiple threads hit a tracepoint at the same time
+
 ## [26.0.2] - 2026-08-31
 
 ### Added

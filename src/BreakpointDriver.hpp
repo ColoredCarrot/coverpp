@@ -22,6 +22,11 @@ private:
     struct Breakpoint
     {
         std::byte original_instruction;
+    	/**
+    	 * Tombstone value; breakpoints are never actually removed from the map.
+    	 * See comment in remove_breakpoint() for an explanation.
+    	 */
+    	bool installed;
     };
 
     std::unordered_map<VirtualAddress, Breakpoint> m_breakpoints;
