@@ -102,6 +102,9 @@ add_executable(coverpp
         src/util/open_browser.hpp
         src/util/progress_bar.hpp
         src/util/progress_bar.cpp
+        src/windows/exception_codes.hpp
+        src/windows/util.cpp
+        src/windows/util.hpp
         src/polyfill/generator.hpp
         src/run.cpp
         src/run.hpp
@@ -168,6 +171,7 @@ target_include_directories(coverpp PUBLIC
         "${CMAKE_SOURCE_DIR}/third_party/Crow/include"
         "${CMAKE_SOURCE_DIR}/third_party/gch_small_vector/include"
         "${CMAKE_SOURCE_DIR}/third_party/rapidjson/include"
+        "${CMAKE_SOURCE_DIR}/third_party/softwareverify_exceptionCodes/include"
 )
 target_link_libraries(coverpp PRIVATE ${DIASDK_LIBRARIES} coverpp::rc)
 

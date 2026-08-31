@@ -11,9 +11,11 @@ This changelog follows the [Keep a Changelog](https://keepachangelog.com/en/1.1.
   In practice, this means that Cover++ will correctly report them according to `--print-first-chance-seh`.
   This might affect you if your app uses `DebugBreak()` and a `__try`/`__except` block for control flow.
 
+- Cover++ can now decode more SEH exceptions to generate useful descriptions. For example, the legacy exception used to set a thread's name is now decoded.
+
 ### Fixed
 
-- The application under coverage no longer crashes when multiple threads hit a tracepoint at the same time
+- The application under coverage no longer crashes when multiple threads hit a tracepoint at the same time.
 
 ## [26.0.2] - 2026-08-31
 

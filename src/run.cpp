@@ -10,6 +10,7 @@
 #include "exporter/raw/RawExporter.hpp"
 #include "util/console_color.hpp"
 #include "util/guard.hpp"
+#include "windows/util.hpp"
 
 #include <print>
 #include <iostream>
@@ -93,7 +94,7 @@ static std::string get_loaded_dll_name(HANDLE process, const LOAD_DLL_DEBUG_INFO
         return "<unknown>";
     }
 
-    char* ptr_in_debuggee;
+    std::uintptr_t ptr_in_debuggee;
     THROW_LAST_ERROR_IF_NOT(
         ReadProcessMemory(process, info.lpImageName, &ptr_in_debuggee, sizeof(ptr_in_debuggee), nullptr));
 
@@ -102,13 +103,9 @@ static std::string get_loaded_dll_name(HANDLE process, const LOAD_DLL_DEBUG_INFO
         return "<unknown>";
 	}
 
-    SIZE_T len{};
-    char buf[512];
-    (ReadProcessMemory(process, ptr_in_debuggee, buf, sizeof(buf) - 2, &len));
-    buf[len] = '\0';
-    buf[len + 1] = '\0';
-
-    return info.fUnicode ? coverpp::windows::utf16le_to_utf8((const wchar_t*) buf) : std::string{(const char*) buf};
+	return info.fUnicode ? coverpp::windows::utf16le_to_utf8(
+	                           coverpp::windows::detail::read_remote_c_wstring(process, ptr_in_debuggee))
+	                     : coverpp::windows::detail::read_remote_c_string(process, ptr_in_debuggee);
 }
 
 static bool contains_space_or_tab(std::wstring_view s)
@@ -375,7 +372,7 @@ int run_with_coverage(const CoverageParams& params)
                     std::println(
                         "{} {} encountered at {}",
                         first_chance ? "First-chance" : "Unhandled",
-                        describe_seh_exception(record.ExceptionCode, record.ExceptionInformation),
+                        describe_seh_exception(record.ExceptionCode, record.ExceptionInformation, hProcess, evt.dwThreadId),
                         tracepoint ? std::format("{}:{}", tracepoint->source_file.u8string(), tracepoint->tracepoint.lineBegin)
                                    : std::format("{}", record.ExceptionAddress)
                     );
