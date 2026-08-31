@@ -4,6 +4,8 @@ This changelog follows the [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ## [Unreleased]
 
+## [26.0.2] - 2026-08-31
+
 ### Added
 
 - `-v`, `--version` to display the version number
