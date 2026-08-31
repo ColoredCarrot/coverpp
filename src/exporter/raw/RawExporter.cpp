@@ -137,5 +137,10 @@ void RawExporter::run(const BasicReport& covered, const BasicReport& reachable, 
     std::ofstream file{params.out_file, std::ios_base::out | std::ios_base::trunc | std::ios_base::binary};
     file.exceptions(std::ios_base::badbit | std::ios_base::failbit);
     file.write(reinterpret_cast<const char*>(builder.GetBufferPointer()), builder.GetSize());
+
+	if (params.verbosity >= 1)
+	{
+		std::println("Report generated: {}", canonical(params.out_file).u8string());
+	}
 }
 }

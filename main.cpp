@@ -41,7 +41,7 @@ struct CoInitializeGuard
     }
 };
 
-static const std::filesystem::path default_report_file = "report.coverpp";
+static constexpr auto default_report_file = "./report.coverpp";
 
 int wmain(int argc, wchar_t** argv_unicode)
 try
@@ -205,11 +205,11 @@ try
     {
         std::println("Cover++");
         std::println("==========================");
-        std::println("Source directory: {}\nExecutable:       {}\nDebug info:       {}\nOutput directory: {}",
+        std::println("Source directory: {}\nExecutable:       {}\nDebug info:       {}\nOutput file:      {}",
                      params.source_dir.u8string(),
                      params.program.u8string(),
                      params.debug_info.u8string(),
-                     absolute(params.out_file).u8string());
+                     weakly_canonical(absolute(params.out_file)).u8string());
         std::println("");
     }
 
