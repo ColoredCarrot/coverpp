@@ -15,10 +15,10 @@ if (process.platform === "win32") {
     usePowerShell();
 }
 
-async function confirmOrExit(message: string) {
+async function confirmOrExit(message: string, exitCode: number = 1) {
     const confirmed = await confirm({ message, default: false });
     if (!confirmed) {
-        process.exit(1);
+        process.exit(exitCode);
     }
 }
 
@@ -173,11 +173,11 @@ async function updateCMakeVersion() {
 
 await updateCMakeVersion();
 
-process.exit(0);
-
 ////////////////////////////////////////////////////////////////////////////////
 // Git tag
 //
+
+await confirmOrExit("Publish the new release?", 0);
 
 // Commit the CHANGELOG.md update
 await $`git add ${changelogFile}`;
