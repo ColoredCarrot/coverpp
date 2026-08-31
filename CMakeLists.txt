@@ -163,9 +163,10 @@ find_package(DiaSDK REQUIRED)
 message(STATUS "Found DIA SDK: ${DIASDK_DLL}")
 target_include_directories(coverpp PUBLIC
         ${DIASDK_INCLUDE_DIRS}
-        "${CMAKE_SOURCE_DIR}/third_party/CLI11/include"
         "${CMAKE_SOURCE_DIR}/third_party/asio/include"
+        "${CMAKE_SOURCE_DIR}/third_party/CLI11/include"
         "${CMAKE_SOURCE_DIR}/third_party/Crow/include"
+        "${CMAKE_SOURCE_DIR}/third_party/gch_small_vector/include"
         "${CMAKE_SOURCE_DIR}/third_party/rapidjson/include"
 )
 target_link_libraries(coverpp PRIVATE ${DIASDK_LIBRARIES} coverpp::rc)

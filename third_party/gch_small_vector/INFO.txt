@@ -1,0 +1,2 @@
+gch::small_vector 0.10.4
+https://github.com/gharveymn/small_vector/tree/efcab60e5360b699f45d2a44dcb9a79bba40c356
