@@ -136,20 +136,26 @@ WindowsCoverageSession::resolve_tracepoint(VirtualAddress va)
     wil::com_ptr<IDiaEnumLineNumbers> line_numbers;
     THROW_IF_FAILED(m_dia.session().findLinesByVA(va.value, 1, line_numbers.put()));
 
-    const auto file = get_file_by_line_numbers(*line_numbers);
+	auto const file = get_file_by_line_numbers(*line_numbers);
+	if (!file)
+	{
+		return std::nullopt;
+	}
 
-    if (file)
-    {
-        auto line_number = get_single_item<IDiaLineNumber>(*line_numbers);
-        return Tracepoint{*file, {
-            .lineBegin = get_dword(line_number, &IDiaLineNumber::get_lineNumber),
-            .columnBegin = get_dword(line_number, &IDiaLineNumber::get_columnNumber),
-            .lineEnd = get_dword(line_number, &IDiaLineNumber::get_lineNumberEnd),
-            .columnEnd = get_dword(line_number, &IDiaLineNumber::get_columnNumberEnd),
-        }};
-    }
+	auto line_number = get_single_item<IDiaLineNumber>(*line_numbers);
+	if (!line_number)
+	{
+		// TODO: This happens sometimes. We probably need to return multiple tracepoints?
+		return std::nullopt;
+	}
 
-    return std::nullopt;
+	return Tracepoint{*file,
+	                  {
+	                      .lineBegin   = get_dword(line_number, &IDiaLineNumber::get_lineNumber),
+	                      .columnBegin = get_dword(line_number, &IDiaLineNumber::get_columnNumber),
+	                      .lineEnd     = get_dword(line_number, &IDiaLineNumber::get_lineNumberEnd),
+	                      .columnEnd   = get_dword(line_number, &IDiaLineNumber::get_columnNumberEnd),
+	                  }};
 }
 
 DiaAccessor& WindowsCoverageSession::dia()

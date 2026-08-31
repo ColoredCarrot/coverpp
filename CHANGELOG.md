@@ -12,6 +12,10 @@ This changelog follows the [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 - Consolidated CLI options and defaults
 
+### Fixed
+
+- Fixed a crash when a single virtual address resolves to multiple tracepoints
+
 ## [26.0.1] - 2026-08-30
 
 ### Added
