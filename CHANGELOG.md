@@ -4,6 +4,8 @@ This changelog follows the [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ## [Unreleased]
 
+## [26.0.3] - 2026-08-31
+
 ### Changed
 
 - The default value for `--exclude-source-files-regex` is now `/(vcpkg_installed|_deps)/`.
