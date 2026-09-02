@@ -61,7 +61,7 @@ function useReport(reportPath: string): FileContent {
 export default function CoverageReportPage() {
     const { _splat: reportPath } = routes.coverageReport.useParams();
 
-    const fileContent = useReport(reportPath);
+    const fileContent = useReport(reportPath ?? "");
 
     if (fileContent.status === "fetching") {
         return <p>Fetching...</p>;

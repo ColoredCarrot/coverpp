@@ -1,4 +1,4 @@
-import { ReactNode } from "@tanstack/react-router";
+import { type ReactNode } from "react";
 import "./styles.css";
 import GlobalThemeToggle from "#/components/GlobalThemeToggle";
 

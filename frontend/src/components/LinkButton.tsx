@@ -1,4 +1,4 @@
-import { ReactNode } from "@tanstack/react-router";
+import { type ReactNode } from "react";
 import styles from "./LinkButton.module.css";
 import cls from "#/util/cls";
 

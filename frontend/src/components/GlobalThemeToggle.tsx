@@ -1,5 +1,5 @@
 import { IconMoonFilled, IconSunFilled } from "@tabler/icons-react";
-import { ReactNode } from "@tanstack/react-router";
+import { type ReactNode } from "react";
 import styles from "./GlobalThemeToggle.module.css";
 import {
     Theme,
