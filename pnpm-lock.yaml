@@ -321,7 +321,7 @@ importers:
         specifier: ^6.1.0
         version: 6.1.0(vite@8.2.2(@types/node@26.3.0)(esbuild@0.28.2)(yaml@2.9.0))
       '@wooorm/starry-night':
-        specifier: ^3.2.0
+        specifier: ^3.10.0
         version: 3.10.0
       compression:
         specifier: ^1.7.4
@@ -348,10 +348,10 @@ importers:
         specifier: ^23.5.26
         version: 23.5.26
       hast-util-to-html:
-        specifier: ^9.0.0
+        specifier: ^9.0.5
         version: 9.0.5
       hast-util-to-jsx-runtime:
-        specifier: ^2.3.0
+        specifier: ^2.3.6
         version: 2.3.6(supports-color@7.2.0)
       jotai:
         specifier: ^2.6.5
