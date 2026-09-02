@@ -32,7 +32,10 @@ function ensureSameDrive(inputPath: string): void {
 }
 
 function getPathToDevReport() {
-    const file = path.resolve(__dirname, "../cmake-build-debug/report.coverpp");
+    const file = path.resolve(
+        import.meta.dirname,
+        "../cmake-build-debug/report.coverpp",
+    );
 
     if (!fs.existsSync(file)) {
         throw new Error(
@@ -47,15 +50,13 @@ function getPathToDevReport() {
 
 export default defineConfig(({ mode }) => ({
     plugins: [
-        react({
-            babel: { plugins: ["@babel/plugin-syntax-import-attributes"] },
-        }),
+        react(),
         svgr(),
         // viteSingleFile(),
     ],
     resolve: {
         alias: {
-            "#": path.resolve(__dirname, "./src"),
+            "#": path.resolve(import.meta.dirname, "./src"),
         },
     },
     server: {
