@@ -2,6 +2,8 @@
     padding: 0.5rem 0.5rem;
 
     background-color: rgb(246, 248, 250);
+
+    overflow: auto;
 }
 
 body[data-theme="dark"] .CodeBlock {
