@@ -8,6 +8,8 @@ This changelog follows the [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 - If `--source` is omitted, it now defaults to the root directory containing the program under coverage. For example, running `cover++ run D:\foo\bar\baz.exe` will use `D:\foo` as the source root.
 
+- The file format was changed to start with a magic string and a version number.
+
 - Small viewer style adjustments:
   - Scrollbars are now dark in dark mode.
   - Scrolling in the opened code modal now scrolls the code instead of the entire dialog.

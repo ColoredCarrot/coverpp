@@ -1,3 +1,6 @@
+file_identifier "CvPP";
+file_extension "coverpp";
+
 namespace Coverpp.Report;
 
 table FileReport {

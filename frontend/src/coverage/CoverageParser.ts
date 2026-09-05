@@ -2,8 +2,35 @@ import * as flatbuffers from "flatbuffers";
 import * as Report from "#/_generated/coverpp/report";
 import { CoverageReportT } from "#/_generated/coverpp/report";
 
+const MAGIC = new Uint8Array([0x43, 0x76, 0x50, 0x50, 0xc0, 0x99]); // "CvPP\xC0\x99"
+const FORMAT_VERSION_BYTES = 4;
+
 export function parseCoverage(raw: Uint8Array): CoverageReportT {
-    const buffer = new flatbuffers.ByteBuffer(raw);
+    if (raw.length < MAGIC.length + FORMAT_VERSION_BYTES) {
+        throw new Error("Malformed coverage report");
+    }
+
+    // Magic
+    if (!MAGIC.every((byte, i) => raw[i] === byte)) {
+        throw new Error("Malformed coverage report");
+    }
+
+    // Format version
+    const formatVersion = new DataView(
+        raw.buffer,
+        raw.byteOffset,
+        raw.byteLength,
+    ).getInt32(MAGIC.length, true);
+    if (formatVersion !== 1) {
+        throw new Error(
+            `Unsupported coverage report format version: ${formatVersion}`,
+        );
+    }
+
+    // Payload
+    const payload = raw.subarray(MAGIC.length + FORMAT_VERSION_BYTES);
+
+    const buffer = new flatbuffers.ByteBuffer(payload);
     const coverageReport =
         Report.CoverageReport.getRootAsCoverageReport(buffer).unpack();
 
@@ -13,40 +40,4 @@ export function parseCoverage(raw: Uint8Array): CoverageReportT {
     }
 
     return coverageReport;
-    /*
-    const res: FileCoverage[] = [];
-    for (
-        let i = 0, limit = coverageReport.fileReportsLength();
-        i < limit;
-        ++i
-    ) {
-        const fileReport = coverageReport.fileReports(i);
-        if (fileReport === null || fileReport.reachableLines(0) === null) {
-            continue;
-        }
-
-        const reachableLines = fileReport.reachableLinesArray()!;
-        const coveredLines = fileReport.coveredLinesArray()!;
-
-        const maxReachableLine = reachableLines.reduce(
-            (acc, line) => Math.max(acc, line),
-            0,
-        );
-
-        const lines = Array.from(Array(maxReachableLine + 1).keys()).map(
-            line =>
-                coveredLines.includes(line + 1)
-                    ? reachableLines.includes(line + 1)
-                        ? LineCoverage.Full
-                        : LineCoverage.None
-                    : LineCoverage.NotApplicable,
-        );
-        console.log(lines);
-
-        res.push({
-            filePath: fileReport.path()!,
-            lines,
-        });
-    }
-    return res;*/
 }

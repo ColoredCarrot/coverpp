@@ -10,6 +10,8 @@
 #include <print>
 #include <ranges>
 
+#include "../../report/report_file_utils.hpp"
+
 namespace coverpp
 {
 static std::filesystem::path discover_source_root(BasicReport const& reachable)
@@ -130,13 +132,8 @@ void RawExporter::run(const BasicReport& covered, const BasicReport& reachable, 
 
 	calculate_stats(result);
 
-    flatbuffers::FlatBufferBuilder builder{1024};
-    builder.Finish(Coverpp::Report::CoverageReport::Pack(builder, &result));
 
-    std::filesystem::create_directories(params.out_file.parent_path());
-    std::ofstream file{params.out_file, std::ios_base::out | std::ios_base::trunc | std::ios_base::binary};
-    file.exceptions(std::ios_base::badbit | std::ios_base::failbit);
-    file.write(reinterpret_cast<const char*>(builder.GetBufferPointer()), builder.GetSize());
+    write_report(params.out_file, result);
 
 	if (params.verbosity >= 1)
 	{
