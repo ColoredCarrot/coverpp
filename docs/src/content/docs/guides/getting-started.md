@@ -41,11 +41,13 @@ Cover++ stores coverage results in a compact binary format.
 To view the report you just generated, use:
 
 ```sh
-cover++ view report.coverpp
+cover++ view
 ```
 
 This will start a local web server and open your browser.
-
 To stop the server, type `q` and _Enter_ or use _Ctrl+C_.
 
+By default, `view` (like all commands that operate on a report file)
+looks for `./report.coverpp`.
+To view a different report, append the file path to the command.
 You can find more details [here](/reference/cli/#view).
