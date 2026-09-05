@@ -127,9 +127,10 @@ try
 	auto const export_html_app = export_app->add_subcommand("html");
 	export_html_app->add_option("input", coverpp::HtmlExporter::options.report_file)->default_val(default_report_file)->check(CLI::ExistingFile);
 	export_html_app->add_option("-o,--out", coverpp::HtmlExporter::options.out_dir, "Output directory")->default_val("coverage-html-export");
-	auto const export_clion_app = export_app->add_subcommand("clion");
+	auto const export_clion_app = export_app->add_subcommand("gcov");
+	export_clion_app->alias("clion");
 	export_clion_app->add_option("input", coverpp::CLionExporter::options.report_file)->default_val(default_report_file)->check(CLI::ExistingFile);
-	export_clion_app->add_option("-o,--out", coverpp::CLionExporter::options.out_dir, "Output directory")->default_val("coverage-clion-export");
+	export_clion_app->add_option("-o,--out", coverpp::CLionExporter::options.out_dir, "Output directory")->default_val("coverage-gcov-export");
 	auto const export_json_app = export_app->add_subcommand("json");
 	export_json_app->add_option("input", coverpp::JsonExporter::options.report_file)->default_val(default_report_file)->check(CLI::ExistingFile);
 	export_json_app->add_option("-o,--out", coverpp::JsonExporter::options.out_file, "Output file (use - for stdout)")->default_val("-");

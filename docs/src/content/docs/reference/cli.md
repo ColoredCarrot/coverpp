@@ -99,7 +99,7 @@ Export a coverage report to a JSON file.
 ### Usage
 
 ```sh
-cover++ export json -o <output> <report>
+cover++ export json [-o <output>] [report]
 ```
 
 | Option                  | Description                                                                                       |
@@ -121,3 +121,43 @@ Get the covered lines of a specific file in the first root:
 $report = cover++ export json foo.coverpp | ConvertFrom-Json
 $report.roots[0].children | where file -eq "main.cpp" | select covered
 ```
+
+## export gcov
+
+Export a coverage report to _gcov_ format.
+
+**Alias:** `export clion`
+
+### Usage
+
+```sh
+cover++ export gcov [-o <output>] [report]
+```
+
+| Option                  | Description                                                                                        |
+| ----------------------- | -------------------------------------------------------------------------------------------------- |
+| `-o`<br/>`--out <path>` | The directory in which to place the generated gcov files..<br/>**Default:** `coverage-gcov-export` |
+| `<report>`              | The report file to export.<br/>**Default:** `./report.coverpp`                                     |
+
+### Description
+
+[Gcov](https://gcc.gnu.org/onlinedocs/gcc/Gcov.html)'s
+format is useful primarily because other tools support it.
+Cover++ supports exporting reports in a format compatible with gcov
+to enable integration with such tools.
+
+One `.gcov` file per source file is created in the output directory.
+They are named according to a flat numbering scheme (`001.gcov`, `002.gcov`, ...).
+Each generated file contains the path to the source file and associated coverage information per line.
+
+Starting with CLion 2026.2,
+it's possible to import gcov files into the IDE[^clion-gcov-import].
+To do so, open the _Coverage_ tool window and click _Import a report collected in CI from disk_.
+Then, select ALL files in the exported directory.
+
+[^clion-gcov-import]: See [CPP-48737](https://youtrack.jetbrains.com/projects/CPP/issues/CPP-48737/Allow-opening-existing-gcov-reports)
+
+:::note
+Gcov files contain the full source code,
+so this exporter needs access to the source files.
+:::
