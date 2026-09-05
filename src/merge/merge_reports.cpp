@@ -109,12 +109,18 @@ void merge_reports(MergeOptions const& options)
 {
 	Coverpp::Report::CoverageReportT accumulated{};
 
+	accumulated.coverpp_version = COVERPP_VERSION_STRING;
+
 	auto progress = ProgressBar{options.input_files.size()};
 	for (auto const& [i, input_file] : options.input_files | std::views::enumerate)
 	{
 		auto const& report    = read_report(input_file);
+
 		accumulated.timestamp = report.timestamp;
+		accumulated.coverpp_version = report.coverpp_version;
+
 		merge_reports(accumulated, report);
+
 		progress.update(i + 1);
 	}
 

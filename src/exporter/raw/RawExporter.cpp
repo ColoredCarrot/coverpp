@@ -132,6 +132,7 @@ void RawExporter::run(const BasicReport& covered, const BasicReport& reachable, 
 
 	calculate_stats(result);
 
+	result.coverpp_version = COVERPP_VERSION_STRING;
 
     write_report(params.out_file, result);
 
