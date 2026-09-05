@@ -37,18 +37,6 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")
 set(CMAKE_CXX_STANDARD 23)
 
 add_executable(coverpp
-        src/BreakpointDriver.cpp
-        src/BreakpointDriver.hpp
-        src/CoverageEngine.hpp
-        src/CoverageParams.hpp
-        src/CoverageSink.cpp
-        src/CoverageSink.hpp
-        src/create_report.cpp
-        src/create_report.hpp
-        src/DiaAccessor.cpp
-        src/DiaAccessor.hpp
-        src/WindowsCoverageSession.cpp
-        src/WindowsCoverageSession.hpp
         src/com_utils.cpp
         src/com_utils.hpp
         src/docs/docs.cpp
@@ -83,8 +71,21 @@ add_executable(coverpp
         src/report/flat_report.hpp
         src/report/report_file_utils.cpp
         src/report/report_file_utils.hpp
-        src/run.cpp
-        src/run.hpp
+        src/run/BreakpointDriver.cpp
+        src/run/BreakpointDriver.hpp
+        src/run/CoverageEngine.hpp
+        src/run/CoverageParams.hpp
+        src/run/CoverageSink.cpp
+        src/run/CoverageSink.hpp
+        src/run/DiaAccessor.cpp
+        src/run/DiaAccessor.hpp
+        src/run/WindowsCoverageSession.cpp
+        src/run/WindowsCoverageSession.hpp
+        src/run/create_report.cpp
+        src/run/create_report.hpp
+        src/run/run.cpp
+        src/run/run.hpp
+        src/run/types.hpp
         src/seh_descriptions.cpp
         src/seh_descriptions.hpp
         src/serve/ServeOptions.hpp
@@ -92,7 +93,6 @@ add_executable(coverpp
         src/serve/serve.hpp
         src/stats/calculate_stats.cpp
         src/stats/calculate_stats.hpp
-        src/types.hpp
         src/util/console_color.cpp
         src/util/console_color.hpp
         src/util/crow_util.cpp

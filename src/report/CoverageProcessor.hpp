@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../CoverageSink.hpp"
+#include "../run/CoverageSink.hpp"
 #include "BasicReport.hpp"
 
 namespace coverpp

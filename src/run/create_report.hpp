@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoverageParams.hpp"
-#include "report/BasicReport.hpp"
+#include "../report/BasicReport.hpp"
 
 namespace coverpp
 {

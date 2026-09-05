@@ -1,6 +1,6 @@
 #include "WindowsCoverageSession.hpp"
-#include "com_utils.hpp"
-#include "file_util.hpp"
+#include "../com_utils.hpp"
+#include "../file_util.hpp"
 
 #include <print>
 

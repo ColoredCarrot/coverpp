@@ -1,8 +1,8 @@
 #include "create_report.hpp"
 
-#include "file_util.hpp"
-#include "stats/calculate_stats.hpp"
-#include "util/encodings_util.hpp"
+#include "../file_util.hpp"
+#include "../stats/calculate_stats.hpp"
+#include "../util/encodings_util.hpp"
 
 #include <coverage_report_generated.h>
 
@@ -10,7 +10,7 @@
 #include <print>
 #include <ranges>
 
-#include "report/report_file_utils.hpp"
+#include "../report/report_file_utils.hpp"
 
 namespace coverpp
 {

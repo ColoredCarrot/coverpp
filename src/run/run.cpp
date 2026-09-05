@@ -3,14 +3,14 @@
 #include "BreakpointDriver.hpp"
 #include "CoverageSink.hpp"
 #include "WindowsCoverageSession.hpp"
-#include "com_utils.hpp"
+#include "../com_utils.hpp"
 #include "create_report.hpp"
-#include "report/CoverageProcessor.hpp"
-#include "seh_descriptions.hpp"
-#include "util/console_color.hpp"
-#include "util/encodings_util.hpp"
-#include "util/guard.hpp"
-#include "windows/util.hpp"
+#include "../report/CoverageProcessor.hpp"
+#include "../seh_descriptions.hpp"
+#include "../util/console_color.hpp"
+#include "../util/encodings_util.hpp"
+#include "../util/guard.hpp"
+#include "../windows/util.hpp"
 
 #include <print>
 #include <iostream>
