@@ -1,14 +1,14 @@
 #include "run.hpp"
 
 #include "BreakpointDriver.hpp"
-#include "com_utils.hpp"
 #include "CoverageSink.hpp"
 #include "WindowsCoverageSession.hpp"
+#include "com_utils.hpp"
+#include "create_report.hpp"
 #include "report/CoverageProcessor.hpp"
 #include "seh_descriptions.hpp"
-#include "util/encodings_util.hpp"
-#include "exporter/raw/RawExporter.hpp"
 #include "util/console_color.hpp"
+#include "util/encodings_util.hpp"
 #include "util/guard.hpp"
 #include "windows/util.hpp"
 
@@ -422,8 +422,7 @@ int run_with_coverage(const CoverageParams& params)
     BasicReport report = process_coverage_sink(sink);
     BasicReport reachable_report = process_coverage_sink(reachable);
 
-    RawExporter raw_exporter;
-    raw_exporter.run(report, reachable_report, params);
+    create_report(report, reachable_report, params);
 
     return *exit_code;
 }

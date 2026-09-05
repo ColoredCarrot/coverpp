@@ -43,6 +43,8 @@ add_executable(coverpp
         src/CoverageParams.hpp
         src/CoverageSink.cpp
         src/CoverageSink.hpp
+        src/create_report.cpp
+        src/create_report.hpp
         src/DiaAccessor.cpp
         src/DiaAccessor.hpp
         src/WindowsCoverageSession.cpp
@@ -62,8 +64,6 @@ add_executable(coverpp
         src/exporter/json/JsonExporter.cpp
         src/exporter/json/JsonExporter.hpp
         src/exporter/json/json_export_options.hpp
-        src/exporter/raw/RawExporter.cpp
-        src/exporter/raw/RawExporter.hpp
         src/exporter/teamcity/TeamCityStatisticsExporter.cpp
         src/exporter/teamcity/TeamCityStatisticsExporter.hpp
         src/file_util.cpp
