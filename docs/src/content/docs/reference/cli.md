@@ -87,10 +87,10 @@ Merge multiple coverage reports into a single file.
 cover++ merge -o <output> <inputs...>
 ```
 
-| Option                     | Description                       |
-| -------------------------- | --------------------------------- |
-| `-o`<br/>`--output <path>` | Where to place the merged report. |
-| `<inputs...>`              | One or more report files.         |
+| Option                  | Description                       |
+| ----------------------- | --------------------------------- |
+| `-o`<br/>`--out <path>` | Where to place the merged report. |
+| `<inputs...>`           | One or more report files.         |
 
 ## export json
 

@@ -114,7 +114,7 @@ try
 
 	auto       merge_options = coverpp::MergeOptions{};
 	auto const merge_app     = app.add_subcommand("merge", "Merge multiple reports into one");
-	merge_app->add_option("-o,--output", merge_options.output_file)->required();
+	merge_app->add_option("-o,--out", merge_options.output_file, "Output file")->required();
 	merge_app->add_option("input-files", merge_options.input_files)->expected(-1);
 
 	auto       remap_options = coverpp::RemapOptions{};
@@ -126,13 +126,13 @@ try
 	auto const export_app      = app.add_subcommand("export", "Export coverage results");
 	auto const export_html_app = export_app->add_subcommand("html");
 	export_html_app->add_option("input", coverpp::HtmlExporter::options.report_file)->default_val(default_report_file)->check(CLI::ExistingFile);
-	export_html_app->add_option("-o,--out-dir", coverpp::HtmlExporter::options.out_dir)->default_val("coverage-html-export");
+	export_html_app->add_option("-o,--out", coverpp::HtmlExporter::options.out_dir, "Output directory")->default_val("coverage-html-export");
 	auto const export_clion_app = export_app->add_subcommand("clion");
 	export_clion_app->add_option("input", coverpp::CLionExporter::options.report_file)->default_val(default_report_file)->check(CLI::ExistingFile);
-	export_clion_app->add_option("-o,--out-dir", coverpp::CLionExporter::options.out_dir)->default_val("coverage-clion-export");
+	export_clion_app->add_option("-o,--out", coverpp::CLionExporter::options.out_dir, "Output directory")->default_val("coverage-clion-export");
 	auto const export_json_app = export_app->add_subcommand("json");
 	export_json_app->add_option("input", coverpp::JsonExporter::options.report_file)->default_val(default_report_file)->check(CLI::ExistingFile);
-	export_json_app->add_option("-o,--out", coverpp::JsonExporter::options.out_file)->default_val("-");
+	export_json_app->add_option("-o,--out", coverpp::JsonExporter::options.out_file, "Output file (use - for stdout)")->default_val("-");
 
     try
     {
